@@ -1,0 +1,3344 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบทะเบียนครุภัณฑ์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --sb: #0c1a2e;
+    --sb2: #112240;
+    --sb-active: #1d4ed8;
+    --accent: #2563eb;
+    --accent-h: #1d4ed8;
+    --teal: #0891b2;
+    --green: #059669;
+    --amber: #d97706;
+    --red: #dc2626;
+    --purple: #7c3aed;
+    --bg: #f0f4f8;
+    --bg2: #e8eef5;
+    --card: #ffffff;
+    --border: #dde3ec;
+    --text: #1a2332;
+    --muted: #5e7291;
+    --sw: 260px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Kanit',sans-serif;background:var(--bg);color:var(--text);font-size:15px}
+
+  /* ── SIDEBAR ─────────────────────── */
+  #sidebar{
+    width:var(--sw);height:100vh;
+    background:var(--sb);
+    position:fixed;top:0;left:0;z-index:1000;
+    display:flex;flex-direction:column;
+    transition:transform .2s cubic-bezier(.4,0,.2,1);
+    transform:translateZ(0);
+    overflow:hidden;
+    min-height:0;
+  }
+  #sidebar *{min-height:0}
+  #sidebar::before{
+    content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:linear-gradient(180deg,#3b82f6,#06b6d4,#8b5cf6);
+  }
+  .sb-brand{
+    padding:20px 18px 16px 22px;
+    border-bottom:1px solid rgba(255,255,255,.07);
+    flex-shrink:0;
+  }
+  .sb-logo{
+    display:flex;align-items:center;gap:10px;
+    font-size:15px;font-weight:800;color:#fff;letter-spacing:.2px;
+  }
+  .sb-logo-icon{
+    width:36px;height:36px;border-radius:10px;flex-shrink:0;
+    background:linear-gradient(135deg,#3b82f6,#06b6d4);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .sb-logo-icon i{font-size:18px;color:#fff}
+  .sb-org{font-size:10.5px;color:rgba(255,255,255,.38);margin-top:5px;line-height:1.5}
+  .sb-user{
+    display:flex;align-items:center;gap:9px;
+    margin-top:12px;padding:9px 12px;
+    background:rgba(255,255,255,.06);border-radius:10px;
+    border:1px solid rgba(255,255,255,.07);
+  }
+  .sb-user-avatar{
+    width:28px;height:28px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+    display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700;
+  }
+  .sb-user-name{font-size:12px;color:rgba(255,255,255,.75);font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+
+  .sb-nav{flex:1;overflow-y:auto;padding:8px 0}
+  .sb-nav::-webkit-scrollbar{width:0}
+  .sb-section{
+    font-size:10px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;
+    color:rgba(255,255,255,.25);padding:14px 22px 5px;
+  }
+  #sidebar .nav-link{
+    display:flex;align-items:center;gap:11px;
+    padding:10px 14px 10px 20px;margin:1px 10px;
+    border-radius:9px;font-size:14px;font-weight:500;
+    color:rgba(255,255,255,.6);cursor:pointer;
+    border:none;background:none;width:calc(100% - 20px);text-align:left;
+    transition:all .17s;
+  }
+  #sidebar .nav-link i{font-size:17px;width:22px;text-align:center;flex-shrink:0}
+  #sidebar .nav-link:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)}
+  #sidebar .nav-link.active{
+    background:rgba(59,130,246,.18);color:#93c5fd;font-weight:600;
+    box-shadow:inset 0 0 0 1px rgba(59,130,246,.3);
+  }
+  #sidebar .nav-link.active i{color:#60a5fa}
+
+  .sb-footer{
+    padding:14px 12px;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;
+  }
+  .sb-footer .btn-logout{
+    width:100%;display:flex;align-items:center;gap:11px;
+    padding:10px 14px 10px 20px;margin:1px 0;
+    border-radius:9px;border:none;
+    background:none;color:rgba(255,255,255,.6);
+    font-size:14px;font-weight:500;cursor:pointer;transition:all .17s;text-align:left;
+  }
+  .sb-footer .btn-logout i{font-size:17px;width:22px;text-align:center;flex-shrink:0;}
+  .sb-footer .btn-logout:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)}
+  .sb-footer .btn-logout-red{
+    color:#fca5a5;font-weight:600;
+  }
+  .sb-footer .btn-logout-red:hover{background:rgba(239,68,68,.2)!important;color:#fecaca!important;}
+
+  /* ── MAIN ─────────────────────── */
+  #main{margin-left:var(--sw);min-height:100vh;transition:margin .3s;display:flex;flex-direction:column}
+  #topbar{
+    height:60px;padding:0 24px;
+    background:var(--card);border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:12px;
+    position:sticky;top:0;z-index:990;
+    box-shadow:0 1px 0 var(--border),0 2px 12px rgba(0,0,0,.04);
+    flex-shrink:0;
+  }
+  .tb-title{font-size:16px;font-weight:700;color:var(--sb)}
+  .tb-badge{
+    padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;
+  }
+  .tb-badge.admin{background:#fef2f2;color:#b91c1c}
+  .tb-badge.branch{background:#eff6ff;color:#1d4ed8}
+  .tb-badge.viewer{background:#f9fafb;color:#6b7280;border:1px solid #e5e7eb}
+  .tb-branch{font-size:13px;color:var(--muted)}
+  #content{padding:20px 2.5%;flex:1;max-width:100%;}
+
+  /* ── PAGE HEADER ─────────────────────── */
+  .page-header{margin-bottom:14px}
+  .page-title-bar{
+    display:flex;align-items:center;gap:12px;margin-bottom:16px;
+  }
+  .page-title-icon{
+    width:40px;height:40px;border-radius:10px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:20px;
+  }
+  .page-title-text{font-size:18px;font-weight:800;color:#0f172a;line-height:1.2;}
+  .page-title-sub{font-size:12px;color:#94a3b8;margin-top:2px;font-weight:400;}
+
+  /* ── STAT CARDS (light style) ─────── */
+  .stat-card{
+    background:#fff;border:1px solid #e2e8f0;
+    border-radius:12px;padding:14px 16px;
+    border-left-width:4px;border-left-style:solid;
+    box-shadow:0 1px 6px rgba(0,0,0,.06);
+    transition:transform .18s,box-shadow .18s;
+    display:flex;align-items:center;gap:12px;
+  }
+  /* ── DASHBOARD STATUS CHIPS ────── */
+  .dash-chip{
+    padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;
+    border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;
+    cursor:pointer;transition:all .15s;font-family:'Kanit',sans-serif;
+  }
+  .dash-chip:hover{border-color:var(--cc,#2563eb);color:var(--cc,#2563eb);background:#f0f9ff}
+  .dash-chip-sel{background:var(--cc,#2563eb)!important;color:#fff!important;border-color:var(--cc,#2563eb)!important}
+
+  .stat-card{cursor:pointer}
+  .stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.1)}
+  .stat-card.stat-card-sel{box-shadow:0 0 0 2.5px var(--sc,#999);background:#f8faff;transform:translateY(-1px)}
+  .stat-card .sc-icon{
+    width:40px;height:40px;border-radius:10px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:18px;
+  }
+  .stat-card .sc-label{font-size:11px;color:#64748b;font-weight:600;line-height:1.35;height:30px;display:flex;align-items:flex-start;overflow:hidden;}
+  .stat-card .sc-num{font-size:28px;font-weight:800;line-height:1;color:#0f172a;margin-top:0;}
+  .stat-card .sc-pct{font-size:11px;color:#94a3b8;margin-top:3px;font-weight:500;min-height:16px;}
+  /* single-row 7-col grid */
+  .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px;}
+  @media(min-width:576px){.stat-grid{grid-template-columns:repeat(4,1fr);}}
+  @media(min-width:1200px){.stat-grid{grid-template-columns:repeat(7,1fr);}}
+
+  /* ── CARD ─────────────────────── */
+  .card{border:1px solid var(--border);border-radius:14px;background:var(--card);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+  .card-header{
+    padding:14px 20px;border-bottom:1px solid var(--border);
+    background:var(--card);border-radius:14px 14px 0 0 !important;
+    font-size:15px;font-weight:700;color:var(--sb);display:flex;align-items:center;gap:8px;
+  }
+
+  /* ── TABLE ─────────────────────── */
+  .table-responsive{border-radius:0 0 14px 14px;overflow-x:auto;overflow-y:hidden}
+  .table{font-size:14px;margin:0;border-collapse:collapse;width:100%}
+  .table thead th{
+    background:#1e3a5f;color:rgba(255,255,255,.93);
+    font-size:12.5px;font-weight:600;white-space:nowrap;
+    padding:11px 16px;border:none;letter-spacing:.3px;
+  }
+  .table tbody td{padding:11px 16px;border-bottom:1px solid #f1f4f8;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+  .table tbody tr:last-child td{border-bottom:none}
+  .table tbody tr:hover{background:#f7faff}
+
+  /* ── BADGES ─────────────────────── */
+  .badge{font-size:12px;font-weight:600;padding:4px 11px;border-radius:20px;letter-spacing:.2px}
+  .badge-active{background:#d1fae5;color:#065f46}
+  .badge-damaged_fixable{background:#fef3c7;color:#78350f}
+  .badge-damaged_unfixable{background:#fee2e2;color:#7f1d1d}
+  .badge-transferred{background:#ede9fe;color:#4c1d95}
+  .badge-disposal_pending{background:#fef9c3;color:#713f12}
+  .badge-disposed{background:#e2e8f0;color:#334155}
+  .badge-not_found{background:#ffedd5;color:#7c2d12}
+
+  /* ── FORMS ─────────────────────── */
+  .form-label{font-size:13px;font-weight:600;color:var(--sb);margin-bottom:5px;display:block}
+  .form-control,.form-select{
+    border:1.5px solid var(--border);border-radius:9px;
+    font-family:'Kanit',sans-serif;font-size:14px;color:var(--text);
+    padding:9px 13px;transition:border .2s,box-shadow .2s;
+    background:var(--card);width:100%;
+  }
+  .form-control:focus,.form-select:focus{
+    border-color:var(--accent);outline:none;
+    box-shadow:0 0 0 3px rgba(37,99,235,.12);
+  }
+  .form-control-sm,.form-select-sm{padding:6px 10px;font-size:13px}
+
+  /* ── BUTTONS ─────────────────────── */
+  .btn{
+    border-radius:9px;font-family:'Kanit',sans-serif;
+    font-weight:700;font-size:14px;cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    padding:9px 18px;border:none;transition:all .17s;
+  }
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent-h));color:#fff;box-shadow:0 3px 12px rgba(37,99,235,.3)}
+  .btn-primary:hover{box-shadow:0 6px 20px rgba(37,99,235,.4);transform:translateY(-1px);background:linear-gradient(135deg,#1d4ed8,#1e40af);color:#fff}
+  .btn-success{background:linear-gradient(135deg,#059669,#047857);color:#fff;box-shadow:0 3px 12px rgba(5,150,105,.3)}
+  .btn-success:hover{box-shadow:0 6px 20px rgba(5,150,105,.4);color:#fff}
+  .btn-warning{background:linear-gradient(135deg,#d97706,#b45309);color:#fff;box-shadow:0 3px 12px rgba(217,119,6,.3)}
+  .btn-warning:hover{color:#fff}
+  .btn-danger{background:linear-gradient(135deg,var(--red),#b91c1c);color:#fff}
+  .btn-outline-primary{background:transparent;border:1.5px solid var(--accent);color:var(--accent)}
+  .btn-outline-primary:hover{background:var(--accent);color:#fff}
+  .btn-outline-secondary{background:transparent;border:1.5px solid var(--border);color:var(--muted)}
+  .btn-outline-secondary:hover{background:var(--bg2);color:var(--text)}
+  .btn-outline-danger{background:transparent;border:1.5px solid #fca5a5;color:var(--red)}
+  .btn-outline-danger:hover{background:var(--red);color:#fff}
+  .btn-outline-warning{background:transparent;border:1.5px solid #fcd34d;color:#92400e}
+  .btn-outline-info{background:transparent;border:1.5px solid #67e8f9;color:var(--teal)}
+  .btn-secondary{background:#e2e8f0;color:#475569;border:none}
+  .btn-secondary:hover{background:#cbd5e1}
+  .btn-light{background:var(--bg2);color:var(--text);border:1px solid var(--border)}
+  .btn-sm{padding:5px 12px;font-size:13px;border-radius:7px}
+  .btn-lg{padding:12px 28px;font-size:16px}
+  .w-100{width:100%}
+
+  /* ── OVERLAY ─────────────────────── */
+  #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;backdrop-filter:blur(3px)}
+  #overlay.show{display:block}
+
+  /* ── LOADING ─────────────────────── */
+  #loading{
+    display:none;position:fixed;inset:0;z-index:9999;
+    background:#0f172a;backdrop-filter:blur(4px);
+    align-items:center;justify-content:center;flex-direction:column;gap:14px;
+  }
+  #loading.show{display:flex}
+  #loading .ld-spinner{
+    width:48px;height:48px;border-radius:50%;
+    border:3px solid rgba(255,255,255,.25);border-top-color:#60a5fa;
+    animation:spin .8s linear infinite;
+  }
+  #loading .ld-text{font-size:14px;color:rgba(255,255,255,.85);font-weight:500}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ── MOBILE ─────────────────────── */
+  @media(max-width:768px){
+    #sidebar{transform:translateX(-100%)}
+    #sidebar.show{transform:translateX(0)}
+    #main{margin-left:0}
+    #bottomnav{display:flex!important}
+    #content{padding:14px;padding-bottom:76px}
+    .stat-card .sc-num{font-size:22px!important}
+    .stat-grid{gap:8px!important}
+  }
+  #bottomnav{
+    display:none;position:fixed;bottom:0;left:0;right:0;
+    background:var(--card);border-top:1px solid var(--border);
+    z-index:1000;box-shadow:0 -2px 16px rgba(0,0,0,.08);
+  }
+  #bottomnav .bn-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    padding:8px 4px 6px;border:none;background:none;cursor:pointer;
+    font-size:10px;color:var(--muted);transition:color .2s;
+  }
+  #bottomnav .bn-item i{font-size:21px;line-height:1}
+  #bottomnav .bn-item.active{color:var(--accent)}
+  #bottomnav .bn-item.active i{
+    background:rgba(37,99,235,.1);border-radius:8px;padding:2px 10px;
+  }
+
+  /* ── MODAL ─────────────────────── */
+  .modal-content{border-radius:16px;border:none;box-shadow:0 24px 64px rgba(0,0,0,.22)}
+  .modal-header{
+    background:linear-gradient(135deg,var(--sb),var(--sb2));
+    color:#fff;border-radius:16px 16px 0 0;padding:16px 22px;
+    border:none;
+  }
+  .modal-header .modal-title{font-weight:700;font-size:15px;color:#fff;display:flex;align-items:center;gap:8px}
+  .modal-header .btn-close{filter:invert(1) brightness(2)}
+  .modal-footer{border-top:1px solid var(--border);padding:14px 22px}
+  .modal-body{padding:20px 22px}
+
+  /* ── REPORT CARDS ─────────────────────── */
+  .report-card{
+    border-radius:14px;border:1.5px solid var(--border);cursor:pointer;
+    background:var(--card);overflow:hidden;transition:all .2s;
+  }
+  .report-card:hover{border-color:var(--accent);box-shadow:0 8px 28px rgba(37,99,235,.12);transform:translateY(-3px)}
+  .report-card .card-body{padding:28px 20px;text-align:center}
+  .rc-icon{font-size:42px;line-height:1}
+  .rc-title{font-size:15px;font-weight:700;color:var(--sb);margin-top:12px}
+  .rc-sub{font-size:13px;color:var(--muted);margin-top:5px}
+
+  /* ── ALERT ─────────────────────── */
+  .alert{border-radius:10px;border:none;font-size:14px;padding:12px 16px}
+  .alert-info{background:#eff6ff;color:#1e40af;border-left:3px solid var(--accent)}
+  .alert-success{background:#f0fdf4;color:#166534;border-left:3px solid var(--green)}
+  .alert-danger{background:#fef2f2;color:#991b1b;border-left:3px solid var(--red)}
+  .alert-warning{background:#fffbeb;color:#78350f;border-left:3px solid var(--amber)}
+
+  /* ── MISC ─────────────────────── */
+  .page-content{animation:pgIn .18s ease;will-change:opacity}
+  @keyframes pgIn{from{opacity:.4}to{opacity:1}}
+  ::-webkit-scrollbar{width:5px;height:5px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:4px}
+  ::-webkit-scrollbar-thumb:hover{background:#9ca3af}
+  .text-muted{color:var(--muted)!important}
+  .fw-bold{font-weight:700!important}
+  .fw-semibold{font-weight:600!important}
+  .fw-normal{font-weight:400!important}
+  .shadow-sm{box-shadow:0 1px 4px rgba(0,0,0,.06)!important}
+  .mb-0{margin-bottom:0!important}
+  .mt-0{margin-top:0!important}
+  .mt-1{margin-top:4px!important}
+  .mt-3{margin-top:14px!important}
+  .ms-1{margin-left:4px!important}
+  .ms-2{margin-left:8px!important}
+  .me-3{margin-right:14px!important}
+  .py-0{padding-top:0!important;padding-bottom:0!important}
+  .py-3{padding-top:14px!important;padding-bottom:14px!important}
+  .py-4{padding-top:20px!important;padding-bottom:20px!important}
+  .py-5{padding-top:32px!important;padding-bottom:32px!important}
+  .px-2{padding-left:8px!important;padding-right:8px!important}
+  .px-3{padding-left:14px!important;padding-right:14px!important}
+  .fs-1{font-size:2.5rem!important}
+  .table-sm td,.table-sm th{padding:7px 12px!important}
+  .table-hover tbody tr:hover{background:#f7faff}
+  .table-bordered{border:1px solid var(--border)}
+  .table-bordered td,.table-bordered th{border:1px solid #e2e8f0}
+  .table-sm{font-size:13px}
+  .badge.bg-success{background:#d1fae5;color:#065f46}
+  .badge.bg-danger{background:#fee2e2;color:#991b1b}
+  .badge.bg-secondary{background:#e2e8f0;color:#475569}
+  .badge.bg-primary{background:#dbeafe;color:#1e40af}
+  .badge.bg-warning{background:#fef3c7;color:#78350f}
+  .badge.bg-info{background:#cffafe;color:#155e75}
+  .spinner-border{display:inline-block;width:32px;height:32px;border:3px solid #e2e8f0;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+  .position-relative{position:relative!important}
+  .position-absolute{position:absolute!important}
+  .inset-0{inset:0}
+  .opacity-50{opacity:.5}
+  .cursor-pointer{cursor:pointer}
+  .rounded{border-radius:8px}
+  .rounded-circle{border-radius:50%}
+
+  /* ── UTILITIES ─────────────────────── */
+  .d-none{display:none!important}
+  .d-flex{display:flex!important}
+  .d-block{display:block!important}
+  .d-inline{display:inline!important}
+  @media(min-width:768px){.d-md-inline{display:inline!important}.d-md-none{display:none!important}}
+  .ms-auto{margin-left:auto!important}
+  .me-1{margin-right:4px!important}.me-2{margin-right:8px!important}
+  .mb-2{margin-bottom:8px!important}.mb-3{margin-bottom:14px!important}.mb-4{margin-bottom:20px!important}
+  .mt-2{margin-top:8px!important}.mt-4{margin-top:20px!important}
+  .p-0{padding:0!important}.p-2{padding:8px!important}.p-3{padding:14px!important}.p-4{padding:20px!important}
+  .py-2{padding-top:8px!important;padding-bottom:8px!important}
+  .px-4{padding-left:20px!important;padding-right:20px!important}
+  .gap-1{gap:4px!important}.gap-2{gap:8px!important}.gap-3{gap:14px!important}
+  .row{display:flex;flex-wrap:wrap;margin:-8px}
+  .row.g-2>*{padding:6px}.row.g-3>*{padding:8px}.row.g-4>*{padding:10px}
+  .col-6{width:50%;flex:0 0 50%}
+  .col-12{width:100%;flex:0 0 100%}
+  .col-md-2,.col-md-3,.col-md-4,.col-md-5,.col-md-6,.col-md-8{width:100%;flex:0 0 100%}
+  @media(min-width:768px){
+    .col-md-2{width:16.66%;flex:0 0 16.66%}
+    .col-md-3{width:25%;flex:0 0 25%}
+    .col-md-4{width:33.33%;flex:0 0 33.33%}
+    .col-md-5{width:41.66%;flex:0 0 41.66%}
+    .col-md-6{width:50%;flex:0 0 50%}
+    .col-md-8{width:66.66%;flex:0 0 66.66%}
+    .d-md-none{display:none!important}
+    #btnMenu{display:none!important}
+  }
+  .col-lg-3{width:50%;flex:0 0 50%}
+  @media(min-width:992px){.col-lg-3{width:25%;flex:0 0 25%}}
+  .text-center{text-align:center!important}
+  .text-end{text-align:right!important}
+  .text-start{text-align:left!important}
+  .text-danger{color:var(--red)!important}
+  .text-success{color:var(--green)!important}
+  .text-warning{color:var(--amber)!important}
+  .text-info{color:var(--teal)!important}
+  .text-secondary{color:#6b7280!important}
+  .text-primary{color:var(--accent)!important}
+  .flex-wrap{flex-wrap:wrap!important}
+  .flex-grow-1{flex-grow:1!important}
+  .align-items-center{align-items:center!important}
+  .align-items-start{align-items:flex-start!important}
+  .justify-content-between{justify-content:space-between!important}
+  .justify-content-end{justify-content:flex-end!important}
+  .justify-content-center{justify-content:center!important}
+  .h-100{height:100%}
+  .position-fixed{position:fixed!important}
+  .bottom-0{bottom:0!important}.end-0{right:0!important}
+  .border-top{border-top:1px solid var(--border)!important}
+  .overflow-hidden{overflow:hidden!important}
+  .table-bordered td,.table-bordered th{border:1px solid #e2e8f0}
+  .table-dark th{background:#1e40af!important;color:#fff!important}
+  .table-dark th,.table th{white-space:nowrap}
+  .table td{white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+  .table td.wrap{white-space:normal;max-width:none}
+  .table-warning{background:#fffbeb!important}
+  .progress{height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden}
+  .progress-bar{height:100%;background:var(--green);border-radius:4px;transition:width .4s}
+  .progress-bar.bg-success{background:var(--green)}
+  .toast-container{position:fixed!important;z-index:9999}
+  .toast{border-radius:10px;padding:0;min-width:260px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+  .toast-body{padding:12px 16px;font-size:14px;font-weight:500}
+  .btn-close{background:transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") center/10px auto no-repeat;border:none;width:24px;height:24px;border-radius:4px;cursor:pointer;opacity:.7}
+  .btn-close:hover{opacity:1}
+  .btn-close-white{filter:invert(1) brightness(2)}
+  .form-check{display:flex;align-items:center;gap:8px;padding:4px 0}
+  .form-check-input{width:16px;height:16px;cursor:pointer}
+  small{font-size:12px}
+  code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;color:#dc2626}
+  hr{border:none;border-top:1px solid var(--border);margin:16px 0}
+
+  /* ── PRINT ─────────────────────── */
+  @media print{
+    #sidebar,#topbar,#bottomnav,.no-print{display:none!important}
+    #main{margin:0!important}
+    #content{padding:0!important}
+  }
+
+  /* ── UNDER CONSTRUCTION ─────────────────────── */
+  .under-construction{
+    text-align:center;padding:80px 20px;color:var(--muted);
+  }
+  .under-construction i{font-size:64px;display:block;margin-bottom:16px;opacity:.4;}
+  .under-construction h5{font-size:20px;font-weight:700;margin-bottom:8px;color:var(--sb);}
+  .under-construction p{font-size:14px;}
+
+  /* ── PHOTO UPLOAD ─────────────────────── */
+  .photo-thumb{
+    width:90px;height:72px;object-fit:cover;
+    border-radius:8px;border:1px solid var(--border);
+    cursor:pointer;transition:opacity .2s;
+  }
+  .photo-thumb:hover{opacity:.8;}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading" class="show">
+  <div class="ld-spinner"></div>
+  <div class="ld-text">กำลังโหลดระบบ...</div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginPage" style="display:none;position:fixed;inset:0;z-index:3000;align-items:center;justify-content:center;padding:20px;overflow:hidden;background:#0c1a2e;">
+  <div style="position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.22),transparent 70%);top:-120px;right:-80px;pointer-events:none;"></div>
+  <div style="position:absolute;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(8,145,178,.18),transparent 70%);bottom:-80px;left:-60px;pointer-events:none;"></div>
+  <div style="position:relative;z-index:1;width:100%;max-width:360px;">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:62px;height:62px;border-radius:16px;background:linear-gradient(135deg,#2563eb,#0891b2);box-shadow:0 8px 28px rgba(37,99,235,.4);margin-bottom:14px;">
+        <i class="bi bi-archive-fill" style="font-size:28px;color:#fff;"></i>
+      </div>
+      <h3 style="color:#fff;font-weight:800;font-size:20px;letter-spacing:.3px;margin:0;">ระบบทะเบียนครุภัณฑ์</h3>
+      <p style="color:rgba(255,255,255,.42);font-size:12px;margin:6px 0 0;line-height:1.6;">คณะศิลปศาสตร์และวิทยาศาสตร์<br>มหาวิทยาลัยราชภัฏศรีสะเกษ</p>
+    </div>
+    <div style="background:#fff;border-radius:18px;padding:28px 28px 32px;box-shadow:0 24px 64px rgba(0,0,0,.4);">
+      <p style="font-size:12.5px;color:#64748b;margin-bottom:20px;font-weight:500;text-align:center;">กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+      <div id="loginError" class="alert alert-danger d-none" style="margin-bottom:14px;font-size:13px;"></div>
+      <div style="margin-bottom:14px;">
+        <label class="form-label" style="font-size:13px;font-weight:600;color:#374151;">ชื่อผู้ใช้</label>
+        <div style="position:relative;">
+          <i class="bi bi-person-fill" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:14px;pointer-events:none;"></i>
+          <input id="loginUser" type="text" class="form-control" placeholder="กรอกชื่อผู้ใช้" style="padding-left:38px;font-size:14px;" autocomplete="username">
+        </div>
+      </div>
+      <div style="margin-bottom:22px;">
+        <label class="form-label" style="font-size:13px;font-weight:600;color:#374151;">รหัสผ่าน</label>
+        <div style="position:relative;">
+          <i class="bi bi-lock-fill" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:14px;pointer-events:none;"></i>
+          <input id="loginPass" type="password" class="form-control" placeholder="กรอกรหัสผ่าน" style="padding-left:38px;font-size:14px;" autocomplete="current-password">
+        </div>
+      </div>
+      <button id="loginBtn" class="btn btn-primary w-100" style="padding:10px;font-size:14px;font-weight:700;border-radius:10px;" onclick="doLogin()">
+        <i class="bi bi-box-arrow-in-right me-2"></i>เข้าสู่ระบบ
+      </button>
+    </div>
+    <p style="text-align:center;color:rgba(255,255,255,.18);font-size:11px;margin-top:16px;">ระบบทะเบียนครุภัณฑ์ © 2568</p>
+  </div>
+</div>
+
+<!-- OVERLAY (mobile menu) -->
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar" style="display:none;">
+  <div class="sb-brand">
+    <div class="sb-logo">
+      <div class="sb-logo-icon"><i class="bi bi-archive-fill"></i></div>
+      <span>ระบบทะเบียนครุภัณฑ์</span>
+    </div>
+    <div class="sb-org">คณะศิลปศาสตร์และวิทยาศาสตร์<br>มหาวิทยาลัยราชภัฏศรีสะเกษ</div>
+    <div class="sb-user">
+      <div class="sb-user-avatar" id="sbAvatar">A</div>
+      <div class="sb-user-name" id="sbUserName">-</div>
+    </div>
+  </div>
+
+  <div class="sb-nav">
+    <div class="nav-link" onclick="showPage('dashboard')"><i class="bi bi-speedometer2"></i>ภาพรวมระบบ</div>
+    <div class="nav-link" onclick="showPage('inspection')"><i class="bi bi-clipboard2-check"></i>ตรวจสอบครุภัณฑ์</div>
+    <div class="nav-link" onclick="showPage('assets')"><i class="bi bi-box-seam"></i>รายการครุภัณฑ์</div>
+    <div class="nav-link" onclick="showPage('disposed')" id="menuDisposed">
+      <i class="bi bi-trash3-fill"></i>จำหน่ายครุภัณฑ์
+    </div>
+    <div class="nav-link" onclick="showPage('transfer')" id="menuTransfer">
+      <i class="bi bi-arrow-left-right"></i>โอนย้ายครุภัณฑ์
+    </div>
+    <div class="nav-link" onclick="showPage('report')"><i class="bi bi-file-earmark-bar-graph"></i>รายงาน &amp; พิมพ์</div>
+
+    <div class="sb-section" id="adminSection">จัดการระบบ</div>
+    <div class="nav-link" id="menuAdminUsers" onclick="showPage('admin-users')"><i class="bi bi-people-fill"></i>จัดการผู้ใช้</div>
+  </div>
+
+  <div class="sb-footer">
+    <button onclick="showHelp()" class="btn-logout">
+      <i class="bi bi-question-circle"></i>วิธีใช้งาน
+    </button>
+    <button onclick="doLogout()" class="btn-logout btn-logout-red">
+      <i class="bi bi-box-arrow-left"></i>ออกจากระบบ
+    </button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main" style="display:none;">
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <button onclick="toggleSidebar()" style="display:none;border:1px solid var(--border);background:none;padding:6px 10px;border-radius:8px;cursor:pointer;color:var(--muted);" id="btnMenu">
+      <i class="bi bi-list" style="font-size:20px;"></i>
+    </button>
+    <span id="topTitle" class="tb-title">ภาพรวมระบบ</span>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+      <span class="tb-branch" id="topBranch"></span>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- ===== DASHBOARD ===== -->
+    <div id="page-dashboard" class="page-content">
+      <!-- Page title -->
+      <div class="page-title-bar">
+        <div class="page-title-icon" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe);"><i class="bi bi-bar-chart-line-fill" style="color:#2563eb;"></i></div>
+        <div>
+          <div class="page-title-text">ภาพรวมครุภัณฑ์</div>
+          <div class="page-title-sub">สรุปสถานะและสถิติการตรวจสอบ</div>
+        </div>
+      </div>
+      <!-- Filter bar -->
+      <div class="no-print mb-3" id="dashFilterBar">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <div class="d-flex align-items-center gap-1 flex-fill" style="min-width:140px;">
+            <i class="bi bi-diagram-3 text-success" style="font-size:14px;flex-shrink:0;"></i>
+            <select id="dashBranch" class="form-select form-select-sm" onchange="loadDashboard()">
+              <option value="">ทุกสาขา</option>
+            </select>
+          </div>
+          <div class="d-flex align-items-center gap-1 flex-fill" style="min-width:130px;">
+            <i class="bi bi-calendar3 text-primary" style="font-size:14px;flex-shrink:0;"></i>
+            <select id="dashYear" class="form-select form-select-sm" onchange="loadDashboard()">
+              <option value="">ทุกปีงบประมาณ</option>
+            </select>
+          </div>
+          <div class="d-flex align-items-center gap-1 flex-fill" style="min-width:130px;">
+            <i class="bi bi-funnel text-warning" style="font-size:14px;flex-shrink:0;"></i>
+            <select id="dashStatus" class="form-select form-select-sm" onchange="loadDashboard()">
+              <option value="">ทุกสถานะ</option>
+              <option value="active">พบ / ปกติ</option>
+              <option value="not_found">ไม่พบ</option>
+              <option value="damaged_fixable">ชำรุด ซ่อมได้</option>
+              <option value="damaged_unfixable">ชำรุด ซ่อมไม่ได้</option>
+              <option value="transferred">โอนย้าย</option>
+              <option value="disposal_pending">รออนุมัติจำหน่าย</option>
+              <option value="disposed">จำหน่ายแล้ว</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <!-- STAT CARDS -->
+      <div class="stat-grid" id="statsCards"></div>
+      <!-- Badge ไม่มีสาขา -->
+      <div id="noBranchAlert" style="display:none;" class="mb-2">
+        <span class="badge rounded-pill d-inline-flex align-items-center gap-1 px-3 py-2"
+          style="background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-size:13px;cursor:pointer;font-family:Kanit;"
+          onclick="filterNoBranch()">
+          <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+          <span id="noBranchCount"></span>
+        </span>
+      </div>
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-header fw-semibold d-flex align-items-center gap-2" style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+              <i class="bi bi-bar-chart-fill text-success"></i>
+              <span id="chartTitle">ครุภัณฑ์แยกตามสาขา</span>
+            </div>
+            <div class="card-body" style="padding:12px 14px 10px;">
+              <div style="position:relative;width:100%;height:420px;">
+                <canvas id="branchChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== REPORT (กำลังพัฒนา) ===== -->
+    <div id="page-report" class="page-content" style="display:none;">
+      <div class="under-construction">
+        <i class="bi bi-tools"></i>
+        <h5>รายงาน &amp; พิมพ์</h5>
+        <p>กำลังพัฒนา — จะเปิดใช้งานในเร็วๆ นี้</p>
+      </div>
+    </div>
+
+    <!-- ===== ASSETS ===== -->
+    <div id="page-assets" class="page-content" style="display:none;">
+      <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 no-print">
+        <div class="page-title-bar mb-0" style="margin-bottom:0!important;">
+          <div class="page-title-icon" style="background:linear-gradient(135deg,#fef3c7,#fde68a);"><i class="bi bi-archive-fill" style="color:#b45309;"></i></div>
+          <div>
+            <div class="page-title-text">ทะเบียนครุภัณฑ์</div>
+            <div class="page-title-sub" id="assetPageSub">รายการครุภัณฑ์ทั้งหมด</div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-outline-success btn-sm" onclick="openImportModal()">
+            <i class="bi bi-table me-1"></i>นำเข้าข้อมูล
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="showAssetForm()" id="btnAddAsset">
+            <i class="bi bi-plus-lg me-1"></i>เพิ่มครุภัณฑ์
+          </button>
+        </div>
+      </div>
+      <!-- Filter -->
+      <div class="card shadow-sm mb-3 no-print">
+        <div class="card-body py-2 px-3">
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <input id="filterSearch" type="search" class="form-control form-control-sm" placeholder="ค้นหาชื่อ / รหัส / S/N..." style="min-width:180px;flex:2;" oninput="filterAssetsNow()">
+            <select id="filterYear" class="form-select form-select-sm" onchange="filterAssetsNow()" style="min-width:130px;flex:1;"></select>
+            <select id="filterBranch" class="form-select form-select-sm" onchange="filterAssetsNow()" style="min-width:120px;flex:1;">
+              <option value="">-- ทุกสาขา --</option>
+            </select>
+            <select id="filterStatus" class="form-select form-select-sm" onchange="filterAssetsNow()" style="min-width:130px;flex:1;">
+              <option value="">-- ทุกสถานะ --</option>
+              <option value="active">พบ / ปกติ</option>
+              <option value="not_found">ไม่พบ</option>
+              <option value="damaged_fixable">ชำรุด ซ่อมได้</option>
+              <option value="damaged_unfixable">ชำรุด ซ่อมไม่ได้</option>
+              <option value="transferred">โอนย้าย</option>
+              <option value="disposal_pending">รออนุมัติจำหน่าย</option>
+              <option value="disposed">จำหน่ายแล้ว</option>
+            </select>
+            <button class="btn btn-primary btn-sm px-3" onclick="filterAssetsNow()"><i class="bi bi-search me-1"></i>ค้นหา</button>
+            <button class="btn btn-outline-secondary btn-sm px-3" onclick="clearFilter()"><i class="bi bi-x-circle me-1"></i>ล้าง</button>
+          </div>
+        </div>
+      </div>
+      <!-- Bulk Action Bar -->
+      <div id="bulkBar" style="display:none;" class="card shadow-sm mb-2 border-primary no-print">
+        <div class="card-body py-2 px-3 d-flex align-items-center gap-3 flex-wrap">
+          <span id="bulkCount" class="fw-semibold text-primary" style="font-size:14px;white-space:nowrap;"></span>
+          <div class="d-flex align-items-center gap-2 flex-fill flex-wrap">
+            <label class="form-label mb-0 fw-semibold" style="font-size:13px;white-space:nowrap;">กำหนดสาขา:</label>
+            <select id="bulkBranchSel" class="form-select form-select-sm" style="max-width:220px;">
+              <option value="">-- เลือกสาขา --</option>
+            </select>
+            <button class="btn btn-primary btn-sm px-3" onclick="bulkAssignBranch()">
+              <i class="bi bi-check2-all me-1"></i>ยืนยัน
+            </button>
+            <button class="btn btn-outline-secondary btn-sm px-3" onclick="clearBulkSelect()">
+              <i class="bi bi-x me-1"></i>ยกเลิก
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0">
+              <thead>
+                <tr>
+                  <th class="no-print" style="width:36px;">
+                    <input type="checkbox" id="chkSelectAll" class="form-check-input" onchange="toggleSelectAll(this.checked)" title="เลือกทั้งหมดในหน้านี้">
+                  </th>
+                  <th>รหัสครุภัณฑ์</th>
+                  <th>ชื่อครุภัณฑ์</th>
+                  <th>ยี่ห้อ/รุ่น</th>
+                  <th>สาขา</th>
+                  <th class="text-end">ราคา (บาท)</th>
+                  <th class="text-center" style="width:70px;" title="อายุการใช้งาน (นับจากวันที่ได้มา)">อายุ</th>
+                  <th>สถานะ</th>
+                  <th class="no-print">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="assetTableBody"></tbody>
+            </table>
+          </div>
+          <div id="assetPaging" class="p-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TRANSFER (กำลังพัฒนา) ===== -->
+    <div id="page-transfer" class="page-content" style="display:none;">
+      <div class="under-construction">
+        <i class="bi bi-arrow-left-right"></i>
+        <h5>โอนย้ายครุภัณฑ์</h5>
+        <p>กำลังพัฒนา — จะเปิดใช้งานในเร็วๆ นี้</p>
+      </div>
+    </div>
+
+    <!-- ===== DISPOSED (กำลังพัฒนา) ===== -->
+    <div id="page-disposed" class="page-content" style="display:none;">
+      <div class="under-construction">
+        <i class="bi bi-trash3-fill"></i>
+        <h5>จำหน่ายครุภัณฑ์</h5>
+        <p>กำลังพัฒนา — จะเปิดใช้งานในเร็วๆ นี้</p>
+      </div>
+    </div>
+
+    <!-- ===== ASSET FORM ===== -->
+    <div id="page-asset-form" class="page-content" style="display:none;">
+      <div class="page-header d-flex justify-content-between align-items-center gap-2 no-print">
+        <div class="page-title-bar mb-0" style="margin-bottom:0!important;">
+          <div class="page-title-icon" style="background:linear-gradient(135deg,#ede9fe,#ddd6fe);"><i class="bi bi-pencil-square" style="color:#7c3aed;"></i></div>
+          <div>
+            <div class="page-title-text" id="assetFormTitle">เพิ่มครุภัณฑ์</div>
+            <div class="page-title-sub">กรอกข้อมูลรายละเอียดครุภัณฑ์</div>
+          </div>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" onclick="showPage('assets')">
+          <i class="bi bi-arrow-left me-1"></i>กลับ
+        </button>
+      </div>
+      <div class="card shadow-sm">
+        <div class="card-body py-2 px-3">
+          <input type="hidden" id="assetId">
+          <!-- แถว 1: รหัส / สาขา / ชื่อ / ประเภท -->
+          <div class="row g-2 mb-2">
+            <div class="col-md-3">
+              <label class="form-label form-label-sm fw-semibold mb-1">รหัสครุภัณฑ์ <span class="text-danger">*</span></label>
+              <input id="fAssetCode" class="form-control form-control-sm" placeholder="รหัสครุภัณฑ์">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm fw-semibold mb-1">รหัสเก่า</label>
+              <input id="fOldCode" class="form-control form-control-sm" placeholder="รหัสเก่า">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm fw-semibold mb-1">ชื่อครุภัณฑ์ <span class="text-danger">*</span></label>
+              <input id="fName" class="form-control form-control-sm" placeholder="ชื่อครุภัณฑ์">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm fw-semibold mb-1">สาขา/หน่วยงาน <span class="text-danger">*</span></label>
+              <select id="fBranch" class="form-select form-select-sm"></select>
+            </div>
+          </div>
+          <!-- แถว 2: หมวด / ยี่ห้อ / รุ่น / S/N / หน่วยนับ -->
+          <div class="row g-2 mb-2">
+            <div class="col-md-3">
+              <label class="form-label form-label-sm fw-semibold mb-1">หมวด/ประเภท</label>
+              <select id="fCategory" class="form-select form-select-sm">
+                <option value="">-- เลือกประเภท --</option>
+                <option>ครุภัณฑ์สำนักงาน</option><option>ครุภัณฑ์คอมพิวเตอร์</option>
+                <option>ครุภัณฑ์การศึกษา</option><option>ครุภัณฑ์วิทยาศาสตร์</option>
+                <option>ครุภัณฑ์การเกษตร</option><option>ครุภัณฑ์งานบ้านงานครัว</option>
+                <option>ครุภัณฑ์ยานพาหนะและขนส่ง</option><option>ครุภัณฑ์กีฬาและนันทนาการ</option>
+                <option>ครุภัณฑ์โฆษณาและเผยแพร่</option><option>ครุภัณฑ์ดนตรี</option>
+                <option>ครุภัณฑ์สนาม</option><option>ครุภัณฑ์ไฟฟ้าและวิทยุ</option>
+                <option>ครุภัณฑ์การแพทย์</option><option>ครุภัณฑ์โรงงาน</option>
+                <option>ครุภัณฑ์ก่อสร้าง</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm fw-semibold mb-1">ยี่ห้อ</label>
+              <input id="fBrand" class="form-control form-control-sm" placeholder="ยี่ห้อ">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm fw-semibold mb-1">รุ่น</label>
+              <input id="fModel" class="form-control form-control-sm" placeholder="รุ่น">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm fw-semibold mb-1">S/N หรือ Model No.</label>
+              <input id="fSerial" class="form-control form-control-sm" placeholder="หมายเลขเครื่อง">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm fw-semibold mb-1">หน่วยนับ</label>
+              <input id="fUnit" class="form-control form-control-sm" value="เครื่อง">
+            </div>
+          </div>
+          <!-- แถว 3: จำนวน / ราคา / งบ / อายุ / วันที่ / วิธี -->
+          <div class="row g-2 mb-2">
+            <div class="col-md-1">
+              <label class="form-label form-label-sm fw-semibold mb-1">จำนวน</label>
+              <input id="fQty" type="number" class="form-control form-control-sm" value="1" min="1">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm fw-semibold mb-1">ราคา (บาท)</label>
+              <input id="fPrice" type="number" class="form-control form-control-sm" placeholder="0.00" step="0.01">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm fw-semibold mb-1">งบประมาณ</label>
+              <select id="fBudget" class="form-select form-select-sm">
+                <option value="">-- เลือก --</option>
+                <option>งบแผ่นดิน</option><option>เงินรายได้</option>
+                <option>เงินบริจาค</option><option>โอนมาจาก</option><option>อื่นๆ</option>
+              </select>
+            </div>
+            <div class="col-md-1">
+              <label class="form-label form-label-sm fw-semibold mb-1">อายุ (ปี)</label>
+              <input id="fLifeYears" type="number" class="form-control form-control-sm" placeholder="ปี">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm fw-semibold mb-1">วันที่ได้มา</label>
+              <input id="fAcquiredDate" type="date" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm fw-semibold mb-1">วิธีได้มา</label>
+              <select id="fMethod" class="form-select form-select-sm">
+                <option value="">-- เลือก --</option>
+                <option>ซื้อ</option><option>จ้าง</option><option>บริจาค</option>
+                <option>โอนย้าย</option><option>อื่นๆ</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm fw-semibold mb-1">สถานะ</label>
+              <select id="fStatus" class="form-select form-select-sm">
+                <option value="active">พบ / ปกติ</option>
+                <option value="not_found">ไม่พบ</option>
+                <option value="damaged_fixable">ชำรุด ซ่อมได้</option>
+                <option value="damaged_unfixable">ชำรุด ซ่อมไม่ได้</option>
+                <option value="disposal_pending">รออนุมัติจำหน่าย</option>
+                <option value="disposed">จำหน่ายแล้ว</option>
+              </select>
+            </div>
+          </div>
+          <!-- แถว 4: ร้านค้า / ใบเสร็จ / ใช้ประจำ / ผู้รับผิดชอบ -->
+          <div class="row g-2 mb-2">
+            <div class="col-md-4">
+              <label class="form-label form-label-sm fw-semibold mb-1">ร้านค้า / บริษัท</label>
+              <input id="fVendor" class="form-control form-control-sm" placeholder="ชื่อร้านหรือบริษัท">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm fw-semibold mb-1">เลขที่ใบเสร็จ</label>
+              <input id="fReceipt" class="form-control form-control-sm" placeholder="เลขที่ใบเสร็จ">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm fw-semibold mb-1">ใช้ประจำที่</label>
+              <input id="fLocation" class="form-control form-control-sm" placeholder="ห้อง / อาคาร">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm fw-semibold mb-1">ผู้รับผิดชอบ / ผู้ดูแล</label>
+              <input id="fCustodian" class="form-control form-control-sm" placeholder="ชื่อผู้รับผิดชอบ">
+            </div>
+          </div>
+          <!-- แถว 5: หมายเหตุ + รูปภาพ -->
+          <div class="row g-2 mb-2">
+            <div class="col-md-4">
+              <label class="form-label form-label-sm fw-semibold mb-1">หมายเหตุ</label>
+              <textarea id="fNotes" class="form-control form-control-sm" rows="3"></textarea>
+            </div>
+            <div class="col-md-8">
+              <div class="card h-100" style="border:2px dashed #cbd5e1;background:#f8fafc;">
+                <div class="card-body py-2 px-3">
+                  <div class="fw-bold mb-2" style="color:var(--sb);font-size:13px;">
+                    <i class="bi bi-camera me-1 text-primary"></i>รูปภาพตรวจรับครุภัณฑ์
+                    <span id="photoRequired" class="text-danger" style="font-size:11px;"> * ต้องแนบอย่างน้อย 2 รูป</span>
+                  </div>
+                  <div class="row g-2">
+                    <div class="col-6">
+                      <label class="form-label form-label-sm mb-1">รูปที่ 1 <span class="text-danger" id="photo1req">*</span></label>
+                      <input type="file" id="fPhoto1" class="form-control form-control-sm" accept="image/*">
+                      <div id="photo1Preview" class="mt-1"></div>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label form-label-sm mb-1">รูปที่ 2 <span class="text-danger" id="photo2req">*</span></label>
+                      <input type="file" id="fPhoto2" class="form-control form-control-sm" accept="image/*">
+                      <div id="photo2Preview" class="mt-1"></div>
+                    </div>
+                  </div>
+                  <small class="text-muted" style="font-size:11px;">อัปโหลดรูปถ่ายขณะรับครุภัณฑ์ (jpg, png, webp)</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button onclick="saveAsset()" class="btn btn-primary btn-sm px-4" id="btnSaveAsset">
+              <i class="bi bi-save me-2"></i>บันทึก
+            </button>
+            <button onclick="showPage('assets')" class="btn btn-outline-secondary btn-sm px-4">ยกเลิก</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== INSPECTION ===== -->
+    <div id="page-inspection" class="page-content" style="display:none;">
+      <!-- Admin: สร้างรอบตรวจ -->
+      <div id="inspAdminSection" style="display:none;" class="mb-3">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <i class="bi bi-calendar2-check text-secondary fs-6"></i>
+          <span class="fw-bold text-secondary" style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;">รอบการตรวจสอบ</span>
+          <hr class="flex-grow-1 m-0" style="border-color:#dee2e6;">
+          <button class="btn btn-primary btn-sm" onclick="showCreateInspection()">
+            <i class="bi bi-plus-lg me-1"></i>สร้างรอบตรวจ
+          </button>
+        </div>
+        <div id="settingsRoundList"></div>
+      </div>
+
+      <!-- Banner รอบ active -->
+      <div id="inspRoundBanner" class="mb-2"></div>
+
+      <!-- Branch: ปุ่มรับทราบ -->
+      <div id="inspAckBar" style="display:none;" class="mb-3">
+        <div class="alert alert-info d-flex align-items-center gap-3 py-2 mb-0" style="border-radius:10px;">
+          <i class="bi bi-bell-fill text-info flex-shrink-0 fs-5"></i>
+          <div class="flex-grow-1" style="font-size:13px;">
+            คุณได้รับการแจ้งให้ตรวจสอบครุภัณฑ์ในรอบนี้ กรุณากด <strong>รับทราบ</strong> เพื่อยืนยัน
+          </div>
+          <button id="btnAckInsp" class="btn btn-info btn-sm flex-shrink-0" onclick="acknowledgeRound()">
+            <i class="bi bi-check2-circle me-1"></i>รับทราบ
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div id="inspTabsWrap" style="display:none;">
+        <ul class="nav nav-tabs mb-3" style="border-bottom:2px solid #e2e8f0;">
+          <li class="nav-item">
+            <a class="nav-link active fw-semibold" href="#" id="inspTab-overview" onclick="showInspTab('overview');return false;">
+              <i class="bi bi-diagram-3 me-1"></i>ภาพรวมสาขา
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link fw-semibold" href="#" id="inspTab-pending" onclick="showInspTab('pending');return false;">
+              <i class="bi bi-hourglass-split me-1"></i>ยังไม่ตรวจ
+              <span class="badge bg-warning text-dark ms-1" id="inspPendingBadge" style="font-size:10px;">0</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link fw-semibold" href="#" id="inspTab-done" onclick="showInspTab('done');return false;">
+              <i class="bi bi-check-circle me-1"></i>ตรวจแล้ว
+              <span class="badge bg-success ms-1" id="inspDoneBadge" style="font-size:10px;">0</span>
+            </a>
+          </li>
+        </ul>
+        <div id="inspTabContent-overview">
+          <div id="inspOverviewBody">
+            <div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังโหลด...</div>
+          </div>
+        </div>
+        <div id="inspTabContent-pending" style="display:none;">
+          <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2" style="background:#f8fafc;">
+              <span class="fw-semibold" style="font-size:14px;"><i class="bi bi-hourglass-split text-warning me-1"></i>รายชื่อครุภัณฑ์ที่ยังไม่ตรวจสอบ</span>
+              <div class="d-flex gap-2 flex-wrap">
+                <select id="inspPendingBranch" class="form-select form-select-sm" style="max-width:180px;" onchange="filterPendingTable()"><option value="">ทุกสาขา</option></select>
+                <input id="inspPendingSearch" type="search" class="form-control form-control-sm" placeholder="ค้นหาชื่อ / รหัส..." style="max-width:200px;" oninput="filterPendingTable()">
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0" style="font-size:13px;">
+                <thead style="background:#fef9c3;color:#475569;">
+                  <tr><th>รหัส / ชื่อครุภัณฑ์ / ยี่ห้อ</th><th style="width:160px;">สาขา</th><th style="width:100px;">สถานะ</th></tr>
+                </thead>
+                <tbody id="inspPendingBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="inspTabContent-done" style="display:none;">
+          <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2" style="background:#f8fafc;">
+              <span class="fw-semibold" style="font-size:14px;"><i class="bi bi-check-circle text-success me-1"></i>รายชื่อครุภัณฑ์ที่ตรวจแล้ว</span>
+              <div class="d-flex gap-2 flex-wrap">
+                <select id="inspDoneBranch" class="form-select form-select-sm" style="max-width:180px;" onchange="filterDoneTable()"><option value="">ทุกสาขา</option></select>
+                <input id="inspDoneSearch" type="search" class="form-control form-control-sm" placeholder="ค้นหาชื่อ / รหัส..." style="max-width:200px;" oninput="filterDoneTable()">
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0" style="font-size:13px;">
+                <thead style="background:#dcfce7;color:#475569;">
+                  <tr>
+                    <th style="width:130px;">รหัสครุภัณฑ์</th>
+                    <th>ชื่อครุภัณฑ์</th>
+                    <th style="width:160px;">สาขา</th>
+                    <th style="width:120px;">ผลการตรวจ</th>
+                    <th style="width:120px;">ผู้ตรวจ</th>
+                    <th style="width:110px;">วันที่</th>
+                  </tr>
+                </thead>
+                <tbody id="inspDoneBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="inspEmptyState" class="text-center text-muted py-5" style="display:none;">
+        <i class="bi bi-clipboard2 fs-1"></i>
+        <p class="mt-2">ยังไม่มีรอบตรวจ</p>
+        <p class="small">ผู้ดูแลระบบสามารถสร้างรอบตรวจใหม่ได้ที่ปุ่ม <strong>สร้างรอบตรวจ</strong> ด้านบน</p>
+      </div>
+    </div>
+
+    <!-- ===== INSPECTION FILL ===== -->
+    <div id="page-inspection-fill" class="page-content" style="display:none;">
+      <div class="page-header d-flex justify-content-between align-items-center gap-2 no-print">
+        <div class="page-title-bar mb-0" style="margin-bottom:0!important;">
+          <div class="page-title-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);"><i class="bi bi-clipboard2-check-fill" style="color:#059669;"></i></div>
+          <div>
+            <div class="page-title-text">กรอกผลการตรวจ</div>
+            <div class="page-title-sub">บันทึกผลการตรวจนับครุภัณฑ์ประจำรอบ</div>
+          </div>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" onclick="showPage('inspection')">
+          <i class="bi bi-arrow-left me-1"></i>กลับ
+        </button>
+      </div>
+      <div class="card shadow-sm mb-3 no-print">
+        <div class="card-body py-2">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+              <input id="inspSearch" type="search" class="form-control form-control-sm" placeholder="ค้นหาชื่อ / รหัส..." oninput="filterInspItems()">
+            </div>
+            <div class="col-6 col-md-2">
+              <select id="inspFilterBranch" class="form-select form-select-sm" onchange="filterInspItems()"><option value="">-- ทุกสาขา --</option></select>
+            </div>
+            <div class="col-6 col-md-2">
+              <select id="inspFilterDone" class="form-select form-select-sm" onchange="filterInspItems()">
+                <option value="">-- ทั้งหมด --</option>
+                <option value="done">ตรวจแล้ว</option>
+                <option value="pending">ยังไม่ตรวจ</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-2">
+              <button class="btn btn-success btn-sm w-100" onclick="saveBatchInspection()">
+                <i class="bi bi-save me-1"></i>บันทึกทั้งหมด
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="inspSummaryBar" class="mb-3"></div>
+      <div class="card shadow-sm">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0" style="font-size:12px;">
+              <thead class="table-dark">
+                <tr>
+                  <th class="text-center" style="width:36px;">ที่</th>
+                  <th style="min-width:250px;">ครุภัณฑ์</th>
+                  <th style="min-width:130px;">สาขา / ที่ใช้</th>
+                  <th class="text-end" style="width:90px;">ราคา (บาท)</th>
+                  <th style="min-width:170px;">ผลการตรวจ</th>
+                  <th style="min-width:120px;">หมายเหตุ</th>
+                  <th class="text-center" style="width:80px;">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="inspTableBody"></tbody>
+            </table>
+          </div>
+          <div id="inspPaging" class="p-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN-USERS ===== -->
+    <div id="page-admin-users" class="page-content" style="display:none;">
+      <div class="page-header no-print mb-3">
+        <ul class="nav nav-tabs" id="adminUserTabs">
+          <li class="nav-item">
+            <button class="nav-link active" id="tabBranchBtn" onclick="switchAdminTab('branches',this)">
+              <i class="bi bi-diagram-3 me-1"></i>จัดการสาขา
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" id="tabUsersBtn" onclick="switchAdminTab('users',this)">
+              <i class="bi bi-people me-1"></i>ผู้ใช้ระบบ
+            </button>
+          </li>
+        </ul>
+      </div>
+      <!-- แท็บ: สาขา -->
+      <div id="adminTabBranches">
+        <div class="d-flex justify-content-end mb-3 no-print">
+          <button class="btn btn-primary btn-sm" onclick="showBranchForm()">
+            <i class="bi bi-plus-lg me-1"></i>เพิ่มสาขา
+          </button>
+        </div>
+        <div class="card shadow-sm">
+          <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+              <thead><tr><th>สาขา</th><th>ประธานสาขา</th><th class="text-center">ครุภัณฑ์</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+              <tbody id="branchTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- แท็บ: ผู้ใช้ -->
+      <div id="adminTabUsers" style="display:none;">
+        <div class="alert alert-info py-2 mb-3" style="font-size:13px;">
+          <i class="bi bi-info-circle me-1"></i>
+          การเพิ่มผู้ใช้ใหม่ต้องทำผ่าน Supabase Dashboard → Authentication → Users ก่อน จากนั้นกำหนด profile ที่นี่
+        </div>
+        <div class="card shadow-sm">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead><tr><th>ผู้ใช้งาน</th><th>ระดับ</th><th>สาขา</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+                <tbody id="userTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end #content -->
+</div><!-- end #main -->
+
+<!-- BOTTOM NAV (mobile) -->
+<div id="bottomnav">
+  <button class="bn-item" onclick="showPage('dashboard')" id="bn-dashboard">
+    <i class="bi bi-speedometer2"></i>ภาพรวม
+  </button>
+  <button class="bn-item" onclick="showPage('inspection')" id="bn-inspection">
+    <i class="bi bi-clipboard2-check"></i>ตรวจสอบ
+  </button>
+  <button class="bn-item" onclick="showPage('assets')" id="bn-assets">
+    <i class="bi bi-box-seam"></i>ครุภัณฑ์
+  </button>
+  <button class="bn-item" onclick="showPage('transfer')" id="bn-transfer">
+    <i class="bi bi-arrow-left-right"></i>โอนย้าย
+  </button>
+  <button class="bn-item" onclick="showPage('report')" id="bn-report">
+    <i class="bi bi-file-earmark-bar-graph"></i>รายงาน
+  </button>
+</div>
+
+<!-- ======== MODALS ======== -->
+
+<!-- Branch Form Modal -->
+<div class="modal fade" id="modalBranch" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title" id="branchModalTitle"><i class="bi bi-diagram-3 me-2"></i>เพิ่มสาขา</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="branchId">
+      <div class="mb-3"><label class="form-label">รหัสสาขา <span class="text-danger">*</span></label>
+        <input id="branchCode" class="form-control" placeholder="เช่น ศศว-01"></div>
+      <div class="mb-3"><label class="form-label">ชื่อสาขา <span class="text-danger">*</span></label>
+        <input id="branchName" class="form-control"></div>
+      <div class="mb-3"><label class="form-label">ประธานสาขา</label>
+        <input id="branchChair" class="form-control"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+      <button type="button" class="btn btn-primary" onclick="saveBranch()">บันทึก</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- User Form Modal -->
+<div class="modal fade" id="modalUser" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title" id="userModalTitle">แก้ไขผู้ใช้</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="editUserId">
+      <div class="mb-3"><label class="form-label">ชื่อ-นามสกุล</label>
+        <input id="uFullName" class="form-control"></div>
+      <div class="mb-3"><label class="form-label">ระดับสิทธิ์</label>
+        <select id="uRole" class="form-select" onchange="toggleBranchSelect()">
+          <option value="admin">Admin (ผู้ดูแลระบบ)</option>
+          <option value="branch" selected>Branch (สาขา)</option>
+        </select></div>
+      <div class="mb-3" id="uBranchDiv"><label class="form-label">สาขา</label>
+        <select id="uBranch" class="form-select"></select></div>
+      <div class="mb-3"><label class="form-label">สถานะ</label>
+        <select id="uActive" class="form-select">
+          <option value="true">เปิดใช้งาน</option>
+          <option value="false">ปิดใช้งาน</option>
+        </select></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+      <button type="button" class="btn btn-primary" onclick="saveUser()">บันทึก</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- Inspection Monitor Modal -->
+<div class="modal fade" id="modalInspMonitor" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
+    <div class="modal-header" style="background:linear-gradient(135deg,#1e3a5f,#2d5a8e);color:#fff;">
+      <h5 class="modal-title" id="monitorTitle"><i class="bi bi-speedometer2 me-2"></i>กำกับติดตามความคืบหน้า</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body p-3">
+      <div id="monitorSummaryBar" class="mb-3"></div>
+      <div id="monitorBranchList"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- Create Inspection Modal -->
+<div class="modal fade" id="modalInspection" tabindex="-1">
+  <div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title">สร้างรอบตรวจสอบ</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <div class="row g-3">
+        <div class="col-12"><label class="form-label">ปีงบประมาณ</label>
+          <select id="inspYear" class="form-select"></select></div>
+        <div class="col-12"><label class="form-label">ชื่อรอบตรวจ</label>
+          <input id="inspName" class="form-control" placeholder="เช่น ตรวจสอบครุภัณฑ์ประจำปี 2568"></div>
+        <div class="col-6"><label class="form-label">วันที่เริ่ม</label>
+          <input id="inspStart" type="date" class="form-control"></div>
+        <div class="col-6"><label class="form-label">วันที่สิ้นสุด</label>
+          <input id="inspEnd" type="date" class="form-control"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+      <button type="button" class="btn btn-primary" onclick="saveInspection()">สร้างรอบตรวจ</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal fade" id="modalHelp" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title"><i class="bi bi-question-circle me-2"></i>วิธีใช้งานระบบทะเบียนครุภัณฑ์</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body" style="font-size:14px;line-height:1.8;">
+      <div class="alert alert-info mb-3"><i class="bi bi-info-circle me-2"></i>ระบบทะเบียนครุภัณฑ์ คณะศิลปศาสตร์และวิทยาศาสตร์ มหาวิทยาลัยราชภัฏศรีสะเกษ</div>
+      <h6 class="fw-bold text-primary mb-2"><i class="bi bi-people me-2"></i>ระดับสิทธิ์ผู้ใช้</h6>
+      <div class="table-responsive mb-3">
+        <table class="table table-sm table-bordered">
+          <thead class="table-dark"><tr><th>ระดับ</th><th>สิทธิ์การใช้งาน</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge" style="background:#fef2f2;color:#b91c1c;">Admin</span></td><td>จัดการข้อมูลทั้งหมด สร้างรอบตรวจ จัดการผู้ใช้ นำเข้าข้อมูล</td></tr>
+            <tr><td><span class="badge" style="background:#eff6ff;color:#1d4ed8;">สาขา</span></td><td>เพิ่ม/แก้ไขครุภัณฑ์ของสาขาตนเอง กรอกผลตรวจ</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h6 class="fw-bold text-primary mb-2"><i class="bi bi-box-seam me-2"></i>รายการครุภัณฑ์</h6>
+      <ul>
+        <li>ค้นหาด้วยชื่อ รหัส หรือ Serial No.</li>
+        <li>กรองตามสาขาและสถานะ</li>
+        <li>เพิ่มครุภัณฑ์ใหม่พร้อมแนบรูปถ่ายตรวจรับ 2 รูป</li>
+      </ul>
+      <h6 class="fw-bold text-primary mb-2"><i class="bi bi-clipboard2-check me-2"></i>ตรวจสอบครุภัณฑ์</h6>
+      <ul>
+        <li>Admin สร้างรอบตรวจ กำหนดปีงบประมาณและช่วงวันที่</li>
+        <li>กดปุ่ม "กรอกผล" เพื่อบันทึกผลการตรวจ</li>
+        <li>เลือกสถานะแต่ละรายการ แล้วกด "บันทึกทั้งหมด"</li>
+      </ul>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- Asset Detail Modal -->
+<div class="modal fade" id="modalAssetDetail" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content" style="border:none;">
+    <div class="modal-header" style="background:linear-gradient(135deg,#b45309,#d97706);color:#fff;border-radius:12px 12px 0 0;">
+      <h5 class="modal-title" id="adTitle">
+        <i class="bi bi-file-earmark-text me-2"></i>ทะเบียนพัสดุครุภัณฑ์ (พ.ด. 2)
+      </h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body p-0" id="adBody" style="background:#fffbeb;"></div>
+    <div class="modal-footer" style="background:#fffbeb;border-top:1px solid #fde68a;">
+      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button>
+      <button type="button" class="btn btn-primary btn-sm" id="adEditBtn" onclick="">
+        <i class="bi bi-pencil me-1"></i>แก้ไข
+      </button>
+    </div>
+  </div></div>
+</div>
+
+<!-- Repair History Modal -->
+<div class="modal fade" id="modalRepair" tabindex="-1" data-bs-backdrop="static">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header" style="background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;">
+        <h5 class="modal-title"><i class="bi bi-tools me-2"></i>เพิ่มประวัติการซ่อม</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="repAssetId">
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label small fw-semibold">วันที่ซ่อม</label>
+            <input type="date" id="repDate" class="form-control form-control-sm">
+          </div>
+          <div class="col-6">
+            <label class="form-label small fw-semibold">ค่าใช้จ่าย (บาท)</label>
+            <input type="number" id="repCost" class="form-control form-control-sm" min="0" step="0.01" placeholder="0.00">
+          </div>
+          <div class="col-12">
+            <label class="form-label small fw-semibold">รายการซ่อม <span class="text-danger">*</span></label>
+            <textarea id="repDesc" class="form-control form-control-sm" rows="2" placeholder="รายละเอียดการซ่อม..."></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label small fw-semibold">ผู้ซ่อม / บริษัท</label>
+            <input type="text" id="repVendor" class="form-control form-control-sm" placeholder="ชื่อช่าง / บริษัทที่ซ่อม">
+          </div>
+          <div class="col-12">
+            <label class="form-label small fw-semibold">หมายเหตุ</label>
+            <input type="text" id="repNotes" class="form-control form-control-sm" placeholder="หมายเหตุเพิ่มเติม">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+        <button type="button" class="btn btn-primary" onclick="saveRepair()">
+          <i class="bi bi-save me-1"></i>บันทึก
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="modalImport" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-upload me-2"></i>นำเข้าข้อมูลครุภัณฑ์</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info mb-3" style="font-size:13px;">
+          <i class="bi bi-info-circle me-1"></i>
+          รองรับไฟล์ Excel (.xlsx, .xls) คอลัมน์: asset_code, name, category, branch_id, price, acquired_date, serial_number, location, status
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">เลือกไฟล์ Excel <span class="text-danger">*</span></label>
+          <input id="impFile" type="file" class="form-control" accept=".xlsx,.xls" onchange="previewImport()">
+        </div>
+        <div id="impPreview"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+        <button id="btnImp" class="btn btn-success" disabled onclick="doImportModal()">
+          <i class="bi bi-upload me-1"></i>นำเข้าข้อมูล
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+  <div id="toast" class="toast align-items-center text-white border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMsg"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<!-- ======== SCRIPTS ======== -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script>
+// ============================================================
+// CONFIG & SUPABASE
+// ============================================================
+var SUPA_URL = 'https://cbqukwedykaeqjdidoqa.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNicXVrd2VkeWthZXFqZGlkb3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNjE4NjUsImV4cCI6MjA5NDczNzg2NX0.Qg-_ISPIcGvnb9kPs_z4jof__X9NdXUIw08zDtNrQZM';
+var sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ============================================================
+// APP STATE
+// ============================================================
+var App = {
+  user: null,
+  profile: null,
+  branches: [],
+  allAssets: [],
+  filteredAssets: [],
+  assetPage: 1,
+  assetPageSize: 50,
+  currentInspectionId: null,
+  inspItems: [],
+  inspFiltered: [],
+  inspPage: 1,
+  inspPageSize: 100,
+  _dashChart: null
+};
+
+var STATUS = {
+  active:            { label: 'พบ / ปกติ',          cls: 'badge-active' },
+  not_found:         { label: 'ไม่พบ',               cls: 'badge-not_found' },
+  damaged_fixable:   { label: 'ชำรุด ซ่อมได้',     cls: 'badge-damaged_fixable' },
+  damaged_unfixable: { label: 'ชำรุด ซ่อมไม่ได้',  cls: 'badge-damaged_unfixable' },
+  transferred:       { label: 'โอนย้าย',             cls: 'badge-transferred' },
+  disposal_pending:  { label: 'รออนุมัติจำหน่าย',   cls: 'badge-disposal_pending' },
+  disposed:          { label: 'จำหน่ายแล้ว',         cls: 'badge-disposed' }
+};
+
+// สถานะที่ใช้ในการตรวจสอบครุภัณฑ์เท่านั้น (ไม่รวมสถานะเชิงบริหาร)
+var INSP_STATUS = {
+  active:            { label: 'พบ / ปกติ',          cls: 'badge-active' },
+  not_found:         { label: 'ไม่พบ',               cls: 'badge-not_found' },
+  damaged_fixable:   { label: 'ชำรุด ซ่อมได้',     cls: 'badge-damaged_fixable' },
+  damaged_unfixable: { label: 'ชำรุด ซ่อมไม่ได้',  cls: 'badge-damaged_unfixable' }
+};
+
+function badgeHtml(status) {
+  var s = STATUS[status] || { label: status, cls: 'badge-disposed' };
+  return '<span class="badge ' + s.cls + '">' + s.label + '</span>';
+}
+
+function fmtDate(s) {
+  if (!s) return '-';
+  var dt = new Date(s);
+  if (isNaN(dt)) return String(s);
+  var yr = dt.getFullYear();
+  if (yr > 2500) dt.setFullYear(yr - 543);
+  return dt.toLocaleDateString('th-TH', {year:'numeric',month:'long',day:'numeric'});
+}
+
+function fmtNum(n) {
+  if (!n && n !== 0) return '-';
+  return Number(n).toLocaleString('th-TH', {minimumFractionDigits:2});
+}
+
+function showToast(msg, type) {
+  var el = document.getElementById('toast');
+  var body = document.getElementById('toastMsg');
+  if (!el || !body) { alert(msg); return; }
+  var icons = { success:'bi-check-circle-fill', danger:'bi-x-circle-fill', warning:'bi-exclamation-triangle-fill', primary:'bi-info-circle-fill' };
+  var icon = icons[type] || 'bi-info-circle-fill';
+  var delay = type === 'danger' ? 4500 : type === 'warning' ? 4000 : 3000;
+  el.className = 'toast align-items-center text-white border-0 bg-' + (type === 'danger' ? 'danger' : type === 'warning' ? 'warning text-dark' : type === 'success' ? 'success' : 'primary');
+  body.innerHTML = '<i class="bi ' + icon + ' me-2"></i>' + msg;
+  var t = bootstrap.Toast.getOrCreateInstance(el, {delay: delay});
+  t.show();
+}
+
+function hideLoading() {
+  var el = document.getElementById('loading');
+  if (el) { el.classList.remove('show'); el.style.display = 'none'; }
+}
+
+function showLoading(text) {
+  var el = document.getElementById('loading');
+  var tx = document.querySelector('#loading .ld-text');
+  if (el) el.classList.add('show');
+  if (tx && text) tx.textContent = text;
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+async function doLogin() {
+  var u = (document.getElementById('loginUser').value || '').trim();
+  var p = document.getElementById('loginPass').value || '';
+  var errEl = document.getElementById('loginError');
+  var btn = document.getElementById('loginBtn');
+
+  if (!u || !p) {
+    errEl.textContent = 'กรุณากรอกชื่อผู้ใช้และรหัสผ่าน';
+    errEl.classList.remove('d-none'); return;
+  }
+  errEl.classList.add('d-none');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังเข้าสู่ระบบ...';
+
+  try {
+    var res = await sb.auth.signInWithPassword({ email: u + '@asset.local', password: p });
+    if (res.error) {
+      var msg = res.error.message || '';
+      if (msg.includes('Invalid login') || msg.includes('invalid_credentials') || msg.includes('Email not confirmed') === false) {
+        errEl.textContent = 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง';
+      } else if (msg.includes('Email not confirmed')) {
+        errEl.textContent = 'บัญชีผู้ใช้ยังไม่ได้รับการยืนยัน (Email not confirmed) — กรุณายืนยันใน Supabase';
+      } else {
+        errEl.textContent = 'เข้าสู่ระบบไม่ได้: ' + msg;
+      }
+      errEl.classList.remove('d-none');
+      return;
+    }
+    await _loadProfile(res.data.user);
+    if (!App.profile) {
+      errEl.textContent = 'ไม่พบข้อมูลผู้ใช้ในระบบ — กรุณาติดต่อผู้ดูแล';
+      errEl.classList.remove('d-none');
+      await sb.auth.signOut();
+      return;
+    }
+    _startApp();
+  } catch(e) {
+    errEl.textContent = 'เกิดข้อผิดพลาด: ' + (e.message || 'ไม่ทราบสาเหตุ');
+    errEl.classList.remove('d-none');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>เข้าสู่ระบบ';
+  }
+}
+
+async function _loadProfile(user) {
+  App.user = user || (await sb.auth.getUser()).data.user;
+  var res = await sb.from('profiles').select('*, branches(name)').eq('id', App.user.id).single();
+  App.profile = res.data;
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  App.user = null; App.profile = null; App.allAssets = [];
+  document.getElementById('main').style.display = 'none';
+  document.getElementById('sidebar').style.display = 'none';
+  document.getElementById('bottomnav').style.display = 'none';
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+function _startApp() {
+  var p = App.profile;
+  if (!p) { doLogout(); return; }
+
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('sidebar').style.display = '';
+  document.getElementById('main').style.display = '';
+  document.getElementById('bottomnav').style.display = '';
+  document.getElementById('btnMenu').style.display = '';
+
+  // Topbar — แสดงชื่อสาขาเท่านั้น
+  document.getElementById('topBranch').innerHTML =
+    p.branches ? '<span class="tb-branch">' + p.branches.name + '</span>' : '';
+
+  // Sidebar user
+  var initials = (p.full_name || p.username || 'U').charAt(0).toUpperCase();
+  var sbAv = document.getElementById('sbAvatar');
+  if (sbAv) sbAv.textContent = initials;
+  document.getElementById('sbUserName').textContent = p.full_name || p.username;
+
+  // ซ่อน admin menu ถ้าไม่ใช่ admin
+  var adminSection = document.getElementById('adminSection');
+  var adminMenu = document.getElementById('menuAdminUsers');
+  if (p.role !== 'admin') {
+    if (adminSection) adminSection.style.display = 'none';
+    if (adminMenu) adminMenu.style.display = 'none';
+  }
+
+  hideLoading();
+  loadBranches();
+  showPage('dashboard');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+var PAGE_TITLES = {
+  'dashboard':      'ภาพรวมระบบ',
+  'assets':         'รายการครุภัณฑ์',
+  'inspection':     'ตรวจสอบครุภัณฑ์',
+  'inspection-fill':'กรอกผลการตรวจ',
+  'asset-form':     'แบบฟอร์มครุภัณฑ์',
+  'admin-users':    'จัดการผู้ใช้',
+  'report':         'รายงาน & พิมพ์',
+  'transfer':       'โอนย้ายครุภัณฑ์',
+  'disposed':       'จำหน่ายครุภัณฑ์'
+};
+
+function showPage(page) {
+  // hide all pages
+  document.querySelectorAll('.page-content').forEach(function(el) { el.style.display = 'none'; });
+  // show target
+  var target = document.getElementById('page-' + page);
+  if (target) target.style.display = '';
+
+  // nav active
+  document.querySelectorAll('#sidebar .nav-link').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.bn-item').forEach(function(el) { el.classList.remove('active'); });
+  // try to find matching nav
+  var navLinks = document.querySelectorAll('#sidebar .nav-link');
+  navLinks.forEach(function(el) {
+    var onclick = el.getAttribute('onclick') || '';
+    if (onclick.indexOf("'" + page + "'") > -1) el.classList.add('active');
+  });
+  var bnItem = document.getElementById('bn-' + page);
+  if (bnItem) bnItem.classList.add('active');
+
+  // topbar title
+  document.getElementById('topTitle').textContent = PAGE_TITLES[page] || page;
+
+  // close sidebar on mobile
+  closeSidebar();
+
+  // load page data
+  if (page === 'dashboard') loadDashboard();
+  else if (page === 'assets') loadAssetsPage();
+  else if (page === 'inspection') loadInspectionPage();
+  else if (page === 'admin-users') loadAdminPage();
+}
+
+// ============================================================
+// SIDEBAR
+// ============================================================
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('show');
+  document.getElementById('overlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('show');
+  document.getElementById('overlay').classList.remove('show');
+}
+function showHelp() {
+  var m = new bootstrap.Modal(document.getElementById('modalHelp'));
+  m.show();
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+async function loadBranches() {
+  var res = await sb.from('branches').select('*').eq('active', true);
+  App.branches = (res.data || []).sort(function(a, b) {
+    var na = parseInt(a.code) || 0, nb = parseInt(b.code) || 0;
+    if (na !== nb) return na - nb;
+    return (a.code||'').localeCompare(b.code||'');
+  });
+  _populateBranchSelects();
+  _populateYearSelects();
+}
+
+function _populateBranchSelects() {
+  var selects = ['dashBranch', 'filterBranch', 'fBranch', 'inspFilterBranch', 'inspPendingBranch', 'inspDoneBranch', 'uBranch'];
+  selects.forEach(function(id) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var cur = sel.value;
+    // keep first option(s)
+    while (sel.options.length > 1) sel.remove(1);
+    App.branches.forEach(function(b) {
+      var o = document.createElement('option');
+      o.value = b.id; o.textContent = b.name;
+      sel.appendChild(o);
+    });
+    if (cur) sel.value = cur;
+  });
+  // fBranch has no placeholder option
+  var fBranch = document.getElementById('fBranch');
+  if (fBranch) {
+    fBranch.innerHTML = '';
+    var ph = document.createElement('option');
+    ph.value = ''; ph.textContent = '-- เลือกสาขา --';
+    fBranch.appendChild(ph);
+    App.branches.forEach(function(b) {
+      var o = document.createElement('option');
+      o.value = b.id; o.textContent = b.name;
+      fBranch.appendChild(o);
+    });
+    // if branch user, pre-select their branch
+    if (App.profile && App.profile.role === 'branch' && App.profile.branch_id) {
+      fBranch.value = App.profile.branch_id;
+    }
+  }
+}
+
+function _populateYearSelects() {
+  var now = new Date();
+  var buddhistYear = now.getFullYear() + 543;
+  var curFY = now.getMonth() >= 9 ? buddhistYear + 1 : buddhistYear;
+  var selects = ['dashYear', 'filterYear', 'inspYear'];
+  selects.forEach(function(id) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var hasPlaceholder = (id !== 'inspYear');
+    sel.innerHTML = '';
+    if (hasPlaceholder) {
+      var ph = document.createElement('option');
+      ph.value = ''; ph.textContent = 'ทุกปีงบประมาณ';
+      sel.appendChild(ph);
+    }
+    for (var y = curFY; y >= 2546; y--) {
+      var o = document.createElement('option');
+      o.value = y; o.textContent = 'พ.ศ. ' + y;
+      if (y === curFY && id === 'inspYear') o.selected = true;
+      sel.appendChild(o);
+    }
+  });
+}
+
+async function loadDashboard() {
+  var dashBranch = document.getElementById('dashBranch');
+  var dashYear   = document.getElementById('dashYear');
+  var dashStatus = document.getElementById('dashStatus');
+  var branchFilter = dashBranch ? dashBranch.value : '';
+  var yearFilter   = dashYear   ? dashYear.value   : '';
+  var statusFilter = dashStatus ? dashStatus.value : '';
+
+  // Fetch assets
+  var q = sb.from('assets').select('id, status, branch_id, acquired_date, branches(name)').limit(10000);
+  if (App.profile && App.profile.role === 'branch') {
+    q = q.eq('branch_id', App.profile.branch_id);
+  } else if (branchFilter) {
+    q = q.eq('branch_id', branchFilter);
+  }
+  if (yearFilter) {
+    var fy = parseInt(yearFilter) - 543;
+    var fyStart = (fy - 1) + '-10-01';
+    var fyEnd   = fy + '-09-30';
+    q = q.gte('acquired_date', fyStart).lte('acquired_date', fyEnd);
+  }
+  if (statusFilter) {
+    q = q.eq('status', statusFilter);
+  }
+  var res = await q;
+  var assets = res.data || [];
+
+  var counts = { total: assets.length, active: 0, not_found: 0, damaged_fixable: 0, damaged_unfixable: 0, disposal_pending: 0, disposed: 0, transferred: 0 };
+  assets.forEach(function(a) {
+    if (counts[a.status] !== undefined) counts[a.status]++;
+  });
+
+  var pct = function(n) { return counts.total ? Math.round(n / counts.total * 100) : 0; };
+
+  var cardCfg = [
+    { key:'total',            label:'ทั้งหมด',          color:'#1d4ed8', bg:'#dbeafe', icon:'bi-boxes' },
+    { key:'active',           label:'พบ / ปกติ',        color:'#059669', bg:'#d1fae5', icon:'bi-check-circle-fill' },
+    { key:'not_found',        label:'ไม่พบ',            color:'#ea580c', bg:'#ffedd5', icon:'bi-question-circle-fill' },
+    { key:'damaged_fixable',  label:'ชำรุด ซ่อมได้',   color:'#d97706', bg:'#fef3c7', icon:'bi-tools' },
+    { key:'damaged_unfixable',label:'ชำรุด ซ่อมไม่ได้',color:'#dc2626', bg:'#fee2e2', icon:'bi-x-octagon-fill' },
+    { key:'disposal_pending', label:'รออนุมัติจำหน่าย',color:'#b45309', bg:'#fef9c3', icon:'bi-hourglass-split' },
+    { key:'disposed',         label:'จำหน่ายแล้ว',     color:'#475569', bg:'#e2e8f0', icon:'bi-trash3-fill' }
+  ];
+
+  // คำนวณ KPI เพิ่มเติม
+  var totalValue = assets.reduce(function(s, a) { return s + (a.price || 0); }, 0);
+  var problemCount = counts.not_found + counts.damaged_fixable + counts.damaged_unfixable + counts.disposal_pending;
+  var problemPct = counts.total ? Math.round(problemCount / counts.total * 100) : 0;
+
+  var statsContainer = document.getElementById('statsCards');
+  if (statsContainer) {
+    statsContainer.innerHTML = cardCfg.map(function(c) {
+      var n = counts[c.key];
+      var p = c.key !== 'total' ? pct(n) : 0;
+      // คำอธิบายใต้ตัวเลข — บอกนัยสำคัญสำหรับการตัดสินใจ
+      var subText = '';
+      if (c.key === 'total')            subText = 'มูลค่ารวม ~' + (totalValue >= 1e6 ? (totalValue/1e6).toFixed(1)+'M' : (totalValue/1e3).toFixed(0)+'K') + ' ฿';
+      else if (c.key === 'active')      subText = p + '% ของทั้งหมด';
+      else if (c.key === 'not_found')   subText = p + '%' + (p > 5 ? ' ⚠ สูง' : ' ✓');
+      else if (c.key === 'damaged_fixable')   subText = p + '%' + (p > 10 ? ' ⚠ ควรดำเนินการ' : '');
+      else if (c.key === 'damaged_unfixable') subText = p + '%' + (p > 0 ? ' → จำหน่าย/ทดแทน' : ' ✓');
+      else if (c.key === 'disposal_pending')  subText = p + '%' + (n > 0 ? ' → รอผู้บริหารอนุมัติ' : '');
+      else if (c.key === 'disposed')    subText = p + '% ของทั้งหมด';
+      return '<div class="stat-card" style="border-left-color:' + c.color + ';--sc:' + c.color + ';" onclick="filterDashByStatus(\'' + c.key + '\')">' +
+        '<div class="sc-icon" style="background:' + c.bg + ';"><i class="bi ' + c.icon + '" style="color:' + c.color + ';font-size:20px;"></i></div>' +
+        '<div style="flex:1;">' +
+          '<div class="sc-label">' + c.label + '</div>' +
+          '<div class="sc-num" style="color:' + c.color + ';">' + n + '</div>' +
+          '<div class="sc-pct" style="color:' + (c.key !== 'active' && c.key !== 'total' && n > 0 ? c.color : '#94a3b8') + ';font-size:10px;">' + subText + '</div>' +
+        '</div></div>';
+    }).join('');
+  }
+
+  // Badge ไม่มีสาขา
+  var noBranch = assets.filter(function(a){ return !a.branch_id; }).length;
+  var noBranchEl = document.getElementById('noBranchAlert');
+  var noBranchCnt = document.getElementById('noBranchCount');
+  if (noBranchEl && noBranch > 0) {
+    noBranchCnt.textContent = 'ไม่มีสาขา ' + noBranch + ' รายการ → คลิกเพื่อจัดการ';
+    noBranchEl.style.display = 'block';
+  } else if (noBranchEl) {
+    noBranchEl.style.display = 'none';
+  }
+
+  // Chart
+  _renderDashChart(assets, branchFilter);
+}
+
+function filterNoBranch() {
+  showPage('assets');
+  setTimeout(function() {
+    var sel = document.getElementById('filterBranch');
+    if (sel) { sel.value = 'no_branch'; filterAssetsNow(); }
+  }, 300);
+}
+
+function filterDashByStatus(status) {
+  showPage('assets');
+  setTimeout(function() {
+    var sel = document.getElementById('filterStatus');
+    if (sel) { sel.value = status || ''; filterAssetsNow(); }
+    // highlight selected card
+    document.querySelectorAll('.stat-card').forEach(function(c) { c.classList.remove('stat-card-sel'); });
+    if (status) {
+      document.querySelectorAll('.stat-card').forEach(function(c) {
+        if (c.getAttribute('onclick') && c.getAttribute('onclick').includes("'" + status + "'")) c.classList.add('stat-card-sel');
+      });
+    }
+  }, 200);
+}
+
+function _renderDashChart(assets, selectedBranch) {
+  var ctx = document.getElementById('branchChart');
+  if (!ctx) return;
+  if (App._dashChart) { App._dashChart.destroy(); App._dashChart = null; }
+
+  // group by branch
+  var branchMap = {};
+  App.branches.forEach(function(b) { branchMap[b.id] = b.name; });
+
+  var counts = {};
+  assets.forEach(function(a) {
+    var bName = (a.branches && a.branches.name) || 'ไม่ระบุสาขา';
+    if (!counts[bName]) counts[bName] = { active: 0, problem: 0 };
+    if (a.status === 'active') counts[bName].active++;
+    else counts[bName].problem++;
+  });
+
+  var labels = Object.keys(counts);
+  // เรียงตามอัตราปัญหา (%) มากสุดก่อน → บ่งบอกสาขาที่ต้องการดูแลเร่งด่วน
+  labels.sort(function(a, b) {
+    var ta = counts[a].active + counts[a].problem || 1;
+    var tb = counts[b].active + counts[b].problem || 1;
+    var pctA = counts[a].problem / ta;
+    var pctB = counts[b].problem / tb;
+    return pctA - pctB; // น้อยสุด→มากสุด (ซ้าย→ขวา): สาขาปัญหาสูงอยู่ขวา
+  });
+
+  var totals   = labels.map(function(l){ return counts[l].active + counts[l].problem; });
+  var pctProbs = labels.map(function(l){
+    var t = counts[l].active + counts[l].problem || 1;
+    return Math.round(counts[l].problem / t * 100);
+  });
+
+  // ตัดชื่อสาขายาวให้สั้น
+  var shortLabels = labels.map(function(l){ return l.length > 10 ? l.substring(0,10)+'…' : l; });
+
+  // สีแท่งปัญหา: ไล่ระดับตามอัตราปัญหา
+  var barColors = labels.map(function(l) {
+    var t   = counts[l].active + counts[l].problem || 1;
+    var pct = counts[l].problem / t;
+    return pct >= 0.3 ? '#dc2626' : pct >= 0.1 ? '#f59e0b' : '#ef4444';
+  });
+
+  App._dashChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: shortLabels,
+      datasets: [
+        {
+          label: 'พบ / ปกติ',
+          data: labels.map(function(l){ return counts[l].active; }),
+          backgroundColor: '#059669', borderRadius: 4, maxBarThickness: 36
+        },
+        {
+          label: 'ชำรุด / ไม่พบ / อื่นๆ',
+          data: labels.map(function(l){ return counts[l].problem; }),
+          backgroundColor: '#dc2626', borderRadius: 0, maxBarThickness: 36
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { font: { family: 'Kanit', size: 12 }, boxWidth: 14 } },
+        tooltip: {
+          callbacks: {
+            title: function(items){ return labels[items[0].dataIndex]; },
+            label: function(item){
+              var l = labels[item.dataIndex];
+              var val = item.parsed.y;
+              var t = totals[item.dataIndex] || 1;
+              var pct = Math.round(val / t * 100);
+              return item.dataset.label + ': ' + val + ' รายการ (' + pct + '%)';
+            },
+            afterBody: function(items){
+              var idx = items[0].dataIndex;
+              var l = labels[idx];
+              var prob = counts[l].problem;
+              var t = totals[idx] || 1;
+              var probPct = Math.round(prob / t * 100);
+              return [
+                '────────────────',
+                'รวมทั้งหมด: ' + t + ' รายการ',
+                'อัตราปัญหา: ' + probPct + '% ' + (probPct >= 30 ? '⚠ สูง' : probPct >= 10 ? '▲ ปานกลาง' : '✓ ต่ำ')
+              ];
+            }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: { family: 'Kanit', size: 10, weight: 'bold' },
+          formatter: function(value, ctx) {
+            if (value <= 0) return '';
+            // แสดงเปอร์เซ็นต์เฉพาะแถวปัญหา
+            if (ctx.datasetIndex === 1) {
+              var t = totals[ctx.dataIndex] || 1;
+              var pct = Math.round(value / t * 100);
+              return pct > 0 ? pct + '%' : '';
+            }
+            return value > 8 ? value : '';
+          },
+          anchor: 'center', align: 'center',
+          display: function(ctx){ return ctx.parsed.y > 5; }
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: { font: { family: 'Kanit', size: 10 }, maxRotation: 45, minRotation: 30 },
+          title: { display: true, text: '← ปัญหาน้อย   |   ปัญหามาก →', font: { family: 'Kanit', size: 10 }, color: '#94a3b8' }
+        },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          ticks: { font: { family: 'Kanit', size: 11 } },
+          title: { display: true, text: 'จำนวนครุภัณฑ์ (รายการ)', font: { family: 'Kanit', size: 11 }, color: '#94a3b8' }
+        }
+      }
+    },
+  });
+}
+
+// ============================================================
+// ASSETS PAGE
+// ============================================================
+async function loadAssetsPage() {
+  // show loading spinner in table
+  var tbody = document.getElementById('assetTableBody');
+  App.selectedAssets = new Set();
+  updateBulkBar();
+  if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังโหลด...</td></tr>';
+
+  var q = sb.from('assets').select('id, asset_code, name, brand, model, branch_id, price, status, acquired_date, branches(name)').order('acquired_date', { ascending: false }).order('asset_code', { ascending: true }).limit(10000);
+  if (App.profile && App.profile.role === 'branch') {
+    q = q.eq('branch_id', App.profile.branch_id);
+  }
+  var res = await q;
+  App.allAssets = res.data || [];
+  App.filteredAssets = App.allAssets;
+  App.assetPage = 1;
+
+  // Populate branch filter
+  _populateBranchSelects();
+
+  // Populate year filter options from data
+  var filterYear = document.getElementById('filterYear');
+  if (filterYear) {
+    var years = {};
+    App.allAssets.forEach(function(a) {
+      if (a.acquired_date) {
+        var yr = new Date(a.acquired_date).getFullYear() + 543;
+        years[yr] = true;
+      }
+    });
+    filterYear.innerHTML = '<option value="">-- ทุกปีงบ --</option>';
+    Object.keys(years).sort(function(a,b){return b-a;}).forEach(function(y) {
+      var o = document.createElement('option');
+      o.value = y; o.textContent = 'พ.ศ. ' + y;
+      filterYear.appendChild(o);
+    });
+  }
+
+  renderAssetTable();
+}
+
+function filterAssetsNow() {
+  var search = (document.getElementById('filterSearch').value || '').toLowerCase();
+  var year = document.getElementById('filterYear').value || '';
+  var branch = document.getElementById('filterBranch').value || '';
+  var status = document.getElementById('filterStatus').value || '';
+
+  App.filteredAssets = App.allAssets.filter(function(a) {
+    var matchSearch = !search || (a.asset_code||'').toLowerCase().includes(search) || (a.name||'').toLowerCase().includes(search) || (a.brand||'').toLowerCase().includes(search);
+    var matchYear = !year || (a.acquired_date && (new Date(a.acquired_date).getFullYear() + 543) == year);
+    var matchBranch = !branch || a.branch_id === branch;
+    var matchStatus = !status || a.status === status;
+    return matchSearch && matchYear && matchBranch && matchStatus;
+  });
+  App.assetPage = 1;
+  renderAssetTable();
+}
+
+function clearFilter() {
+  ['filterSearch','filterYear','filterBranch','filterStatus'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  filterAssetsNow();
+}
+
+function renderAssetTable() {
+  var tbody = document.getElementById('assetTableBody');
+  var paging = document.getElementById('assetPaging');
+  if (!tbody) return;
+
+  var data = App.filteredAssets;
+  var total = data.length;
+  var ps = App.assetPageSize;
+  var page = App.assetPage;
+  var pages = Math.max(1, Math.ceil(total / ps));
+  if (page > pages) page = App.assetPage = 1;
+  var slice = data.slice((page-1)*ps, page*ps);
+
+  // update subtitle
+  var sub = document.getElementById('assetPageSub');
+  if (sub) {
+    var allTotal = (App.assets || []).length;
+    sub.textContent = total === allTotal
+      ? 'ทั้งหมด ' + allTotal.toLocaleString() + ' รายการ'
+      : 'แสดง ' + total.toLocaleString() + ' จาก ' + allTotal.toLocaleString() + ' รายการ';
+  }
+
+  // sync select-all checkbox
+  var chkAll = document.getElementById('chkSelectAll');
+  if (chkAll) chkAll.checked = false;
+
+  if (!slice.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-5 text-muted">ไม่พบรายการ</td></tr>';
+  } else {
+    tbody.innerHTML = slice.map(function(a) {
+      var brandModel = [a.brand, a.model].filter(Boolean).join(' / ') || '-';
+      var branchName = (a.branches && a.branches.name) || '<span style="color:#f59e0b;font-size:11px;">ยังไม่ระบุ</span>';
+      var price = a.price ? Number(a.price).toLocaleString('th-TH', {minimumFractionDigits:2}) : '-';
+      var fyStr = '';
+      var ageHtml = '<span style="color:#cbd5e1;font-size:11px;">—</span>';
+      if (a.acquired_date) {
+        var d = new Date(a.acquired_date);
+        var beY = d.getFullYear() + 543;
+        fyStr = '<div style="font-size:10px;color:#94a3b8;margin-top:1px;">ปีงบ ' + beY + '</div>';
+        var ageYrs = (new Date() - d) / (365.25 * 24 * 3600 * 1000);
+        var ageFull = Math.floor(ageYrs);
+        var ageColor = ageFull >= 10 ? '#dc2626' : ageFull >= 5 ? '#f59e0b' : '#059669';
+        var ageTip = ageFull >= 10 ? 'เกินอายุการใช้งานปกติ' : ageFull >= 5 ? 'ควรวางแผนทดแทน' : 'อยู่ในเกณฑ์ดี';
+        ageHtml = '<div style="text-align:center;" title="' + ageTip + '">' +
+          '<span style="font-size:13px;font-weight:700;color:' + ageColor + ';">' + ageFull + '</span>' +
+          '<span style="font-size:10px;color:#94a3b8;"> ปี</span>' +
+        '</div>';
+      }
+      var isChecked = App.selectedAssets && App.selectedAssets.has(a.id);
+      return '<tr class="' + (isChecked ? 'table-primary' : '') + '">' +
+        '<td class="no-print"><input type="checkbox" class="form-check-input asset-chk" ' + (isChecked?'checked':'') + ' onchange="toggleAssetCheck(\'' + a.id + '\',this.checked)"></td>' +
+        '<td style="font-family:monospace;font-size:12px;">' + (a.asset_code||'-') + fyStr + '</td>' +
+        '<td>' + (a.name||'-') + '</td>' +
+        '<td style="color:#64748b;font-size:12px;">' + brandModel + '</td>' +
+        '<td style="font-size:12px;">' + branchName + '</td>' +
+        '<td class="text-end" style="font-size:12px;">' + price + '</td>' +
+        '<td>' + ageHtml + '</td>' +
+        '<td>' + badgeHtml(a.status) + '</td>' +
+        '<td class="no-print">' +
+          '<button class="btn btn-sm btn-outline-secondary py-0 px-2 me-1" onclick="showAssetDetail(\'' + a.id + '\')"><i class="bi bi-eye"></i></button>' +
+          '<button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="showAssetForm(\'' + a.id + '\')"><i class="bi bi-pencil"></i></button>' +
+        '</td></tr>';
+    }).join('');
+  }
+
+  if (paging) {
+    var info = 'แสดง ' + (total ? (page-1)*ps+1 : 0) + '–' + Math.min(page*ps, total) + ' จาก ' + total + ' รายการ';
+    var btnStyle = 'style="min-width:36px;min-height:36px;font-size:15px;"';
+    var prev = page > 1
+      ? '<button class="btn btn-primary btn-sm" ' + btnStyle + ' onclick="assetGoPage(' + (page-1) + ')"><i class="bi bi-chevron-left"></i></button>'
+      : '<button class="btn btn-outline-secondary btn-sm" ' + btnStyle + ' disabled><i class="bi bi-chevron-left"></i></button>';
+    var next = page < pages
+      ? '<button class="btn btn-primary btn-sm" ' + btnStyle + ' onclick="assetGoPage(' + (page+1) + ')"><i class="bi bi-chevron-right"></i></button>'
+      : '<button class="btn btn-outline-secondary btn-sm" ' + btnStyle + ' disabled><i class="bi bi-chevron-right"></i></button>';
+    var pageInfo = '<span class="btn btn-light btn-sm disabled" style="min-height:36px;font-size:13px;font-family:Kanit;">' + page + ' / ' + pages + '</span>';
+    paging.innerHTML = '<span style="font-size:12px;color:#64748b;" class="me-2">' + info + '</span><div class="d-flex gap-1 align-items-center">' + prev + pageInfo + next + '</div>';
+  }
+}
+
+function assetGoPage(p) { App.assetPage = p; renderAssetTable(); }
+
+// ===== BULK SELECT =====
+function toggleAssetCheck(id, checked) {
+  if (!App.selectedAssets) App.selectedAssets = new Set();
+  if (checked) App.selectedAssets.add(id);
+  else App.selectedAssets.delete(id);
+  updateBulkBar();
+  // sync select-all
+  var chks = document.querySelectorAll('.asset-chk');
+  var chkAll = document.getElementById('chkSelectAll');
+  if (chkAll) chkAll.checked = chks.length > 0 && Array.from(chks).every(function(c){ return c.checked; });
+}
+
+function toggleSelectAll(checked) {
+  if (!App.selectedAssets) App.selectedAssets = new Set();
+  var ps = App.assetPageSize, page = App.assetPage;
+  var slice = App.filteredAssets.slice((page-1)*ps, page*ps);
+  slice.forEach(function(a) {
+    if (checked) App.selectedAssets.add(a.id);
+    else App.selectedAssets.delete(a.id);
+  });
+  renderAssetTable();
+  updateBulkBar();
+}
+
+function clearBulkSelect() {
+  App.selectedAssets = new Set();
+  renderAssetTable();
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  var bar = document.getElementById('bulkBar');
+  var cnt = document.getElementById('bulkCount');
+  var sel = App.selectedAssets ? App.selectedAssets.size : 0;
+  if (!bar) return;
+  if (sel > 0) {
+    bar.style.display = '';
+    if (cnt) cnt.textContent = 'เลือกแล้ว ' + sel + ' รายการ';
+    // populate branch select
+    var bulkSel = document.getElementById('bulkBranchSel');
+    if (bulkSel && bulkSel.options.length <= 1) {
+      (App.branches || []).forEach(function(b) {
+        var o = document.createElement('option');
+        o.value = b.id; o.textContent = b.name;
+        bulkSel.appendChild(o);
+      });
+    }
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+async function bulkAssignBranch() {
+  var branchId = document.getElementById('bulkBranchSel').value;
+  if (!branchId) { showToast('กรุณาเลือกสาขาก่อน', 'warning'); return; }
+  if (!App.selectedAssets || App.selectedAssets.size === 0) return;
+  var ids = Array.from(App.selectedAssets);
+  var branchName = document.getElementById('bulkBranchSel').selectedOptions[0].text;
+  if (!confirm('กำหนดสาขา "' + branchName + '" ให้กับ ' + ids.length + ' รายการ?')) return;
+
+  showToast('กำลังบันทึก...', 'primary');
+  var res = await sb.from('assets').update({ branch_id: branchId }).in('id', ids);
+  if (res.error) { showToast('เกิดข้อผิดพลาด: ' + res.error.message, 'danger'); return; }
+
+  showToast('กำหนดสาขาเรียบร้อย ' + ids.length + ' รายการ', 'success');
+  clearBulkSelect();
+  loadAssetsPage();
+}
+
+// ===== ASSET FORM =====
+async function showAssetForm(id) {
+  // populate branch select first
+  _populateBranchSelects();
+
+  if (id) {
+    // Load asset for editing
+    var res = await sb.from('assets').select('*').eq('id', id).single();
+    var a = res.data;
+    if (!a) { alert('ไม่พบรายการ'); return; }
+    document.getElementById('assetId').value = a.id;
+    document.getElementById('fAssetCode').value = a.asset_code || '';
+    document.getElementById('fOldCode').value = a.old_code || '';
+    document.getElementById('fBranch').value = a.branch_id || '';
+    document.getElementById('fName').value = a.name || '';
+    document.getElementById('fCategory').value = a.category || '';
+    document.getElementById('fBrand').value = a.brand || '';
+    document.getElementById('fModel').value = a.model || '';
+    document.getElementById('fSerial').value = a.serial_number || '';
+    document.getElementById('fUnit').value = a.unit || 'เครื่อง';
+    document.getElementById('fQty').value = a.quantity || 1;
+    document.getElementById('fPrice').value = a.price || '';
+    document.getElementById('fBudget').value = a.budget_type || '';
+    document.getElementById('fLifeYears').value = a.life_years || '';
+    document.getElementById('fAcquiredDate').value = a.acquired_date || '';
+    document.getElementById('fMethod').value = a.acquisition_method || '';
+    document.getElementById('fVendor').value = a.vendor || '';
+    document.getElementById('fReceipt').value = a.receipt_number || '';
+    document.getElementById('fLocation').value = a.location || '';
+    document.getElementById('fCustodian').value = a.custodian || '';
+    document.getElementById('fStatus').value = a.status || 'active';
+    document.getElementById('fNotes').value = a.notes || '';
+    // photos not required for edit
+    document.getElementById('photoRequired').style.display = 'none';
+    document.getElementById('photo1req').style.display = 'none';
+    document.getElementById('photo2req').style.display = 'none';
+    var ft = document.getElementById('assetFormTitle');
+    if (ft) ft.textContent = 'แก้ไขครุภัณฑ์';
+  } else {
+    // New asset
+    var ft2 = document.getElementById('assetFormTitle');
+    if (ft2) ft2.textContent = 'เพิ่มครุภัณฑ์';
+    document.getElementById('assetId').value = '';
+    document.getElementById('fAssetCode').value = '';
+    document.getElementById('fOldCode').value = '';
+    document.getElementById('fName').value = '';
+    document.getElementById('fCategory').value = '';
+    document.getElementById('fBrand').value = '';
+    document.getElementById('fModel').value = '';
+    document.getElementById('fSerial').value = '';
+    document.getElementById('fUnit').value = 'เครื่อง';
+    document.getElementById('fQty').value = 1;
+    document.getElementById('fPrice').value = '';
+    document.getElementById('fBudget').value = '';
+    document.getElementById('fLifeYears').value = '';
+    document.getElementById('fAcquiredDate').value = '';
+    document.getElementById('fMethod').value = '';
+    document.getElementById('fVendor').value = '';
+    document.getElementById('fReceipt').value = '';
+    document.getElementById('fLocation').value = '';
+    document.getElementById('fCustodian').value = '';
+    document.getElementById('fStatus').value = 'active';
+    document.getElementById('fNotes').value = '';
+    document.getElementById('photoRequired').style.display = '';
+    document.getElementById('photo1req').style.display = '';
+    document.getElementById('photo2req').style.display = '';
+    document.getElementById('fPhoto1').value = '';
+    document.getElementById('fPhoto2').value = '';
+    document.getElementById('photo1Preview').innerHTML = '';
+    document.getElementById('photo2Preview').innerHTML = '';
+    // pre-select branch for branch users
+    if (App.profile && App.profile.role === 'branch' && App.profile.branch_id) {
+      document.getElementById('fBranch').value = App.profile.branch_id;
+    }
+  }
+  showPage('asset-form');
+}
+
+// photo preview
+document.addEventListener('DOMContentLoaded', function() {
+  ['fPhoto1','fPhoto2'].forEach(function(id, idx) {
+    var el = document.getElementById(id);
+    var previewId = 'photo' + (idx+1) + 'Preview';
+    if (el) {
+      el.addEventListener('change', function() {
+        var prev = document.getElementById(previewId);
+        if (!prev) return;
+        if (this.files && this.files[0]) {
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            prev.innerHTML = '<img src="' + e.target.result + '" class="photo-thumb" style="width:120px;height:96px;">';
+          };
+          reader.readAsDataURL(this.files[0]);
+        } else {
+          prev.innerHTML = '';
+        }
+      });
+    }
+  });
+});
+
+async function saveAsset() {
+  var id = document.getElementById('assetId').value;
+  var isNew = !id;
+  var assetCode = document.getElementById('fAssetCode').value.trim();
+  var name = document.getElementById('fName').value.trim();
+  var branchId = document.getElementById('fBranch').value;
+
+  if (!assetCode || !name) { showToast('กรุณากรอกรหัสและชื่อครุภัณฑ์', 'danger'); return; }
+
+  var photo1 = document.getElementById('fPhoto1').files[0];
+  var photo2 = document.getElementById('fPhoto2').files[0];
+  if (isNew && (!photo1 || !photo2)) {
+    showToast('กรุณาแนบรูปถ่ายครุภัณฑ์ 2 รูป', 'warning'); return;
+  }
+
+  var btn = document.getElementById('btnSaveAsset');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังบันทึก...';
+
+  try {
+    var payload = {
+      asset_code:          assetCode,
+      old_code:            document.getElementById('fOldCode').value.trim() || null,
+      branch_id:           branchId || null,
+      name:                name,
+      category:            document.getElementById('fCategory').value || null,
+      brand:               document.getElementById('fBrand').value.trim() || null,
+      model:               document.getElementById('fModel').value.trim() || null,
+      serial_number:       document.getElementById('fSerial').value.trim() || null,
+      unit:                document.getElementById('fUnit').value.trim() || 'เครื่อง',
+      quantity:            parseInt(document.getElementById('fQty').value) || 1,
+      price:               parseFloat(document.getElementById('fPrice').value) || 0,
+      budget_type:         document.getElementById('fBudget').value || null,
+      life_years:          parseInt(document.getElementById('fLifeYears').value) || null,
+      acquired_date:       document.getElementById('fAcquiredDate').value || null,
+      acquisition_method:  document.getElementById('fMethod').value || null,
+      vendor:              document.getElementById('fVendor').value.trim() || null,
+      receipt_number:      document.getElementById('fReceipt').value.trim() || null,
+      location:            document.getElementById('fLocation').value.trim() || null,
+      custodian:           document.getElementById('fCustodian').value.trim() || null,
+      status:              document.getElementById('fStatus').value || 'active',
+      notes:               document.getElementById('fNotes').value.trim() || null
+    };
+
+    var savedId;
+    if (isNew) {
+      var insRes = await sb.from('assets').insert(payload).select().single();
+      if (insRes.error) throw insRes.error;
+      savedId = insRes.data.id;
+    } else {
+      payload.updated_at = new Date().toISOString();
+      var updRes = await sb.from('assets').update(payload).eq('id', id);
+      if (updRes.error) throw updRes.error;
+      savedId = id;
+    }
+
+    // Upload photos
+    var photos = isNew ? [photo1, photo2] : [];
+    for (var i = 0; i < photos.length; i++) {
+      var file = photos[i];
+      if (!file) continue;
+      var ext = file.name.split('.').pop();
+      var path = savedId + '/receipt_' + (i+1) + '_' + Date.now() + '.' + ext;
+      var upRes = await sb.storage.from('asset photo').upload(path, file, { upsert: true });
+      if (!upRes.error) {
+        var urlRes = sb.storage.from('asset photo').getPublicUrl(path);
+        await sb.from('asset_photos').insert({
+          asset_id: savedId,
+          photo_url: urlRes.data.publicUrl,
+          photo_type: 'receipt',
+          uploaded_by: App.profile.id
+        });
+      }
+    }
+
+    showToast(isNew ? 'เพิ่มครุภัณฑ์เรียบร้อย' : 'บันทึกการแก้ไขเรียบร้อย', 'success');
+    showPage('assets');
+  } catch(e) {
+    showToast('เกิดข้อผิดพลาด: ' + e.message, 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-save me-2"></i>บันทึก';
+  }
+}
+
+// ===== ASSET DETAIL MODAL =====
+async function showAssetDetail(id) {
+  var res = await sb.from('assets').select('*, branches(name), asset_photos(*), asset_repairs(*)').eq('id', id).single();
+  var a = res.data;
+  if (!a) return;
+
+  document.getElementById('adTitle').innerHTML = '<i class="bi bi-file-earmark-text me-2"></i>' + a.name;
+  var photos = a.asset_photos || [];
+  var repairs = a.asset_repairs || [];
+
+  var photoHtml = photos.length
+    ? '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + photos.map(function(p) {
+        return '<div style="position:relative;width:90px;height:90px;cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,.1);" onclick="window.open(\'' + p.photo_url + '\')">' +
+          '<img src="' + p.photo_url + '" style="width:100%;height:100%;object-fit:cover;" title="' + (p.photo_type||'') + '">' +
+          '<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.6));color:#fff;font-size:9px;padding:3px 5px;text-align:center;">' + (p.photo_type||'รูป') + '</div>' +
+        '</div>';
+      }).join('') + '</div>'
+    : '<div style="font-size:13px;color:#94a3b8;text-align:center;padding:20px 0;"><i class="bi bi-image" style="font-size:28px;display:block;margin-bottom:6px;opacity:.35;"></i>ยังไม่มีรูปภาพ</div>';
+
+  var repairHtml = '';
+  if (repairs.length) {
+    repairHtml = repairs.map(function(r, ri) {
+      return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;margin-bottom:8px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
+          '<div style="flex:1;">' +
+            '<div style="font-weight:600;font-size:13px;">' + (r.description||'-') + '</div>' +
+            (r.vendor ? '<div style="font-size:11px;color:#64748b;margin-top:2px;"><i class="bi bi-person-gear me-1"></i>' + r.vendor + '</div>' : '') +
+            (r.notes ? '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">' + r.notes + '</div>' : '') +
+          '</div>' +
+          '<div style="text-align:right;flex-shrink:0;">' +
+            '<div style="font-size:12px;font-weight:700;color:#b45309;">' + fmtNum(r.cost) + ' ฿</div>' +
+            '<div style="font-size:11px;color:#94a3b8;margin-top:2px;"><i class="bi bi-calendar3 me-1"></i>' + fmtDate(r.repair_date) + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } else {
+    repairHtml = '<div style="font-size:13px;color:#94a3b8;text-align:center;padding:16px 0;"><i class="bi bi-tools" style="font-size:24px;display:block;margin-bottom:6px;opacity:.3;"></i>ไม่มีประวัติการซ่อม</div>';
+  }
+
+  document.getElementById('adBody').innerHTML = '<div style="padding:20px;">' +
+    '<div class="row g-3">' +
+      '<div class="col-md-6">' +
+        '<table class="table table-sm table-borderless">' +
+          '<tr><td style="color:#64748b;width:130px;font-size:12px;">รหัสครุภัณฑ์</td><td><strong style="font-family:monospace;">' + (a.asset_code||'-') + '</strong></td></tr>' +
+          '<tr><td style="color:#64748b;font-size:12px;">ชื่อครุภัณฑ์</td><td style="font-size:13px;">' + (a.name||'-') + '</td></tr>' +
+          '<tr><td style="color:#64748b;font-size:12px;">ประเภท</td><td style="font-size:13px;">' + (a.category||'-') + '</td></tr>' +
+          '<tr><td style="color:#64748b;font-size:12px;">ยี่ห้อ/รุ่น</td><td style="font-size:13px;">' + ([a.brand,a.model].filter(Boolean).join(' / ')||'-') + '</td></tr>' +
+          '<tr><td style="color:#64748b;font-size:12px;">Serial No.</td><td style="font-size:13px;font-family:monospace;">' + (a.serial_number||'-') + '</td></tr>' +
+          '<tr><td style="color:#64748b;font-size:12px;">สาขา</td><td style="font-size:13px;">' + ((a.branches&&a.branches.name)||'-') + '</td></tr>' +
+          '<tr><td style="color:#64748b;font-size:12px;">ที่ตั้ง</td><td style="font-size:13px;">' + (a.location||'-') + '</td></tr>' +
+          '<tr><td style="color:#64748b;font-size:12px;">ราคา</td><td style="font-size:13px;">' + fmtNum(a.price) + ' บาท</td></tr>' +
+          '<tr><td style="color:#64748b;font-size:12px;">วันที่ได้มา</td><td style="font-size:13px;">' + fmtDate(a.acquired_date) + '</td></tr>' +
+          '<tr><td style="color:#64748b;font-size:12px;">สถานะ</td><td>' + badgeHtml(a.status) + '</td></tr>' +
+        '</table>' +
+        (a.notes ? '<div style="background:#f8fafc;padding:10px;border-radius:8px;font-size:12px;"><strong>หมายเหตุ:</strong> ' + a.notes + '</div>' : '') +
+      '</div>' +
+      '<div class="col-md-6">' +
+        '<div style="font-size:13px;font-weight:600;margin-bottom:8px;"><i class="bi bi-images me-1 text-muted"></i>รูปภาพ (' + photos.length + ')</div>' +
+        photoHtml +
+        '<hr>' +
+        '<div style="font-size:13px;font-weight:600;margin-bottom:8px;"><i class="bi bi-tools me-1 text-muted"></i>ประวัติการซ่อม (' + repairs.length + ')</div>' +
+        repairHtml +
+        '<button class="btn btn-sm btn-outline-primary mt-2" onclick="openRepairModal(\'' + a.id + '\')"><i class="bi bi-plus-lg me-1"></i>เพิ่มประวัติซ่อม</button>' +
+      '</div>' +
+    '</div></div>';
+
+  var editBtn = document.getElementById('adEditBtn');
+  if (editBtn) {
+    editBtn.setAttribute('onclick', 'showAssetForm(\'' + a.id + '\');bootstrap.Modal.getInstance(document.getElementById(\'modalAssetDetail\')).hide();');
+  }
+
+  var m = new bootstrap.Modal(document.getElementById('modalAssetDetail'));
+  m.show();
+}
+
+// ===== REPAIR =====
+function openRepairModal(assetId) {
+  document.getElementById('repAssetId').value = assetId;
+  document.getElementById('repDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('repDesc').value = '';
+  document.getElementById('repCost').value = '';
+  document.getElementById('repVendor').value = '';
+  document.getElementById('repNotes').value = '';
+  // close asset detail modal first
+  var adModal = bootstrap.Modal.getInstance(document.getElementById('modalAssetDetail'));
+  if (adModal) adModal.hide();
+  var m = new bootstrap.Modal(document.getElementById('modalRepair'));
+  m.show();
+}
+
+async function saveRepair() {
+  var assetId = document.getElementById('repAssetId').value;
+  var desc = document.getElementById('repDesc').value.trim();
+  if (!desc) { showToast('กรุณากรอกรายละเอียดการซ่อม', 'warning'); return; }
+  var payload = {
+    asset_id:    assetId,
+    repair_date: document.getElementById('repDate').value || null,
+    description: desc,
+    cost:        parseFloat(document.getElementById('repCost').value) || 0,
+    vendor:      document.getElementById('repVendor').value.trim() || null,
+    notes:       document.getElementById('repNotes').value.trim() || null,
+    created_by:  App.profile.id
+  };
+  var res = await sb.from('asset_repairs').insert(payload);
+  if (res.error) { showToast('เกิดข้อผิดพลาด: ' + res.error.message, 'danger'); return; }
+  showToast('บันทึกประวัติซ่อมเรียบร้อย', 'success');
+  var m = bootstrap.Modal.getInstance(document.getElementById('modalRepair'));
+  if (m) m.hide();
+}
+
+// ============================================================
+// IMPORT (Excel)
+// ============================================================
+var _impData = [];
+
+function openImportModal() {
+  document.getElementById('impFile').value = '';
+  document.getElementById('impPreview').innerHTML = '';
+  document.getElementById('btnImp').disabled = true;
+  _impData = [];
+  var m = new bootstrap.Modal(document.getElementById('modalImport'));
+  m.show();
+}
+
+function previewImport() {
+  var file = document.getElementById('impFile').files[0];
+  if (!file) return;
+  _loadXLSX(function() {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var wb = XLSX.read(e.target.result, { type: 'array' });
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        _impData = rows;
+        var prev = document.getElementById('impPreview');
+        if (!rows.length) { prev.innerHTML = '<div class="alert alert-warning">ไม่พบข้อมูล</div>'; return; }
+        var cols = Object.keys(rows[0]);
+        prev.innerHTML = '<div class="alert alert-success mb-2" style="font-size:13px;">พบ ' + rows.length + ' รายการ</div>' +
+          '<div style="overflow-x:auto;max-height:240px;"><table class="table table-sm table-bordered" style="font-size:11px;">' +
+          '<thead><tr>' + cols.map(function(c) { return '<th>' + c + '</th>'; }).join('') + '</tr></thead>' +
+          '<tbody>' + rows.slice(0,5).map(function(r) {
+            return '<tr>' + cols.map(function(c) { return '<td>' + r[c] + '</td>'; }).join('') + '</tr>';
+          }).join('') + '</tbody></table></div>';
+        document.getElementById('btnImp').disabled = false;
+      } catch(ex) {
+        document.getElementById('impPreview').innerHTML = '<div class="alert alert-danger">อ่านไฟล์ไม่ได้: ' + ex.message + '</div>';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function doImportModal() {
+  var btn = document.getElementById('btnImp');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังนำเข้า...';
+  try {
+    var chunkSize = 50;
+    for (var i = 0; i < _impData.length; i += chunkSize) {
+      var chunk = _impData.slice(i, i + chunkSize).map(function(r) {
+        return {
+          asset_code:         String(r.asset_code || r['รหัสครุภัณฑ์'] || '').trim(),
+          name:               String(r.name || r['ชื่อครุภัณฑ์'] || '').trim(),
+          category:           String(r.category || r['ประเภท'] || '').trim() || null,
+          branch_id:          r.branch_id || null,
+          price:              parseFloat(r.price || r['ราคา']) || 0,
+          acquired_date:      r.acquired_date || r['วันที่ได้มา'] || null,
+          serial_number:      String(r.serial_number || r['Serial No.'] || '').trim() || null,
+          location:           String(r.location || r['สถานที่'] || '').trim() || null,
+          status:             r.status || 'active'
+        };
+      }).filter(function(r) { return r.asset_code && r.name; });
+      if (!chunk.length) continue;
+      var res = await sb.from('assets').upsert(chunk, { onConflict: 'asset_code' });
+      if (res.error) throw res.error;
+    }
+    showToast('นำเข้าข้อมูล ' + _impData.length + ' รายการเรียบร้อย', 'success');
+    bootstrap.Modal.getInstance(document.getElementById('modalImport')).hide();
+    loadAssetsPage();
+  } catch(e) {
+    showToast('เกิดข้อผิดพลาด: ' + e.message, 'danger');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-upload me-1"></i>นำเข้าข้อมูล';
+  }
+}
+
+function _loadXLSX(cb) {
+  if (typeof XLSX !== 'undefined') { cb(); return; }
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  s.onload = cb;
+  s.onerror = function() { showToast('โหลด XLSX ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต', 'danger'); };
+  document.head.appendChild(s);
+}
+
+// ============================================================
+// INSPECTION PAGE
+// ============================================================
+async function loadInspectionPage() {
+  var inspAdmin = document.getElementById('inspAdminSection');
+  var inspTabsWrap = document.getElementById('inspTabsWrap');
+  var inspEmptyState = document.getElementById('inspEmptyState');
+  var inspRoundBanner = document.getElementById('inspRoundBanner');
+  var inspAckBar = document.getElementById('inspAckBar');
+
+  if (App.profile && App.profile.role === 'admin') {
+    if (inspAdmin) inspAdmin.style.display = '';
+  }
+
+  // Load active inspection
+  var res = await sb.from('inspections').select('*').eq('status', 'active').order('created_at', { ascending: false }).limit(1);
+  var inspections = res.data || [];
+
+  if (!inspections.length) {
+    if (inspEmptyState) inspEmptyState.style.display = '';
+    if (inspTabsWrap) inspTabsWrap.style.display = 'none';
+    if (inspRoundBanner) inspRoundBanner.innerHTML = '';
+    // Load round list for admin
+    if (App.profile && App.profile.role === 'admin') _loadRoundList();
+    return;
+  }
+
+  var insp = inspections[0];
+  App.currentInspectionId = insp.id;
+
+  if (inspEmptyState) inspEmptyState.style.display = 'none';
+  if (inspTabsWrap) inspTabsWrap.style.display = '';
+
+  // Banner — redesigned with status badge, days remaining, action buttons
+  if (inspRoundBanner) {
+    var daysLeftHtml = '';
+    if (insp.end_date) {
+      var endD = new Date(insp.end_date);
+      var today = new Date(); today.setHours(0,0,0,0);
+      var diff = Math.ceil((endD - today) / (1000*60*60*24));
+      if (diff > 0) daysLeftHtml = '<span style="background:rgba(255,255,255,.18);color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.3);">เหลือ ' + diff + ' วัน</span>';
+      else if (diff === 0) daysLeftHtml = '<span style="background:#fbbf24;color:#000;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;">วันสุดท้าย</span>';
+      else daysLeftHtml = '<span style="background:#ef4444;color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;">เลยกำหนด ' + Math.abs(diff) + ' วัน</span>';
+    }
+    var isAdmin = App.profile && App.profile.role === 'admin';
+    var btnsHtml = isAdmin
+      ? '<button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);" onclick="goFillInspection()"><i class="bi bi-pencil me-1"></i>กรอกผล</button>' +
+        '<button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);" onclick="loadInspMonitor()"><i class="bi bi-speedometer2 me-1"></i>กำกับติดตาม</button>' +
+        '<button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);" onclick="showToast(\'ฟีเจอร์นี้กำลังพัฒนา\',\'warning\')"><i class="bi bi-envelope me-1"></i>แจ้งสาขา</button>' +
+        '<button class="btn btn-sm btn-danger" onclick="closeRound(\'' + insp.id + '\')"><i class="bi bi-lock me-1"></i>ปิดรอบ</button>'
+      : '<button class="btn btn-sm btn-success" onclick="goFillInspection()"><i class="bi bi-pencil me-1"></i>กรอกผล</button>';
+    inspRoundBanner.innerHTML =
+      '<div style="background:linear-gradient(135deg,#1e3a5f,#1e40af);border-radius:14px;padding:14px 18px;margin-bottom:14px;color:#fff;">' +
+        '<div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">' +
+          '<div>' +
+            '<div class="d-flex align-items-center gap-2 mb-2 flex-wrap">' +
+              '<span style="background:#22c55e;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;">เปิดรอบ</span>' +
+              daysLeftHtml +
+            '</div>' +
+            '<div style="font-size:17px;font-weight:800;line-height:1.2;margin-bottom:4px;">' + (insp.name||'รอบตรวจ') + '</div>' +
+            '<div style="font-size:12px;opacity:.7;">' +
+              '<i class="bi bi-calendar3 me-1"></i>ปีงบประมาณ ' + (insp.fiscal_year||'-') +
+              (insp.start_date ? ' &nbsp;·&nbsp; ' + fmtDate(insp.start_date) + ' – ' + fmtDate(insp.end_date) : '') +
+            '</div>' +
+          '</div>' +
+          '<div class="d-flex gap-2 flex-wrap align-items-center">' + btnsHtml + '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // Admin round list
+  if (App.profile && App.profile.role === 'admin') _loadRoundList();
+
+  showInspTab('overview');
+}
+
+async function _loadRoundList() {
+  var container = document.getElementById('settingsRoundList');
+  if (!container) return;
+  var res = await sb.from('inspections').select('*').order('created_at', { ascending: false });
+  var rounds = res.data || [];
+  if (!rounds.length) { container.innerHTML = '<div class="text-muted small">ยังไม่มีรอบตรวจ</div>'; return; }
+  container.innerHTML = '<div style="overflow-x:auto;"><table class="table table-sm table-hover" style="font-size:13px;">' +
+    '<thead><tr><th>ชื่อรอบตรวจ</th><th>ปีงบ</th><th>วันที่</th><th>สถานะ</th><th>จัดการ</th></tr></thead>' +
+    '<tbody>' + rounds.map(function(r) {
+      return '<tr><td>' + (r.name||'-') + '</td>' +
+        '<td>' + (r.fiscal_year||'-') + '</td>' +
+        '<td style="font-size:11px;">' + fmtDate(r.start_date) + ' – ' + fmtDate(r.end_date) + '</td>' +
+        '<td><span class="badge ' + (r.status==='active'?'bg-success':'bg-secondary') + '">' + (r.status==='active'?'กำลังดำเนินการ':'ปิดแล้ว') + '</span></td>' +
+        '<td>' +
+          (r.status==='active'
+            ? '<button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="closeRound(\'' + r.id + '\')">ปิดรอบ</button>'
+            : '<button class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="reopenRound(\'' + r.id + '\')">เปิดใหม่</button>') +
+        '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+
+function showInspTab(tab) {
+  ['overview','pending','done'].forEach(function(t) {
+    var content = document.getElementById('inspTabContent-' + t);
+    var link = document.getElementById('inspTab-' + t);
+    if (content) content.style.display = t === tab ? '' : 'none';
+    if (link) link.classList.toggle('active', t === tab);
+  });
+  if (tab === 'overview') _loadInspOverview();
+  else if (tab === 'pending') _loadInspPending();
+  else if (tab === 'done') _loadInspDone();
+}
+
+// store overview data for re-sort without re-fetch
+App._inspOverviewData = null;
+App._inspOverviewSort = 'pct_asc'; // pct_asc | pct_desc | name
+
+async function _loadInspOverview() {
+  var container = document.getElementById('inspOverviewBody');
+  if (!container) return;
+  if (!App.currentInspectionId) { container.innerHTML = '<div class="text-muted text-center py-3">ไม่มีรอบตรวจ</div>'; return; }
+  container.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังโหลด...</div>';
+
+  // Load assets (exclude disposed), and inspection items
+  // ต้องไม่กรองเฉพาะ 'active' — ครุภัณฑ์ชำรุด/ไม่พบก็ต้องตรวจนับด้วย
+  var assetsQ = sb.from('assets')
+    .select('id, asset_code, name, branch_id, status, branches(id,name,code)')
+    .neq('status', 'disposed')
+    .limit(10000);
+  if (App.profile && App.profile.role === 'branch') assetsQ = assetsQ.eq('branch_id', App.profile.branch_id);
+  var assRes = await assetsQ;
+  var assets = assRes.data || [];
+
+  var itemsRes = await sb.from('inspection_items').select('asset_id, inspected_by').eq('inspection_id', App.currentInspectionId);
+  var items = itemsRes.data || [];
+  var doneSet = {};
+  var doneByBranch = {};
+  items.forEach(function(i) {
+    doneSet[i.asset_id] = true;
+    if (i.inspected_by) doneByBranch[i.inspected_by] = (doneByBranch[i.inspected_by]||0) + 1;
+  });
+
+  // Group by branch
+  var byBranch = {};
+  assets.forEach(function(a) {
+    var bId   = a.branch_id || '__none__';
+    var brObj = a.branches || {};
+    var bName = brObj.name || 'ไม่ระบุสาขา';
+    var bCode = brObj.code || '-';
+    if (!byBranch[bId]) byBranch[bId] = { name: bName, code: bCode, total: 0, done: 0 };
+    byBranch[bId].total++;
+    if (doneSet[a.id]) byBranch[bId].done++;
+  });
+
+  var totalAssets = assets.length;
+  var totalDone   = items.length;
+  var totalPct    = totalAssets ? Math.round(totalDone / totalAssets * 100) : 0;
+
+  document.getElementById('inspPendingBadge').textContent = totalAssets - totalDone;
+  document.getElementById('inspDoneBadge').textContent    = totalDone;
+
+  App._inspOverviewData = Object.keys(byBranch).map(function(bId) {
+    var b  = byBranch[bId];
+    var bp = b.total ? Math.round(b.done / b.total * 100) : 0;
+    return { bId: bId, name: b.name, code: b.code, done: b.done, total: b.total, bp: bp };
+  });
+  App._inspOverviewTotals = { totalAssets: totalAssets, totalDone: totalDone, totalPct: totalPct };
+
+  _renderInspOverview(totalAssets, totalDone, totalPct);
+}
+
+function _renderInspOverview(totalAssets, totalDone, totalPct) {
+  var container = document.getElementById('inspOverviewBody');
+  if (!container || !App._inspOverviewData) return;
+  var sort = App._inspOverviewSort || 'pct_asc';
+
+  var branchList = App._inspOverviewData.slice().sort(function(a, b) {
+    if (sort === 'pct_asc')  return a.bp - b.bp;
+    if (sort === 'pct_desc') return b.bp - a.bp;
+    return (a.name||'').localeCompare(b.name||'', 'th');
+  });
+
+  var isAdmin = App.profile && App.profile.role === 'admin';
+  var pctColor = totalPct >= 100 ? '#22c55e' : totalPct >= 50 ? '#f59e0b' : '#f87171';
+
+  // Summary stats box
+  var statsBox =
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">' +
+      _ovStatCard(totalAssets, 'รวมทั้งหมด', '#2563eb', 'bi-archive-fill') +
+      _ovStatCard(totalDone, 'ตรวจแล้ว', '#22c55e', 'bi-check-circle-fill') +
+      _ovStatCard(totalAssets - totalDone, 'ยังไม่ตรวจ', '#f59e0b', 'bi-hourglass-split') +
+      _ovStatCard(totalPct + '%', 'ความคืบหน้ารวม', pctColor, 'bi-speedometer2') +
+    '</div>';
+
+  // Sort buttons
+  var sortBtn = function(key, label) {
+    var active = sort === key;
+    return '<button onclick="App._inspOverviewSort=\'' + key + '\';var t=App._inspOverviewTotals||{};_renderInspOverview(t.totalAssets||0,t.totalDone||0,t.totalPct||0);" class="btn btn-sm" style="' +
+      (active ? 'background:#1e40af;color:#fff;' : 'background:#f1f5f9;color:#475569;') +
+      'border:1px solid #e2e8f0;font-size:12px;font-weight:600;padding:5px 12px;">' + label + '</button>';
+  };
+  var sortBar =
+    '<div class="d-flex align-items-center gap-2 mb-3 flex-wrap">' +
+      '<span style="font-size:12px;color:#64748b;font-weight:600;">เรียงตาม:</span>' +
+      sortBtn('pct_asc',  '% น้อยสุด ↑') +
+      sortBtn('pct_desc', '% มากสุด ↓') +
+      sortBtn('name',     'ชื่อสาขา') +
+    '</div>';
+
+  // Branch cards — 2-column grid
+  var cards = branchList.map(function(item) {
+    var bp    = item.bp;
+    var color = bp >= 100 ? '#22c55e' : bp >= 50 ? '#f59e0b' : '#ef4444';
+    var bg    = bp >= 100 ? '#f0fdf4' : bp >= 50 ? '#fffbeb' : '#fff5f5';
+    var badgeStyle = item.done > 0
+      ? 'background:#dcfce7;color:#166534;border:1px solid #bbf7d0;'
+      : 'background:#fef9c3;color:#92400e;border:1px solid #fde68a;';
+    var badgeLabel = item.done > 0 ? '<i class="bi bi-check2-circle me-1"></i>มีข้อมูลแล้ว' : '<i class="bi bi-hourglass-split me-1"></i>ยังไม่มีข้อมูล';
+    var fillBtn = '';
+    if (!isAdmin && item.bId === (App.profile && App.profile.branch_id)) {
+      fillBtn = '<button class="btn btn-sm btn-success" onclick="goFillInspection()" style="font-size:11px;white-space:nowrap;"><i class="bi bi-pencil me-1"></i>กรอกผล</button>';
+    }
+    return '<div style="background:' + bg + ';border:1px solid #e2e8f0;border-left:4px solid ' + color + ';border-radius:10px;padding:12px 14px;">' +
+      '<div class="d-flex justify-content-between align-items-start mb-2 gap-2">' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + item.name + '</div>' +
+          '<div style="font-size:11px;color:#94a3b8;margin-top:1px;">รหัส ' + item.code + '</div>' +
+        '</div>' +
+        '<div class="d-flex gap-1 flex-shrink-0">' +
+          '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;' + badgeStyle + '">' + badgeLabel + '</span>' +
+          (isAdmin ? '<button class="btn btn-sm" style="font-size:10px;padding:2px 8px;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;" onclick="showToast(\'ฟีเจอร์นี้กำลังพัฒนา\',\'warning\')"><i class="bi bi-envelope me-1"></i>แจ้งสาขา</button>' : fillBtn) +
+        '</div>' +
+      '</div>' +
+      '<div class="d-flex align-items-center gap-2 mb-1">' +
+        '<div style="flex:1;background:#e2e8f0;border-radius:99px;height:8px;overflow:hidden;">' +
+          '<div style="height:100%;width:' + bp + '%;background:' + color + ';border-radius:99px;transition:width .4s;"></div>' +
+        '</div>' +
+        '<span style="font-size:14px;font-weight:800;color:' + color + ';min-width:42px;text-align:right;">' + bp + '%</span>' +
+      '</div>' +
+      '<div style="font-size:11px;color:#64748b;">ตรวจแล้ว <strong>' + item.done + '</strong> / ' + item.total + ' รายการ</div>' +
+    '</div>';
+  });
+
+  var grid = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;">' + cards.join('') + '</div>';
+
+  container.innerHTML = statsBox + sortBar + grid;
+}
+
+function _ovStatCard(val, label, color, icon) {
+  return '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;text-align:center;">' +
+    '<div style="font-size:22px;font-weight:800;color:' + color + ';line-height:1;">' + val + '</div>' +
+    '<div style="font-size:11px;color:#64748b;margin-top:4px;"><i class="bi ' + icon + ' me-1" style="color:' + color + ';"></i>' + label + '</div>' +
+  '</div>';
+}
+
+async function _loadInspPending() {
+  var tbody = document.getElementById('inspPendingBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="3" class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+  if (!App.currentInspectionId) { tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">ไม่มีรอบตรวจ</td></tr>'; return; }
+
+  var itemsRes = await sb.from('inspection_items').select('asset_id').eq('inspection_id', App.currentInspectionId);
+  var doneIds = (itemsRes.data||[]).map(function(i) { return i.asset_id; });
+
+  var q = sb.from('assets').select('id, asset_code, name, brand, branch_id, status, branches(name)').eq('status', 'active').order('asset_code', { ascending: true });
+  if (App.profile && App.profile.role === 'branch') q = q.eq('branch_id', App.profile.branch_id);
+  if (doneIds.length) q = q.not('id', 'in', '(' + doneIds.join(',') + ')');
+  var res = await q;
+  var pending = res.data || [];
+
+  if (!pending.length) { tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">ครุภัณฑ์ทั้งหมดตรวจแล้ว</td></tr>'; return; }
+  tbody.innerHTML = pending.map(function(a) {
+    return '<tr><td><div style="font-size:12px;color:#64748b;">' + (a.asset_code||'-') + '</div><div style="font-weight:600;">' + a.name + '</div>' + (a.brand ? '<div style="font-size:11px;color:#94a3b8;">' + a.brand + '</div>' : '') + '</td>' +
+      '<td style="font-size:12px;">' + ((a.branches&&a.branches.name)||'-') + '</td>' +
+      '<td>' + badgeHtml(a.status) + '</td></tr>';
+  }).join('');
+}
+
+async function _loadInspDone() {
+  var tbody = document.getElementById('inspDoneBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+  if (!App.currentInspectionId) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">ไม่มีรอบตรวจ</td></tr>'; return; }
+
+  var res = await sb.from('inspection_items').select('*, assets(asset_code, name, branches(name)), profiles(full_name,username)').eq('inspection_id', App.currentInspectionId).order('inspected_at', { ascending: false });
+  var done = res.data || [];
+  if (!done.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">ยังไม่มีรายการที่ตรวจ</td></tr>'; return; }
+  tbody.innerHTML = done.map(function(item) {
+    var a = item.assets || {};
+    return '<tr>' +
+      '<td style="font-family:monospace;font-size:11px;">' + (a.asset_code||'-') + '</td>' +
+      '<td>' + (a.name||'-') + '</td>' +
+      '<td style="font-size:12px;">' + ((a.branches&&a.branches.name)||'-') + '</td>' +
+      '<td>' + badgeHtml(item.result||item.status) + '</td>' +
+      '<td style="font-size:12px;">' + ((item.profiles&&(item.profiles.full_name||item.profiles.username))||'-') + '</td>' +
+      '<td style="font-size:11px;">' + fmtDate(item.inspected_at||item.created_at) + '</td></tr>';
+  }).join('');
+}
+
+// ===== INSPECTION FILL =====
+async function goFillInspection() {
+  showPage('inspection-fill');
+  var tbody = document.getElementById('inspTableBody');
+  if (tbody) tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+
+  if (!App.currentInspectionId) { showToast('ไม่มีรอบตรวจที่ active', 'warning'); return; }
+
+  var q = sb.from('assets').select('id, asset_code, name, brand, branch_id, price, location, status, branches(name)').order('asset_code', { ascending: true });
+  if (App.profile && App.profile.role === 'branch') q = q.eq('branch_id', App.profile.branch_id);
+  var assRes = await q;
+  var assets = assRes.data || [];
+
+  var itemsRes = await sb.from('inspection_items').select('*').eq('inspection_id', App.currentInspectionId);
+  var itemsMap = {};
+  (itemsRes.data||[]).forEach(function(i) { itemsMap[i.asset_id] = i; });
+
+  App.inspItems = assets.map(function(a) {
+    return { asset: a, item: itemsMap[a.id] || null, _status: itemsMap[a.id] ? itemsMap[a.id].result || itemsMap[a.id].status : a.status, _note: itemsMap[a.id] ? itemsMap[a.id].notes || '' : '' };
+  });
+  App.inspFiltered = App.inspItems;
+  App.inspPage = 1;
+  _renderInspTable();
+}
+
+function filterInspItems() {
+  var search = (document.getElementById('inspSearch').value||'').toLowerCase();
+  var branchFilter = document.getElementById('inspFilterBranch').value || '';
+  var doneFilter = document.getElementById('inspFilterDone').value || '';
+  App.inspFiltered = App.inspItems.filter(function(row) {
+    var a = row.asset;
+    var matchS = !search || (a.asset_code||'').toLowerCase().includes(search) || (a.name||'').toLowerCase().includes(search);
+    var matchB = !branchFilter || a.branch_id === branchFilter;
+    var matchD = !doneFilter || (doneFilter === 'done' ? !!row.item : !row.item);
+    return matchS && matchB && matchD;
+  });
+  App.inspPage = 1;
+  _renderInspTable();
+}
+
+function _renderInspTable() {
+  var tbody = document.getElementById('inspTableBody');
+  var paging = document.getElementById('inspPaging');
+  var summaryBar = document.getElementById('inspSummaryBar');
+  if (!tbody) return;
+
+  var data = App.inspFiltered;
+  var ps = App.inspPageSize;
+  var page = App.inspPage;
+  var pages = Math.max(1, Math.ceil(data.length / ps));
+  if (page > pages) page = App.inspPage = 1;
+  var slice = data.slice((page-1)*ps, page*ps);
+
+  var done = App.inspItems.filter(function(r) { return !!r.item; }).length;
+  var total = App.inspItems.length;
+  if (summaryBar) {
+    var pct = total ? Math.round(done / total * 100) : 0;
+    var barColor = pct === 100 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#3b82f6';
+    summaryBar.innerHTML =
+      '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+          '<div style="width:40px;height:40px;border-radius:50%;background:' + barColor + '22;display:flex;align-items:center;justify-content:center;">' +
+            '<i class="bi bi-clipboard2-check" style="color:' + barColor + ';font-size:18px;"></i>' +
+          '</div>' +
+          '<div>' +
+            '<div style="font-size:13px;font-weight:700;color:#0f172a;">ตรวจแล้ว <span style="color:' + barColor + ';">' + done + '</span> / ' + total + ' รายการ</div>' +
+            '<div style="font-size:11px;color:#94a3b8;">' + pct + '% ของทั้งหมด</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="flex:1;min-width:120px;">' +
+          '<div style="background:#f1f5f9;border-radius:99px;height:8px;overflow:hidden;">' +
+            '<div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:99px;transition:width .4s;"></div>' +
+          '</div>' +
+        '</div>' +
+        (pct === 100 ? '<span style="font-size:12px;font-weight:700;color:#22c55e;"><i class="bi bi-check-circle-fill me-1"></i>ครบทุกรายการ</span>' : '<span style="font-size:12px;color:#94a3b8;">เหลือ ' + (total - done) + ' รายการ</span>') +
+      '</div>';
+  }
+
+  var statusOpts = Object.entries(INSP_STATUS).map(function(e) {
+    return '<option value="' + e[0] + '">' + e[1].label + '</option>';
+  }).join('');
+
+  tbody.innerHTML = slice.map(function(row, idx) {
+    var a = row.asset;
+    var i = (page-1)*ps + idx + 1;
+    var isDone = !!row.item;
+    var rowStyle = isDone
+      ? 'background:#f0fdf4;border-left:3px solid #22c55e;'
+      : 'background:#fff;border-left:3px solid #f59e0b;';
+    var statusBadge = isDone
+      ? '<span class="badge" style="background:#dcfce7;color:#166534;font-size:10px;font-weight:600;border:1px solid #bbf7d0;"><i class="bi bi-check-circle-fill me-1"></i>ตรวจแล้ว</span>'
+      : '<span class="badge" style="background:#fef9c3;color:#92400e;font-size:10px;font-weight:600;border:1px solid #fde68a;"><i class="bi bi-hourglass-split me-1"></i>รอตรวจ</span>';
+    return '<tr style="' + rowStyle + '">' +
+      '<td class="text-center" style="font-size:11px;color:#94a3b8;font-weight:600;">' + i + '</td>' +
+      '<td><div style="font-weight:700;font-size:13px;">' + a.name + '</div>' +
+        '<div style="font-size:11px;color:#64748b;font-family:monospace;margin-top:1px;">' + (a.asset_code||'-') + '</div>' +
+        (a.brand ? '<div style="font-size:11px;color:#94a3b8;">' + a.brand + (a.model?' · '+a.model:'') + '</div>' : '') +
+      '</td>' +
+      '<td style="font-size:12px;">' +
+        '<span style="font-weight:600;">' + ((a.branches&&a.branches.name)||'<span style="color:#f59e0b;">ไม่ระบุ</span>') + '</span>' +
+        (a.location ? '<br><span style="color:#94a3b8;font-size:11px;"><i class="bi bi-geo-alt me-1"></i>' + a.location + '</span>' : '') +
+      '</td>' +
+      '<td class="text-end" style="font-size:12px;font-weight:600;color:#0f172a;">' + fmtNum(a.price) + '</td>' +
+      '<td><select class="form-select form-select-sm" data-insp-idx="' + ((page-1)*ps+idx) + '" onchange="setInspStatus(this)">' + statusOpts.replace('value="' + row._status + '"', 'value="' + row._status + '" selected') + '</select></td>' +
+      '<td><input type="text" class="form-control form-control-sm" value="' + (row._note||'') + '" data-note-idx="' + ((page-1)*ps+idx) + '" onchange="setInspNote(this)" placeholder="หมายเหตุ..."></td>' +
+      '<td class="text-center">' + statusBadge + '</td></tr>';
+  }).join('');
+
+  if (paging) {
+    var ibtnStyle = 'style="min-width:36px;min-height:36px;font-size:15px;"';
+    var iPrev = page > 1
+      ? '<button class="btn btn-primary btn-sm" ' + ibtnStyle + ' onclick="inspGoPage(' + (page-1) + ')"><i class="bi bi-chevron-left"></i></button>'
+      : '<button class="btn btn-outline-secondary btn-sm" ' + ibtnStyle + ' disabled><i class="bi bi-chevron-left"></i></button>';
+    var iNext = page < pages
+      ? '<button class="btn btn-primary btn-sm" ' + ibtnStyle + ' onclick="inspGoPage(' + (page+1) + ')"><i class="bi bi-chevron-right"></i></button>'
+      : '<button class="btn btn-outline-secondary btn-sm" ' + ibtnStyle + ' disabled><i class="bi bi-chevron-right"></i></button>';
+    var iPageInfo = '<span class="btn btn-light btn-sm disabled" style="min-height:36px;font-size:13px;font-family:Kanit;">' + page + ' / ' + pages + '</span>';
+    paging.innerHTML = '<span style="font-size:12px;color:#64748b;" class="me-2">แสดง ' + data.length + ' รายการ</span>' +
+      '<div class="d-flex gap-1 align-items-center">' + iPrev + iPageInfo + iNext + '</div>';
+  }
+}
+
+function setInspStatus(sel) {
+  var idx = parseInt(sel.getAttribute('data-insp-idx'));
+  if (App.inspFiltered[idx]) App.inspFiltered[idx]._status = sel.value;
+}
+function setInspNote(inp) {
+  var idx = parseInt(inp.getAttribute('data-note-idx'));
+  if (App.inspFiltered[idx]) App.inspFiltered[idx]._note = inp.value;
+}
+function inspGoPage(p) { App.inspPage = p; _renderInspTable(); }
+
+function filterPendingTable() { /* re-render pending tab */ _loadInspPending(); }
+function filterDoneTable() { _loadInspDone(); }
+
+async function saveBatchInspection() {
+  if (!App.currentInspectionId) { showToast('ไม่มีรอบตรวจ', 'warning'); return; }
+  var changed = App.inspFiltered.filter(function(row) { return !row.item || row.item.result !== row._status || (row.item.notes||'') !== (row._note||''); });
+  if (!changed.length) { showToast('ไม่มีรายการที่เปลี่ยนแปลง', 'warning'); return; }
+
+  showToast('กำลังบันทึก...', 'primary');
+  var errors = 0;
+  for (var i = 0; i < changed.length; i++) {
+    var row = changed[i];
+    var payload = {
+      inspection_id: App.currentInspectionId,
+      asset_id:      row.asset.id,
+      result:        row._status,
+      status:        row._status,
+      notes:         row._note || null,
+      inspected_by:  App.profile.id,
+      inspected_at:  new Date().toISOString()
+    };
+    var res;
+    if (row.item) {
+      res = await sb.from('inspection_items').update(payload).eq('id', row.item.id);
+    } else {
+      res = await sb.from('inspection_items').insert(payload).select().single();
+      if (!res.error && res.data) row.item = res.data;
+    }
+    if (!res.error) {
+      // Update asset status
+      await sb.from('assets').update({ status: row._status }).eq('id', row.asset.id);
+      row.asset.status = row._status;
+    } else {
+      errors++;
+    }
+  }
+  if (errors) showToast('บันทึกเรียบร้อย (มี ' + errors + ' รายการที่ผิดพลาด)', 'warning');
+  else showToast('บันทึก ' + changed.length + ' รายการเรียบร้อย', 'success');
+  _renderInspTable();
+}
+
+// ===== CREATE INSPECTION =====
+function showCreateInspection() {
+  _populateYearSelects();
+  document.getElementById('inspName').value = '';
+  document.getElementById('inspStart').value = '';
+  document.getElementById('inspEnd').value = '';
+  var m = new bootstrap.Modal(document.getElementById('modalInspection'));
+  m.show();
+}
+
+async function saveInspection() {
+  var year = document.getElementById('inspYear').value;
+  var name = document.getElementById('inspName').value.trim();
+  var start = document.getElementById('inspStart').value;
+  var end = document.getElementById('inspEnd').value;
+  if (!name) { showToast('กรุณากรอกชื่อรอบตรวจ', 'warning'); return; }
+  var res = await sb.from('inspections').insert({
+    fiscal_year: year,
+    name:        name,
+    start_date:  start || null,
+    end_date:    end || null,
+    status:      'active',
+    created_by:  App.profile.id
+  });
+  if (res.error) { showToast('เกิดข้อผิดพลาด: ' + res.error.message, 'danger'); return; }
+  showToast('สร้างรอบตรวจเรียบร้อย', 'success');
+  bootstrap.Modal.getInstance(document.getElementById('modalInspection')).hide();
+  loadInspectionPage();
+}
+
+async function closeRound(id) {
+  var res = await sb.from('inspections').update({ status: 'closed' }).eq('id', id);
+  if (res.error) { showToast(res.error.message, 'danger'); return; }
+  showToast('ปิดรอบตรวจเรียบร้อย', 'success');
+  loadInspectionPage();
+}
+
+async function reopenRound(id) {
+  var res = await sb.from('inspections').update({ status: 'active' }).eq('id', id);
+  if (res.error) { showToast(res.error.message, 'danger'); return; }
+  showToast('เปิดรอบตรวจใหม่เรียบร้อย', 'success');
+  loadInspectionPage();
+}
+
+async function acknowledgeRound() {
+  showToast('รับทราบเรียบร้อย', 'success');
+  document.getElementById('inspAckBar').style.display = 'none';
+}
+
+async function loadInspMonitor() {
+  var m = new bootstrap.Modal(document.getElementById('modalInspMonitor'));
+  m.show();
+  document.getElementById('monitorBranchList').innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>';
+  // Re-use overview logic
+  var assRes = await sb.from('assets').select('id, branch_id, branches(name)').eq('status','active');
+  var assets = assRes.data || [];
+  var itemsRes = await sb.from('inspection_items').select('asset_id').eq('inspection_id', App.currentInspectionId);
+  var doneIds = {};
+  (itemsRes.data||[]).forEach(function(i) { doneIds[i.asset_id] = true; });
+  var byBranch = {};
+  assets.forEach(function(a) {
+    var bName = (a.branches&&a.branches.name)||'ไม่ระบุสาขา';
+    if (!byBranch[bName]) byBranch[bName] = { total:0, done:0 };
+    byBranch[bName].total++;
+    if (doneIds[a.id]) byBranch[bName].done++;
+  });
+  var total = assets.length, done = Object.keys(doneIds).length;
+  document.getElementById('monitorSummaryBar').innerHTML = '<div class="alert alert-info py-2" style="font-size:13px;">ภาพรวม: ตรวจแล้ว <strong>' + done + '</strong> / ' + total + ' รายการ</div>';
+  document.getElementById('monitorBranchList').innerHTML = '<table class="table table-sm table-hover">' +
+    '<thead><tr><th>สาขา</th><th>ตรวจแล้ว</th><th>ทั้งหมด</th><th>%</th></tr></thead>' +
+    '<tbody>' + Object.keys(byBranch).map(function(b) {
+      var bb = byBranch[b];
+      var bp = bb.total ? Math.round(bb.done/bb.total*100) : 0;
+      return '<tr><td>' + b + '</td><td>' + bb.done + '</td><td>' + bb.total + '</td><td>' +
+        '<div class="progress" style="height:6px;"><div class="progress-bar" style="width:' + bp + '%;background:' + (bp>=100?'#059669':bp>=50?'#d97706':'#dc2626') + ';"></div></div>' +
+        '<span style="font-size:11px;">' + bp + '%</span></td></tr>';
+    }).join('') + '</tbody></table>';
+}
+
+// ============================================================
+// ADMIN — BRANCHES & USERS
+// ============================================================
+function switchAdminTab(tab, btn) {
+  ['branches','users'].forEach(function(t) {
+    var el = document.getElementById('adminTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
+  document.querySelectorAll('#adminUserTabs .nav-link').forEach(function(el) { el.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  if (tab === 'branches') _loadBranchTable();
+  else if (tab === 'users') _loadUserTable();
+}
+
+async function loadAdminPage() {
+  _loadBranchTable();
+}
+
+async function _loadBranchTable() {
+  var tbody = document.getElementById('branchTableBody');
+  if (!tbody) return;
+
+  // โหลดพร้อมกัน: branches + จำนวนครุภัณฑ์ต่อสาขา
+  var [brRes, assetCountRes] = await Promise.all([
+    sb.from('branches').select('*'),
+    sb.from('assets').select('branch_id, status')
+  ]);
+  var branches = (brRes.data||[]).sort(function(a,b){
+    var na=parseInt(a.code)||0, nb=parseInt(b.code)||0;
+    return na!==nb ? na-nb : (a.code||'').localeCompare(b.code||'');
+  });
+
+  // สร้าง map: branch_id → { total, problem }
+  var assetMap = {};
+  (assetCountRes.data||[]).forEach(function(a) {
+    var id = a.branch_id || '__none__';
+    if (!assetMap[id]) assetMap[id] = { total: 0, problem: 0 };
+    assetMap[id].total++;
+    if (a.status && a.status !== 'active' && a.status !== 'disposed') assetMap[id].problem++;
+  });
+
+  tbody.innerHTML = branches.map(function(b) {
+    var initials = (b.name||'?').charAt(0);
+    var ac = assetMap[b.id] || { total: 0, problem: 0 };
+    var activeBadge = b.active
+      ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;color:#059669;border:1px solid #bbf7d0;padding:2px 10px;border-radius:20px;font-size:11px;"><span style="width:6px;height:6px;border-radius:50%;background:#059669;display:inline-block;"></span>เปิดใช้</span>'
+      : '<span style="display:inline-flex;align-items:center;gap:4px;background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;padding:2px 10px;border-radius:20px;font-size:11px;"><span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;display:inline-block;"></span>ปิด</span>';
+    // แสดงจำนวนครุภัณฑ์พร้อม indicator ปัญหา
+    var probPct = ac.total ? Math.round(ac.problem / ac.total * 100) : 0;
+    var probColor = probPct >= 20 ? '#dc2626' : probPct >= 5 ? '#f59e0b' : '#059669';
+    var assetCell = '<div style="text-align:center;">' +
+      '<div style="font-size:15px;font-weight:700;color:#0f172a;">' + ac.total + '</div>' +
+      (ac.problem > 0
+        ? '<div style="font-size:10px;color:' + probColor + ';font-weight:600;" title="มีปัญหา/ไม่พบ ' + ac.problem + ' รายการ (' + probPct + '%)"><i class="bi bi-exclamation-triangle-fill me-1"></i>' + ac.problem + ' ปัญหา</div>'
+        : '<div style="font-size:10px;color:#059669;">✓ ปกติทั้งหมด</div>') +
+    '</div>';
+    return '<tr style="' + (!b.active?'opacity:.6;':'') + '">' +
+      '<td>' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#0891b2,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;">' + initials + '</div>' +
+          '<div>' +
+            '<div style="font-weight:600;font-size:13px;">' + b.name + '</div>' +
+            '<div style="font-family:monospace;font-size:11px;color:#64748b;">รหัส: ' + b.code + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</td>' +
+      '<td style="font-size:12px;color:#64748b;"><i class="bi bi-person me-1"></i>' + (b.chair_name||'—') + '</td>' +
+      '<td>' + assetCell + '</td>' +
+      '<td>' + activeBadge + '</td>' +
+      '<td>' +
+        '<button class="btn btn-sm btn-light border me-1" style="font-size:12px;padding:3px 10px;" onclick=\'showBranchForm(' + JSON.stringify(b) + ')\'><i class="bi bi-pencil me-1"></i>แก้ไข</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('') || '<tr><td colspan="5" class="text-center text-muted py-4">ไม่มีข้อมูล</td></tr>';
+}
+
+function showBranchForm(branch) {
+  document.getElementById('branchId').value = branch ? branch.id : '';
+  document.getElementById('branchCode').value = branch ? branch.code : '';
+  document.getElementById('branchName').value = branch ? branch.name : '';
+  document.getElementById('branchChair').value = branch ? (branch.chair_name||'') : '';
+  document.getElementById('branchModalTitle').innerHTML = '<i class="bi bi-diagram-3 me-2"></i>' + (branch ? 'แก้ไขสาขา' : 'เพิ่มสาขา');
+  var m = new bootstrap.Modal(document.getElementById('modalBranch'));
+  m.show();
+}
+
+async function saveBranch() {
+  var id = document.getElementById('branchId').value;
+  var code = document.getElementById('branchCode').value.trim();
+  var name = document.getElementById('branchName').value.trim();
+  var chair = document.getElementById('branchChair').value.trim();
+  if (!code || !name) { showToast('กรุณากรอกรหัสและชื่อสาขา', 'warning'); return; }
+  var res;
+  if (id) {
+    res = await sb.from('branches').update({ code, name, chair_name: chair||null }).eq('id', id);
+  } else {
+    res = await sb.from('branches').insert({ code, name, chair_name: chair||null, active: true });
+  }
+  if (res.error) { showToast(res.error.message, 'danger'); return; }
+  showToast('บันทึกเรียบร้อย', 'success');
+  bootstrap.Modal.getInstance(document.getElementById('modalBranch')).hide();
+  _loadBranchTable();
+  loadBranches();
+}
+
+async function _loadUserTable() {
+  var container = document.getElementById('userTableBody');
+  if (!container) return;
+  var res = await sb.from('profiles').select('*, branches(name)').order('role').order('username');
+  var users = res.data || [];
+  if (!users.length) { container.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">ไม่มีข้อมูล</td></tr>'; return; }
+
+  // sort: admin first, then numeric username
+  users.sort(function(a,b) {
+    if (a.role === 'admin' && b.role !== 'admin') return -1;
+    if (a.role !== 'admin' && b.role === 'admin') return 1;
+    var na = parseInt(a.username)||0, nb = parseInt(b.username)||0;
+    if (na !== nb) return na - nb;
+    return (a.username||'').localeCompare(b.username||'');
+  });
+
+  container.innerHTML = users.map(function(u) {
+    var isAdmin = u.role === 'admin';
+    var initials = (u.full_name||u.username||'?').charAt(0).toUpperCase();
+    var avatarBg = isAdmin ? 'linear-gradient(135deg,#3b82f6,#8b5cf6)' : 'linear-gradient(135deg,#059669,#0891b2)';
+    var roleBadge = isAdmin
+      ? '<span style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;">Admin</span>'
+      : '<span style="background:#f0fdf4;color:#059669;border:1px solid #bbf7d0;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;">สาขา</span>';
+    var activeBadge = u.active
+      ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;color:#059669;border:1px solid #bbf7d0;padding:2px 10px;border-radius:20px;font-size:11px;"><span style="width:6px;height:6px;border-radius:50%;background:#059669;display:inline-block;"></span>เปิดใช้</span>'
+      : '<span style="display:inline-flex;align-items:center;gap:4px;background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;padding:2px 10px;border-radius:20px;font-size:11px;"><span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;display:inline-block;"></span>ปิด</span>';
+    var branchName = (u.branches&&u.branches.name) || (isAdmin ? '<span style="color:#94a3b8;font-size:11px;">ทุกสาขา</span>' : '<span style="color:#f59e0b;font-size:11px;">ยังไม่ระบุ</span>');
+
+    return '<tr style="' + (!u.active ? 'opacity:.55;' : '') + '">' +
+      '<td>' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<div style="width:34px;height:34px;border-radius:50%;background:' + avatarBg + ';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;">' + initials + '</div>' +
+          '<div>' +
+            '<div style="font-weight:600;font-size:13px;">' + (u.full_name||'—') + '</div>' +
+            '<div style="font-family:monospace;font-size:11px;color:#64748b;">@' + (u.username||'-') + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</td>' +
+      '<td>' + roleBadge + '</td>' +
+      '<td style="font-size:12px;">' + branchName + '</td>' +
+      '<td>' + activeBadge + '</td>' +
+      '<td>' +
+        '<button class="btn btn-sm btn-light border" style="font-size:12px;padding:3px 10px;" onclick=\'showEditUser(' + JSON.stringify(u) + ')\'>' +
+          '<i class="bi bi-pencil me-1"></i>แก้ไข' +
+        '</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function showEditUser(u) {
+  document.getElementById('editUserId').value = u.id;
+  document.getElementById('uFullName').value = u.full_name || '';
+  document.getElementById('uRole').value = u.role || 'branch';
+  document.getElementById('uBranch').value = u.branch_id || '';
+  document.getElementById('uActive').value = u.active ? 'true' : 'false';
+  toggleBranchSelect();
+  document.getElementById('userModalTitle').textContent = 'แก้ไขผู้ใช้: ' + (u.username||u.id);
+  // populate branch select
+  _populateBranchSelects();
+  setTimeout(function() {
+    document.getElementById('uBranch').value = u.branch_id || '';
+  }, 100);
+  var m = new bootstrap.Modal(document.getElementById('modalUser'));
+  m.show();
+}
+
+function toggleBranchSelect() {
+  var role = document.getElementById('uRole').value;
+  var div = document.getElementById('uBranchDiv');
+  if (div) div.style.display = role === 'branch' ? '' : 'none';
+}
+
+async function saveUser() {
+  var id = document.getElementById('editUserId').value;
+  if (!id) return;
+  var res = await sb.from('profiles').update({
+    full_name: document.getElementById('uFullName').value.trim() || null,
+    role:      document.getElementById('uRole').value,
+    branch_id: document.getElementById('uBranch').value || null,
+    active:    document.getElementById('uActive').value === 'true'
+  }).eq('id', id);
+  if (res.error) { showToast(res.error.message, 'danger'); return; }
+  showToast('บันทึกเรียบร้อย', 'success');
+  bootstrap.Modal.getInstance(document.getElementById('modalUser')).hide();
+  _loadUserTable();
+}
+
+// ============================================================
+// STARTUP
+// ============================================================
+(async function() {
+  // bind Enter key on login
+  var passEl = document.getElementById('loginPass');
+  if (passEl) passEl.addEventListener('keydown', function(e) { if (e.key==='Enter') doLogin(); });
+
+  // Check existing session
+  try {
+    var res = await sb.auth.getSession();
+    if (res.data && res.data.session) {
+      await _loadProfile(res.data.session.user);
+      if (App.profile) {
+        _startApp();
+        return;
+      }
+    }
+  } catch(e) { /* ignore */ }
+
+  // No session — show login
+  hideLoading();
+  document.getElementById('loginPage').style.display = 'flex';
+})();
+</script>
+</body>
+</html>
