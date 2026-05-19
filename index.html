@@ -1715,6 +1715,12 @@ function _populateBranchSelects() {
   }
 }
 
+// Helper: แปลงปีจาก date เป็น พ.ศ. (รองรับทั้งที่เก็บเป็น ค.ศ. และ พ.ศ. แล้ว)
+function toThaiYear(dateOrStr) {
+  var yr = (dateOrStr instanceof Date ? dateOrStr : new Date(dateOrStr)).getFullYear();
+  return yr >= 2500 ? yr : yr + 543;
+}
+
 function _populateYearSelects() {
   var now = new Date();
   var buddhistYear = now.getFullYear() + 543;
@@ -1759,7 +1765,7 @@ async function loadDashboard() {
     q = q.eq('branch_id', branchFilter);
   }
   if (yearFilter) {
-    var fy = parseInt(yearFilter) - 543;
+    var fy = parseInt(yearFilter); // พ.ศ. ตรงๆ (DB เก็บเป็น พ.ศ.)
     var fyStart = (fy - 1) + '-10-01';
     var fyEnd   = fy + '-09-30';
     q = q.gte('acquired_date', fyStart).lte('acquired_date', fyEnd);
@@ -2076,7 +2082,7 @@ async function loadAssetsPage() {
     var years = {};
     App.allAssets.forEach(function(a) {
       if (a.acquired_date) {
-        var yr = new Date(a.acquired_date).getFullYear() + 543;
+        var yr = toThaiYear(a.acquired_date);
         years[yr] = true;
       }
     });
@@ -2099,7 +2105,7 @@ function filterAssetsNow() {
 
   App.filteredAssets = App.allAssets.filter(function(a) {
     var matchSearch = !search || (a.asset_code||'').toLowerCase().includes(search) || (a.name||'').toLowerCase().includes(search) || (a.brand||'').toLowerCase().includes(search);
-    var matchYear = !year || (a.acquired_date && (new Date(a.acquired_date).getFullYear() + 543) == year);
+    var matchYear = !year || (a.acquired_date && toThaiYear(a.acquired_date) == year);
     var matchBranch = !branch || a.branch_id === branch;
     var matchStatus = !status || a.status === status;
     return matchSearch && matchYear && matchBranch && matchStatus;
@@ -2153,7 +2159,7 @@ function renderAssetTable() {
       var ageHtml = '<span style="color:#cbd5e1;font-size:11px;">—</span>';
       if (a.acquired_date) {
         var d = new Date(a.acquired_date);
-        var beY = d.getFullYear() + 543;
+        var beY = toThaiYear(d);
         fyStr = '<div style="font-size:10px;color:#94a3b8;margin-top:1px;">ปีงบ ' + beY + '</div>';
         var ageYrs = (new Date() - d) / (365.25 * 24 * 3600 * 1000);
         var ageFull = Math.floor(ageYrs);
