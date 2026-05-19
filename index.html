@@ -1753,8 +1753,12 @@ async function loadDashboard() {
   var yearFilter   = dashYear   ? dashYear.value   : '';
   var statusFilter = dashStatus ? dashStatus.value : '';
 
-  // Fetch assets
+  // ซ่อน/แสดง filter ตาม role
   var isBranchUser = App.profile && App.profile.role === 'branch';
+  var dashBranchWrap = document.getElementById('dashBranch') && document.getElementById('dashBranch').closest('.d-flex');
+  if (dashBranchWrap) dashBranchWrap.style.display = isBranchUser ? 'none' : '';
+  var dashStatusWrap = document.getElementById('dashStatus') && document.getElementById('dashStatus').closest('.d-flex');
+  if (dashStatusWrap) dashStatusWrap.style.display = isBranchUser ? 'none' : '';
   var selectFields = isBranchUser
     ? 'id, asset_code, name, status, branch_id, acquired_date, branches(name)'
     : 'id, status, branch_id, acquired_date, branches(name)';
@@ -1865,7 +1869,6 @@ function filterDashByStatus(status) {
 }
 
 function _renderBranchActionPanel(assets) {
-  // Update header
   var titleEl = document.getElementById('chartTitle');
   var iconEl  = document.getElementById('dashChartIcon');
   if (titleEl) titleEl.textContent = 'รายการที่ต้องดำเนินการ';
@@ -1873,48 +1876,54 @@ function _renderBranchActionPanel(assets) {
   if (App._dashChart) { App._dashChart.destroy(); App._dashChart = null; }
 
   var groups = [
-    { status:'not_found',         label:'ไม่พบ',              icon:'bi-question-circle-fill', color:'#ea580c', bg:'#fff7ed', border:'#fed7aa' },
-    { status:'damaged_fixable',   label:'ชำรุด ซ่อมได้',     icon:'bi-tools',                color:'#d97706', bg:'#fffbeb', border:'#fde68a' },
-    { status:'damaged_unfixable', label:'ชำรุด ซ่อมไม่ได้',  icon:'bi-x-octagon-fill',       color:'#dc2626', bg:'#fef2f2', border:'#fecaca' },
-    { status:'disposal_pending',  label:'รออนุมัติจำหน่าย',  icon:'bi-hourglass-split',      color:'#b45309', bg:'#fefce8', border:'#fef08a' }
+    { status:'damaged_unfixable', label:'ชำรุด ซ่อมไม่ได้',  icon:'bi-x-octagon-fill',       color:'#dc2626', bg:'#fef2f2', border:'#fecaca', hint:'เสนอขออนุมัติจำหน่าย' },
+    { status:'not_found',         label:'ไม่พบ',              icon:'bi-question-circle-fill', color:'#ea580c', bg:'#fff7ed', border:'#fed7aa', hint:'ตรวจสอบ/แจ้งให้ทราบ' },
+    { status:'damaged_fixable',   label:'ชำรุด ซ่อมได้',     icon:'bi-tools',                color:'#d97706', bg:'#fffbeb', border:'#fde68a', hint:'แจ้งซ่อม' },
+    { status:'disposal_pending',  label:'รออนุมัติจำหน่าย',  icon:'bi-hourglass-split',      color:'#b45309', bg:'#fefce8', border:'#fef08a', hint:'รอผู้บริหาร' }
   ];
 
-  var hasAny = false;
-  var html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:4px;">';
+  var totalAction = 0;
+  var html = '<div style="padding:4px 0;">';
 
   groups.forEach(function(g) {
     var items = assets.filter(function(a){ return a.status === g.status; });
     if (items.length === 0) return;
-    hasAny = true;
-    html += '<div style="border:1px solid ' + g.border + ';border-radius:10px;overflow:hidden;background:#fff;">';
-    // Header
-    html += '<div style="background:' + g.bg + ';padding:10px 14px;display:flex;align-items:center;gap:8px;">';
-    html += '<i class="bi ' + g.icon + '" style="color:' + g.color + ';font-size:16px;"></i>';
-    html += '<span style="font-weight:700;color:' + g.color + ';font-size:14px;">' + g.label + '</span>';
-    html += '<span style="margin-left:auto;background:' + g.color + ';color:#fff;border-radius:12px;padding:1px 10px;font-size:12px;font-weight:700;">' + items.length + ' รายการ</span>';
+    totalAction += items.length;
+
+    // Group header (คลิกได้เพื่อ filter)
+    html += '<div style="margin-bottom:2px;">';
+    html += '<div style="background:' + g.bg + ';border-left:4px solid ' + g.color + ';padding:9px 14px;display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="filterDashByStatus(\'' + g.status + '\')">';
+    html += '<i class="bi ' + g.icon + '" style="color:' + g.color + ';font-size:15px;"></i>';
+    html += '<span style="font-weight:700;color:' + g.color + ';font-size:13px;">' + g.label + '</span>';
+    html += '<span style="font-size:12px;color:#94a3b8;margin-left:4px;">— ' + g.hint + '</span>';
+    html += '<span style="margin-left:auto;background:' + g.color + ';color:#fff;border-radius:10px;padding:1px 10px;font-size:12px;font-weight:700;">' + items.length + '</span>';
     html += '</div>';
-    // List
-    html += '<div style="max-height:220px;overflow-y:auto;">';
-    items.forEach(function(a) {
-      html += '<div style="padding:7px 14px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'#fff\'" onclick="filterDashByStatus(\'' + g.status + '\')">';
-      html += '<span style="font-size:11px;color:#94a3b8;font-family:monospace;min-width:80px;">' + (a.asset_code || '-') + '</span>';
-      html += '<span style="font-size:13px;color:#1e293b;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (a.name || '-') + '</span>';
-      html += '</div>';
+
+    // Table rows
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<thead><tr style="background:#f8fafc;">';
+    html += '<th style="padding:5px 14px;font-weight:600;color:#64748b;font-size:11px;text-align:left;width:180px;">รหัสครุภัณฑ์</th>';
+    html += '<th style="padding:5px 14px;font-weight:600;color:#64748b;font-size:11px;text-align:left;">ชื่อครุภัณฑ์</th>';
+    html += '</tr></thead><tbody>';
+    items.forEach(function(a, idx) {
+      var rowBg = idx % 2 === 0 ? '#fff' : '#fafafa';
+      html += '<tr style="background:' + rowBg + ';border-bottom:1px solid #f1f5f9;cursor:pointer;" onmouseover="this.style.background=\'#f0f9ff\'" onmouseout="this.style.background=\'' + rowBg + '\'" onclick="filterDashByStatus(\'' + g.status + '\')">';
+      html += '<td style="padding:7px 14px;font-family:monospace;font-size:11px;color:#64748b;">' + (a.asset_code || '—') + '</td>';
+      html += '<td style="padding:7px 14px;color:#1e293b;">' + (a.name || '—') + '</td>';
+      html += '</tr>';
     });
-    html += '</div>';
-    // Footer button
-    html += '<div style="padding:8px 14px;background:#f8fafc;text-align:right;">';
-    html += '<button class="btn btn-sm" style="font-size:12px;color:' + g.color + ';border:1px solid ' + g.color + ';border-radius:6px;padding:3px 12px;font-weight:600;" onclick="filterDashByStatus(\'' + g.status + '\')">ดูทั้งหมด <i class="bi bi-arrow-right"></i></button>';
-    html += '</div>';
+    html += '</tbody></table>';
     html += '</div>';
   });
 
-  if (!hasAny) {
-    html += '<div style="grid-column:1/-1;text-align:center;padding:48px 20px;color:#22c55e;">';
-    html += '<i class="bi bi-check-circle-fill" style="font-size:56px;"></i>';
+  if (totalAction === 0) {
+    html += '<div style="text-align:center;padding:48px 20px;">';
+    html += '<i class="bi bi-check-circle-fill" style="font-size:56px;color:#22c55e;"></i>';
     html += '<div style="font-size:17px;font-weight:700;margin-top:14px;color:#166534;">ครุภัณฑ์ทุกรายการอยู่ในสภาพดี!</div>';
     html += '<div style="font-size:13px;color:#86efac;margin-top:4px;">ไม่มีรายการที่ต้องดำเนินการ</div>';
     html += '</div>';
+  } else {
+    html += '<div style="text-align:right;padding:10px 14px 4px;font-size:12px;color:#94a3b8;">รวม ' + totalAction + ' รายการที่ต้องดำเนินการ</div>';
   }
 
   html += '</div>';
