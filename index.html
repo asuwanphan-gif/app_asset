@@ -586,6 +586,8 @@
           <div class="page-title-sub">สรุปสถานะและสถิติการตรวจสอบ</div>
         </div>
       </div>
+      <!-- Inspection Banner -->
+      <div id="dashInspBanner" class="mb-3"></div>
       <!-- Filter bar -->
       <div class="no-print mb-3" id="dashFilterBar">
         <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -680,6 +682,7 @@
             <select id="filterYear" class="form-select form-select-sm" onchange="filterAssetsNow()" style="min-width:130px;flex:1;"></select>
             <select id="filterBranch" class="form-select form-select-sm" onchange="filterAssetsNow()" style="min-width:120px;flex:1;">
               <option value="">-- ทุกสาขา --</option>
+              <option value="no_branch">ยังไม่ระบุสาขา</option>
             </select>
             <select id="filterStatus" class="form-select form-select-sm" onchange="filterAssetsNow()" style="min-width:130px;flex:1;">
               <option value="">-- ทุกสถานะ --</option>
@@ -742,12 +745,159 @@
       </div>
     </div>
 
-    <!-- ===== TRANSFER (กำลังพัฒนา) ===== -->
+    <!-- ===== TRANSFER ===== -->
     <div id="page-transfer" class="page-content" style="display:none;">
-      <div class="under-construction">
-        <i class="bi bi-arrow-left-right"></i>
-        <h5>โอนย้ายครุภัณฑ์</h5>
-        <p>กำลังพัฒนา — จะเปิดใช้งานในเร็วๆ นี้</p>
+      <!-- Header -->
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div class="page-title-bar mb-0">
+          <div class="page-title-icon" style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);"><i class="bi bi-arrow-left-right" style="color:#4f46e5;"></i></div>
+          <div>
+            <div class="page-title-text">โอนย้ายครุภัณฑ์</div>
+            <div class="page-title-sub">ส่งคำขอ · ขาเข้า · ขาออก · ประวัติ</div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm px-3" id="trBtnCreate" onclick="openTransferModal()" style="font-family:Kanit;"><i class="bi bi-plus-circle me-1"></i>สร้างคำขอโอน</button>
+      </div>
+
+      <!-- Tab bar -->
+      <div class="card shadow-sm mb-0">
+        <div class="card-body p-0">
+          <div class="d-flex align-items-center" style="border-bottom:1px solid #e2e8f0;">
+            <button id="trTabBtnIncoming" onclick="showTransferTab('incoming')" style="flex:1;padding:11px 6px;border:none;background:none;font-family:Kanit;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#64748b;"><i class="bi bi-download me-1"></i>ขาเข้า <span id="trIncomingBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:0px 6px;font-size:10px;font-weight:700;"></span></button>
+            <button id="trTabBtnOutgoing" onclick="showTransferTab('outgoing')" style="flex:1;padding:11px 6px;border:none;background:none;font-family:Kanit;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#64748b;"><i class="bi bi-upload me-1"></i>ขาออก</button>
+            <button id="trTabBtnHistory"  onclick="showTransferTab('history')"  style="flex:1;padding:11px 6px;border:none;background:none;font-family:Kanit;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#64748b;"><i class="bi bi-clock-history me-1"></i>ประวัติ</button>
+            <button onclick="loadTransferPage()" style="padding:8px 12px;border:none;background:none;cursor:pointer;color:#94a3b8;" title="รีเฟรช"><i class="bi bi-arrow-clockwise"></i></button>
+          </div>
+
+          <!-- TAB: ขาเข้า -->
+          <div id="trTabIncoming">
+            <div style="overflow-x:auto;">
+              <table class="table table-hover table-sm mb-0" style="font-size:13px;min-width:700px;">
+                <thead style="background:#0c1a2e;color:#fff;">
+                  <tr>
+                    <th style="padding:10px 12px;font-weight:600;">ครุภัณฑ์</th>
+                    <th style="padding:10px 12px;font-weight:600;">จากสาขา</th>
+                    <th style="padding:10px 12px;font-weight:600;">ผู้ขอโอน</th>
+                    <th style="padding:10px 12px;font-weight:600;">วันที่ขอ</th>
+                    <th style="padding:10px 12px;font-weight:600;">หมายเหตุ</th>
+                    <th style="padding:10px 12px;font-weight:600;text-align:center;">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="trIncomingBody">
+                  <tr><td colspan="6" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังโหลด...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB: ขาออก -->
+          <div id="trTabOutgoing" style="display:none;">
+            <div style="overflow-x:auto;">
+              <table class="table table-hover table-sm mb-0" style="font-size:13px;min-width:700px;">
+                <thead style="background:#0c1a2e;color:#fff;">
+                  <tr>
+                    <th style="padding:10px 12px;font-weight:600;">ครุภัณฑ์</th>
+                    <th style="padding:10px 12px;font-weight:600;">ไปยังสาขา</th>
+                    <th style="padding:10px 12px;font-weight:600;">วันที่ขอ</th>
+                    <th style="padding:10px 12px;font-weight:600;">หมายเหตุ</th>
+                    <th style="padding:10px 12px;font-weight:600;text-align:center;">สถานะ</th>
+                    <th style="padding:10px 12px;font-weight:600;text-align:center;">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="trOutgoingBody">
+                  <tr><td colspan="6" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังโหลด...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB: ประวัติ -->
+          <div id="trTabHistory" style="display:none;">
+            <div style="overflow-x:auto;">
+              <table class="table table-hover table-sm mb-0" style="font-size:13px;min-width:700px;">
+                <thead style="background:#0c1a2e;color:#fff;">
+                  <tr>
+                    <th style="padding:10px 12px;font-weight:600;">วันที่</th>
+                    <th style="padding:10px 12px;font-weight:600;">ครุภัณฑ์</th>
+                    <th style="padding:10px 12px;font-weight:600;">ต้นทาง → ปลายทาง</th>
+                    <th style="padding:10px 12px;font-weight:600;">หมายเหตุ</th>
+                    <th style="padding:10px 12px;font-weight:600;text-align:center;">ผลลัพธ์</th>
+                  </tr>
+                </thead>
+                <tbody id="trHistoryBody">
+                  <tr><td colspan="5" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังโหลด...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: สร้างคำขอโอน -->
+    <div class="modal fade" id="modalTransferCreate" tabindex="-1">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header" style="background:#0c1a2e;color:#fff;">
+            <h5 class="modal-title" style="font-family:Kanit;font-size:15px;"><i class="bi bi-arrow-left-right me-2"></i>สร้างคำขอโอนย้ายครุภัณฑ์</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body p-0">
+            <!-- Modal filter -->
+            <div style="padding:12px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+              <div class="d-flex gap-2 align-items-center flex-wrap">
+                <input id="trMSearch" type="search" class="form-control form-control-sm" placeholder="ค้นหาชื่อ / รหัส..." style="min-width:180px;flex:2;" oninput="filterTransferModal()">
+                <select id="trMFromBranch" class="form-select form-select-sm" onchange="filterTransferModal()" style="min-width:150px;flex:1;">
+                  <option value="">-- สาขาต้นทาง --</option>
+                </select>
+                <select id="trMStatus" class="form-select form-select-sm" onchange="filterTransferModal()" style="min-width:130px;flex:1;">
+                  <option value="">-- ทุกสถานะ --</option>
+                  <option value="active">พบ / ปกติ</option>
+                  <option value="not_found">ไม่พบ</option>
+                  <option value="damaged_fixable">ชำรุด ซ่อมได้</option>
+                  <option value="damaged_unfixable">ชำรุด ซ่อมไม่ได้</option>
+                </select>
+              </div>
+            </div>
+            <!-- Selection summary bar -->
+            <div id="trMActionBar" style="display:none;padding:8px 16px;background:#312e81;color:#fff;">
+              <div class="d-flex align-items-center gap-3 flex-wrap">
+                <span id="trMSelectedCount" style="font-weight:700;font-size:13px;flex:1;"></span>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span style="font-size:12px;opacity:.8;">โอนไปยัง:</span>
+                  <select id="trMTarget" class="form-select form-select-sm" style="min-width:165px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);font-family:Kanit;">
+                    <option value="">-- เลือกสาขาปลายทาง --</option>
+                  </select>
+                  <input id="trMNote" type="text" class="form-control form-control-sm" placeholder="หมายเหตุ (ถ้ามี)" style="min-width:150px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);font-family:Kanit;">
+                </div>
+              </div>
+            </div>
+            <!-- Asset table -->
+            <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
+              <table class="table table-hover table-sm mb-0" style="font-size:13px;min-width:650px;">
+                <thead style="background:#f1f5f9;position:sticky;top:0;z-index:1;">
+                  <tr>
+                    <th style="padding:9px 10px;width:36px;"><input type="checkbox" class="form-check-input" id="trMAllChk" onchange="trMToggleAll(this.checked)"></th>
+                    <th style="padding:9px 10px;">รหัส</th>
+                    <th style="padding:9px 10px;">ชื่อรายการ</th>
+                    <th style="padding:9px 10px;">สาขา</th>
+                    <th style="padding:9px 10px;">สถานะ</th>
+                    <th style="padding:9px 10px;text-align:right;">ราคา</th>
+                  </tr>
+                </thead>
+                <tbody id="trMTableBody">
+                  <tr><td colspan="6" class="text-center py-3 text-muted">กำลังโหลด...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <span id="trMPagingInfo" class="text-muted me-auto" style="font-size:12px;"></span>
+            <div id="trMPaging" class="d-flex gap-1 me-2"></div>
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">ยกเลิก</button>
+            <button type="button" class="btn btn-primary btn-sm px-4" onclick="submitTransferRequest()" id="trMSubmitBtn"><i class="bi bi-send me-1"></i>ส่งคำขอโอน</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1650,6 +1800,7 @@ function showPage(page) {
   if (page === 'dashboard') loadDashboard();
   else if (page === 'assets') loadAssetsPage();
   else if (page === 'inspection') loadInspectionPage();
+  else if (page === 'transfer') loadTransferPage();
   else if (page === 'admin-users') loadAdminPage();
 }
 
@@ -1691,6 +1842,12 @@ function _populateBranchSelects() {
     var cur = sel.value;
     // keep first option(s)
     while (sel.options.length > 1) sel.remove(1);
+    // เพิ่ม "ยังไม่ระบุสาขา" สำหรับ filterBranch เท่านั้น
+    if (id === 'filterBranch') {
+      var nob = document.createElement('option');
+      nob.value = 'no_branch'; nob.textContent = 'ยังไม่ระบุสาขา';
+      sel.appendChild(nob);
+    }
     App.branches.forEach(function(b) {
       var o = document.createElement('option');
       o.value = b.id; o.textContent = b.name;
@@ -1828,6 +1985,44 @@ async function loadDashboard() {
     }).join('');
   }
 
+  // ── Inspection Banner ──────────────────────────────────────
+  var dashInspBanner = document.getElementById('dashInspBanner');
+  if (dashInspBanner) {
+    var inspRes = await sb.from('inspections').select('*').eq('status','active').order('created_at',{ascending:false}).limit(1);
+    var activeInsp = (inspRes.data || [])[0] || null;
+    if (activeInsp) {
+      var endD = activeInsp.end_date ? new Date(activeInsp.end_date) : null;
+      var todayD = new Date(); todayD.setHours(0,0,0,0);
+      var daysTag = '';
+      if (endD) {
+        var diff = Math.ceil((endD - todayD) / (864e5));
+        if (diff > 3)       daysTag = '<span style="background:rgba(255,255,255,.2);color:#fff;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;">เหลือ ' + diff + ' วัน</span>';
+        else if (diff > 0)  daysTag = '<span style="background:#fbbf24;color:#000;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;">ใกล้ครบกำหนด! เหลือ ' + diff + ' วัน</span>';
+        else if (diff === 0) daysTag = '<span style="background:#ef4444;color:#fff;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;">วันสุดท้าย!</span>';
+        else daysTag = '<span style="background:#ef4444;color:#fff;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;">เลยกำหนด ' + Math.abs(diff) + ' วัน</span>';
+      }
+      var dateRange = activeInsp.start_date ? fmtDate(activeInsp.start_date) + ' – ' + fmtDate(activeInsp.end_date) : '';
+      dashInspBanner.innerHTML =
+        '<div style="background:linear-gradient(135deg,#1e3a5f,#1e40af);border-radius:12px;padding:12px 18px;color:#fff;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">' +
+          '<div style="background:rgba(255,255,255,.15);border-radius:10px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+            '<i class="bi bi-clipboard2-pulse-fill" style="font-size:20px;color:#93c5fd;"></i>' +
+          '</div>' +
+          '<div style="flex:1;min-width:180px;">' +
+            '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px;">' +
+              '<span style="background:#22c55e;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;">เปิดรอบตรวจ</span>' +
+              daysTag +
+            '</div>' +
+            '<div style="font-size:15px;font-weight:800;">' + (activeInsp.name||'รอบตรวจ') + '</div>' +
+            '<div style="font-size:11px;opacity:.7;margin-top:1px;"><i class="bi bi-calendar3 me-1"></i>ปีงบ ' + (activeInsp.fiscal_year||'-') + (dateRange ? '  ·  ' + dateRange : '') + '</div>' +
+          '</div>' +
+          '<button class="btn btn-sm" style="background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);font-family:Kanit;" onclick="showPage(\'inspection\')">' +
+            '<i class="bi bi-arrow-right-circle me-1"></i>ไปกรอกผล</button>' +
+        '</div>';
+    } else {
+      dashInspBanner.innerHTML = '';
+    }
+  }
+
   // Badge ไม่มีสาขา
   var noBranch = assets.filter(function(a){ return !a.branch_id; }).length;
   var noBranchEl = document.getElementById('noBranchAlert');
@@ -1843,31 +2038,18 @@ async function loadDashboard() {
   if (isBranchUser) {
     _renderBranchActionPanel(assets);
   } else {
-    _renderDashChart(assets, branchFilter);
+    await _renderDashChart(assets, branchFilter);
   }
 }
 
 function filterNoBranch() {
+  App._pendingFilter = { branch: 'no_branch' };
   showPage('assets');
-  setTimeout(function() {
-    var sel = document.getElementById('filterBranch');
-    if (sel) { sel.value = 'no_branch'; filterAssetsNow(); }
-  }, 300);
 }
 
 function filterDashByStatus(status) {
+  App._pendingFilter = { status: status || '' };
   showPage('assets');
-  setTimeout(function() {
-    var sel = document.getElementById('filterStatus');
-    if (sel) { sel.value = status || ''; filterAssetsNow(); }
-    // highlight selected card
-    document.querySelectorAll('.stat-card').forEach(function(c) { c.classList.remove('stat-card-sel'); });
-    if (status) {
-      document.querySelectorAll('.stat-card').forEach(function(c) {
-        if (c.getAttribute('onclick') && c.getAttribute('onclick').includes("'" + status + "'")) c.classList.add('stat-card-sel');
-      });
-    }
-  }, 200);
 }
 
 function _renderBranchActionPanel(assets) {
@@ -1959,13 +2141,10 @@ function _renderBranchActionPanel(assets) {
   if (body) body.innerHTML = html;
 }
 
-function _renderDashChart(assets, selectedBranch) {
-  // Reset header for admin chart view
+async function _renderDashChart(assets, selectedBranch) {
   var titleEl = document.getElementById('chartTitle');
   var iconEl  = document.getElementById('dashChartIcon');
-  if (titleEl) titleEl.textContent = 'ครุภัณฑ์แยกตามสาขา';
-  if (iconEl)  { iconEl.className = 'bi bi-bar-chart-fill text-success'; iconEl.style.color = ''; }
-  var body = document.getElementById('dashChartBody');
+  var body    = document.getElementById('dashChartBody');
   if (body && !body.querySelector('canvas#branchChart')) {
     body.innerHTML = '<div style="position:relative;width:100%;height:420px;"><canvas id="branchChart"></canvas></div>';
   }
@@ -1973,122 +2152,104 @@ function _renderDashChart(assets, selectedBranch) {
   if (!ctx) return;
   if (App._dashChart) { App._dashChart.destroy(); App._dashChart = null; }
 
-  // group by branch
-  var branchMap = {};
-  App.branches.forEach(function(b) { branchMap[b.id] = b.name; });
+  // ── หา active inspection + inspection_items ──────────────
+  var inspRes = await sb.from('inspections').select('id,name').eq('status','active').order('created_at',{ascending:false}).limit(1);
+  var activeInsp = (inspRes.data||[])[0] || null;
+  var inspectedSet = new Set();
+  if (activeInsp) {
+    var itemsRes = await sb.from('inspection_items').select('asset_id').eq('inspection_id', activeInsp.id);
+    (itemsRes.data||[]).forEach(function(i){ inspectedSet.add(i.asset_id); });
+  }
 
-  var counts = {};
+  if (titleEl) {
+    titleEl.textContent = activeInsp
+      ? 'ความคืบหน้าการตรวจ: ' + activeInsp.name
+      : 'ครุภัณฑ์แยกตามสาขา (ยังไม่เปิดรอบตรวจ)';
+  }
+  if (iconEl) { iconEl.className = 'bi bi-bar-chart-fill'; iconEl.style.color = '#22c55e'; }
+
+  // ── Group by branch ──────────────────────────────────────
+  var bMap = {}; // name → { total, inspected }
   assets.forEach(function(a) {
-    var bName = (a.branches && a.branches.name) || 'ไม่ระบุสาขา';
-    if (!counts[bName]) counts[bName] = { active: 0, problem: 0 };
-    if (a.status === 'active') counts[bName].active++;
-    else counts[bName].problem++;
+    var n = (a.branches && a.branches.name) || 'ไม่ระบุสาขา';
+    if (!bMap[n]) bMap[n] = { total:0, inspected:0 };
+    bMap[n].total++;
+    if (inspectedSet.has(a.id)) bMap[n].inspected++;
   });
 
-  var labels = Object.keys(counts);
-  // เรียงตามอัตราปัญหา (%) มากสุดก่อน → บ่งบอกสาขาที่ต้องการดูแลเร่งด่วน
-  labels.sort(function(a, b) {
-    var ta = counts[a].active + counts[a].problem || 1;
-    var tb = counts[b].active + counts[b].problem || 1;
-    var pctA = counts[a].problem / ta;
-    var pctB = counts[b].problem / tb;
-    return pctA - pctB; // น้อยสุด→มากสุด (ซ้าย→ขวา): สาขาปัญหาสูงอยู่ขวา
-  });
-
-  var totals   = labels.map(function(l){ return counts[l].active + counts[l].problem; });
-  var pctProbs = labels.map(function(l){
-    var t = counts[l].active + counts[l].problem || 1;
-    return Math.round(counts[l].problem / t * 100);
-  });
-
-  // ตัดชื่อสาขายาวให้สั้น
+  // เรียงตาม total มากสุดก่อน
+  var labels = Object.keys(bMap).sort(function(a,b){ return bMap[b].total - bMap[a].total; });
   var shortLabels = labels.map(function(l){ return l.length > 10 ? l.substring(0,10)+'…' : l; });
-
-  // สีแท่งปัญหา: ไล่ระดับตามอัตราปัญหา
-  var barColors = labels.map(function(l) {
-    var t   = counts[l].active + counts[l].problem || 1;
-    var pct = counts[l].problem / t;
-    return pct >= 0.3 ? '#dc2626' : pct >= 0.1 ? '#f59e0b' : '#ef4444';
-  });
+  var dInspected    = labels.map(function(l){ return bMap[l].inspected; });
+  var dNotInspected = labels.map(function(l){ return bMap[l].total - bMap[l].inspected; });
+  var totals        = labels.map(function(l){ return bMap[l].total; });
 
   App._dashChart = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: shortLabels,
       datasets: [
-        {
-          label: 'พบ / ปกติ',
-          data: labels.map(function(l){ return counts[l].active; }),
-          backgroundColor: '#059669', borderRadius: 4, maxBarThickness: 36
-        },
-        {
-          label: 'ชำรุด / ไม่พบ / อื่นๆ',
-          data: labels.map(function(l){ return counts[l].problem; }),
-          backgroundColor: '#dc2626', borderRadius: 0, maxBarThickness: 36
-        }
+        { label:'ตรวจแล้ว',    data: dInspected,    backgroundColor:'#22c55e', borderRadius:0, maxBarThickness:52 },
+        { label:'ยังไม่ตรวจ',  data: dNotInspected, backgroundColor:'#bfdbfe', borderRadius:4, maxBarThickness:52 }
       ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      responsive:true, maintainAspectRatio:false,
       plugins: {
-        legend: { position: 'top', labels: { font: { family: 'Kanit', size: 12 }, boxWidth: 14 } },
+        legend: { position:'top', labels:{ font:{family:'Kanit',size:12}, boxWidth:14 } },
         tooltip: {
           callbacks: {
             title: function(items){ return labels[items[0].dataIndex]; },
             label: function(item){
-              var l = labels[item.dataIndex];
+              var lbl = item.dataset.label;
               var val = item.parsed.y;
-              var t = totals[item.dataIndex] || 1;
-              var pct = Math.round(val / t * 100);
-              return item.dataset.label + ': ' + val + ' รายการ (' + pct + '%)';
+              return lbl + ': ' + val.toLocaleString('th-TH');
             },
             afterBody: function(items){
               var idx = items[0].dataIndex;
-              var l = labels[idx];
-              var prob = counts[l].problem;
-              var t = totals[idx] || 1;
-              var probPct = Math.round(prob / t * 100);
-              return [
-                '────────────────',
-                'รวมทั้งหมด: ' + t + ' รายการ',
-                'อัตราปัญหา: ' + probPct + '% ' + (probPct >= 30 ? '⚠ สูง' : probPct >= 10 ? '▲ ปานกลาง' : '✓ ต่ำ')
-              ];
+              var tot = totals[idx] || 1;
+              var ins = dInspected[idx];
+              var pct = Math.round(ins/tot*100);
+              return ['──────────────','ทั้งหมด: '+tot.toLocaleString('th-TH')+' | ตรวจแล้ว: '+ins+' ('+pct+'%)'];
             }
           }
         },
         datalabels: {
-          color: '#fff',
-          font: { family: 'Kanit', size: 10, weight: 'bold' },
-          formatter: function(value, ctx) {
-            if (value <= 0) return '';
-            // แสดงเปอร์เซ็นต์เฉพาะแถวปัญหา
-            if (ctx.datasetIndex === 1) {
-              var t = totals[ctx.dataIndex] || 1;
-              var pct = Math.round(value / t * 100);
-              return pct > 0 ? pct + '%' : '';
-            }
-            return value > 8 ? value : '';
-          },
-          anchor: 'center', align: 'center',
-          display: function(ctx){ return ctx.parsed.y > 5; }
+          font: { family:'Kanit', size:10, weight:'bold' },
+          color: function(ctx){ return ctx.datasetIndex===0 ? '#fff' : '#1e40af'; },
+          formatter: function(value){ return value > 0 ? value.toLocaleString('th-TH') : ''; },
+          anchor:'center', align:'center',
+          display: function(ctx){ return ctx.parsed.y > 4; }
         }
       },
       scales: {
         x: {
           stacked: true,
-          ticks: { font: { family: 'Kanit', size: 10 }, maxRotation: 45, minRotation: 30 },
-          title: { display: true, text: '← ปัญหาน้อย   |   ปัญหามาก →', font: { family: 'Kanit', size: 10 }, color: '#94a3b8' }
+          ticks: { font:{family:'Kanit',size:10}, maxRotation:45, minRotation:30 },
+          grid: { display:false }
         },
         y: {
-          stacked: true,
-          beginAtZero: true,
-          ticks: { font: { family: 'Kanit', size: 11 } },
-          title: { display: true, text: 'จำนวนครุภัณฑ์ (รายการ)', font: { family: 'Kanit', size: 11 }, color: '#94a3b8' }
+          stacked: true, beginAtZero: true,
+          ticks: { font:{family:'Kanit',size:11} },
+          title: { display:true, text:'จำนวนครุภัณฑ์ (รายการ)', font:{family:'Kanit',size:11}, color:'#94a3b8' }
         }
       }
-    },
+    }
   });
+
+  // แสดง label รวมบนสุดของแต่ละแท่ง (Chart.js annotation approach via datalabels on hidden dataset)
+  // เพิ่ม dataset พิเศษสำหรับ total label
+  App._dashChart.data.datasets.push({
+    label: '_total', data: totals,
+    backgroundColor: 'transparent', maxBarThickness:52,
+    datalabels: {
+      anchor:'end', align:'top',
+      color:'#1e293b', font:{family:'Kanit',size:11,weight:'bold'},
+      formatter: function(value){ return value > 0 ? value.toLocaleString('th-TH') : ''; },
+      display: true
+    }
+  });
+  App._dashChart.update('none');
 }
 
 // ============================================================
@@ -2131,7 +2292,27 @@ async function loadAssetsPage() {
     });
   }
 
-  renderAssetTable();
+  // apply pending filter from filterNoBranch / filterDashByStatus
+  if (App._pendingFilter) {
+    var pf = App._pendingFilter;
+    App._pendingFilter = null;
+    if (pf.branch !== undefined) {
+      var fbEl = document.getElementById('filterBranch');
+      if (fbEl) fbEl.value = pf.branch;
+    }
+    if (pf.status !== undefined) {
+      var fsEl = document.getElementById('filterStatus');
+      if (fsEl) fsEl.value = pf.status;
+      // highlight stat card
+      document.querySelectorAll('.stat-card').forEach(function(c) { c.classList.remove('stat-card-sel'); });
+      if (pf.status) {
+        document.querySelectorAll('.stat-card').forEach(function(c) {
+          if (c.getAttribute('onclick') && c.getAttribute('onclick').includes("'" + pf.status + "'")) c.classList.add('stat-card-sel');
+        });
+      }
+    }
+  }
+  filterAssetsNow();
 }
 
 function filterAssetsNow() {
@@ -2143,7 +2324,7 @@ function filterAssetsNow() {
   App.filteredAssets = App.allAssets.filter(function(a) {
     var matchSearch = !search || (a.asset_code||'').toLowerCase().includes(search) || (a.name||'').toLowerCase().includes(search) || (a.brand||'').toLowerCase().includes(search);
     var matchYear = !year || (a.acquired_date && toThaiYear(a.acquired_date) == year);
-    var matchBranch = !branch || a.branch_id === branch;
+    var matchBranch = !branch || (branch === 'no_branch' ? !a.branch_id : a.branch_id === branch);
     var matchStatus = !status || a.status === status;
     return matchSearch && matchYear && matchBranch && matchStatus;
   });
@@ -2208,8 +2389,11 @@ function renderAssetTable() {
         '</div>';
       }
       var isChecked = App.selectedAssets && App.selectedAssets.has(a.id);
-      return '<tr class="' + (isChecked ? 'table-primary' : '') + '">' +
-        '<td class="no-print"><input type="checkbox" class="form-check-input asset-chk" ' + (isChecked?'checked':'') + ' onchange="toggleAssetCheck(\'' + a.id + '\',this.checked)"></td>' +
+      var hasNoBranch = !a.branch_id;
+      var chkCell = hasNoBranch
+        ? '<td class="no-print"><input type="checkbox" class="form-check-input asset-chk" ' + (isChecked?'checked':'') + ' onchange="toggleAssetCheck(\'' + a.id + '\',this.checked)"></td>'
+        : '<td class="no-print"></td>';
+      return '<tr class="' + (isChecked ? 'table-primary' : '') + '">' + chkCell +
         '<td style="font-family:monospace;font-size:12px;">' + (a.asset_code||'-') + fyStr + '</td>' +
         '<td>' + (a.name||'-') + '</td>' +
         '<td style="color:#64748b;font-size:12px;">' + brandModel + '</td>' +
@@ -2257,8 +2441,10 @@ function toggleSelectAll(checked) {
   var ps = App.assetPageSize, page = App.assetPage;
   var slice = App.filteredAssets.slice((page-1)*ps, page*ps);
   slice.forEach(function(a) {
-    if (checked) App.selectedAssets.add(a.id);
-    else App.selectedAssets.delete(a.id);
+    if (!a.branch_id) { // เลือกเฉพาะที่ไม่มีสาขา
+      if (checked) App.selectedAssets.add(a.id);
+      else App.selectedAssets.delete(a.id);
+    }
   });
   renderAssetTable();
   updateBulkBar();
@@ -2691,6 +2877,345 @@ function _loadXLSX(cb) {
   s.onload = cb;
   s.onerror = function() { showToast('โหลด XLSX ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต', 'danger'); };
   document.head.appendChild(s);
+}
+
+// ============================================================
+// TRANSFER PAGE  (Approval Workflow)
+// ============================================================
+var _trAll = [], _trMFiltered = [], _trMSelected = new Set(), _trMPage = 1, _trMPerPage = 50;
+
+// ── Tab switching ──────────────────────────────────────────
+function showTransferTab(tab) {
+  ['incoming','outgoing','history'].forEach(function(t) {
+    var cap = t.charAt(0).toUpperCase() + t.slice(1);
+    var el  = document.getElementById('trTab' + cap);
+    var btn = document.getElementById('trTabBtn' + cap);
+    if (el) el.style.display = (t === tab) ? '' : 'none';
+    if (btn) {
+      btn.style.color       = (t === tab) ? '#4f46e5' : '#64748b';
+      btn.style.borderBottom= (t === tab) ? '2px solid #4f46e5' : '2px solid transparent';
+      btn.style.background  = (t === tab) ? '#f5f3ff' : 'none';
+    }
+  });
+  if (tab === 'incoming') _loadIncomingTransfers();
+  if (tab === 'outgoing') _loadOutgoingTransfers();
+  if (tab === 'history')  _loadTransferHistory();
+}
+
+// ── Load page ─────────────────────────────────────────────
+async function loadTransferPage() {
+  var isAdmin    = App.profile && App.profile.role === 'admin';
+  var isBranch   = App.profile && App.profile.role === 'branch';
+  var myBranchId = App.profile ? App.profile.branch_id : null;
+
+  // Populate modal branch selects
+  ['trMFromBranch','trMTarget'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var cur = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    App.branches.forEach(function(b) {
+      if (id === 'trMFromBranch' && isBranch && b.id !== myBranchId) return;
+      if (id === 'trMTarget'     && isBranch && b.id === myBranchId) return;
+      var o = document.createElement('option');
+      o.value = b.id; o.textContent = b.name;
+      sel.appendChild(o);
+    });
+    if (cur) sel.value = cur;
+    if (id === 'trMFromBranch' && isBranch && myBranchId) sel.value = myBranchId;
+  });
+
+  // Load assets for modal
+  var q = sb.from('assets')
+    .select('id,asset_code,name,branch_id,status,price,branches(name)')
+    .not('status','in','("disposed","transferred")')
+    .order('branch_id',{ascending:true}).order('asset_code',{ascending:true}).limit(10000);
+  if (isBranch && myBranchId) q = q.eq('branch_id', myBranchId);
+  var res = await q;
+  _trAll = res.data || [];
+  _trMSelected = new Set();
+  _trMPage = 1;
+  filterTransferModal();
+
+  // Incoming badge
+  var pendingQ = sb.from('asset_transfers').select('id',{count:'exact',head:true}).eq('status','pending');
+  if (isBranch && myBranchId) pendingQ = pendingQ.eq('to_branch_id', myBranchId);
+  var pr = await pendingQ;
+  var cnt = pr.count || 0;
+  var badge = document.getElementById('trIncomingBadge');
+  if (badge) { badge.textContent = cnt; badge.style.display = cnt > 0 ? 'inline' : 'none'; }
+
+  showTransferTab('incoming');
+}
+
+// ── Open modal ────────────────────────────────────────────
+function openTransferModal() {
+  _trMSelected = new Set();
+  _trMPage = 1;
+  filterTransferModal();
+  var m = new bootstrap.Modal(document.getElementById('modalTransferCreate'));
+  m.show();
+}
+
+// ── Modal asset table ─────────────────────────────────────
+function filterTransferModal() {
+  var search  = ((document.getElementById('trMSearch')||{}).value||'').toLowerCase();
+  var fromB   = (document.getElementById('trMFromBranch')||{}).value||'';
+  var stFil   = (document.getElementById('trMStatus')||{}).value||'';
+  var isBranch= App.profile && App.profile.role === 'branch';
+  var myB     = App.profile ? App.profile.branch_id : null;
+
+  _trMFiltered = _trAll.filter(function(a){
+    var ms  = !search || (a.name||'').toLowerCase().includes(search)||(a.asset_code||'').toLowerCase().includes(search);
+    var mb  = !fromB  || a.branch_id === fromB;
+    var mst = !stFil  || a.status === stFil;
+    var mm  = !isBranch || a.branch_id === myB;
+    return ms && mb && mst && mm;
+  });
+  _trMPage = 1;
+  renderTransferModal();
+}
+
+function renderTransferModal() {
+  var tbody   = document.getElementById('trMTableBody');
+  var pgEl    = document.getElementById('trMPaging');
+  var infoEl  = document.getElementById('trMPagingInfo');
+  if (!tbody) return;
+  var start = (_trMPage-1)*_trMPerPage;
+  var slice = _trMFiltered.slice(start, start+_trMPerPage);
+  var totalPages = Math.ceil(_trMFiltered.length/_trMPerPage)||1;
+
+  if (!_trMFiltered.length) {
+    tbody.innerHTML='<tr><td colspan="6" class="text-center py-3 text-muted">ไม่พบรายการ</td></tr>';
+    if (infoEl) infoEl.textContent=''; if (pgEl) pgEl.innerHTML='';
+    _updateMActionBar(); return;
+  }
+  var html='';
+  slice.forEach(function(a){
+    var chk = _trMSelected.has(a.id);
+    var brN = (a.branches&&a.branches.name)||'<span style="color:#f59e0b;">ไม่ระบุ</span>';
+    html+='<tr style="background:'+(chk?'#eef2ff':'')+';'+(chk?'border-left:3px solid #4f46e5;':'')+'cursor:pointer;" onclick="trMToggleItem(\''+a.id+'\',!document.querySelector(\'[data-mid=\\\'' + a.id + '\\\']\').checked)">';
+    html+='<td style="padding:7px 10px;"><input type="checkbox" class="form-check-input" data-mid="'+a.id+'" '+(chk?'checked':'')+' onchange="trMToggleItem(\''+a.id+'\',this.checked)" onclick="event.stopPropagation()"></td>';
+    html+='<td style="padding:7px 10px;font-family:monospace;font-size:11px;color:#64748b;">'+(a.asset_code||'—')+'</td>';
+    html+='<td style="padding:7px 10px;">'+(a.name||'—')+'</td>';
+    html+='<td style="padding:7px 10px;">'+brN+'</td>';
+    html+='<td style="padding:7px 10px;">'+badgeHtml(a.status)+'</td>';
+    html+='<td style="padding:7px 10px;text-align:right;font-size:12px;">'+(a.price?fmtNum(a.price):'—')+'</td>';
+    html+='</tr>';
+  });
+  tbody.innerHTML=html;
+  if (infoEl) infoEl.textContent='แสดง '+(start+1)+'–'+Math.min(start+_trMPerPage,_trMFiltered.length)+' จาก '+_trMFiltered.length+' รายการ';
+  if (pgEl) pgEl.innerHTML=
+    '<button class="btn btn-sm btn-outline-secondary" onclick="trMGoPage('+(_trMPage-1)+')" '+(_trMPage<=1?'disabled':'')+'><i class="bi bi-chevron-left"></i></button>'+
+    '<span style="padding:4px 10px;font-size:12px;">'+_trMPage+'/'+totalPages+'</span>'+
+    '<button class="btn btn-sm btn-outline-secondary" onclick="trMGoPage('+(_trMPage+1)+')" '+(_trMPage>=totalPages?'disabled':'')+'><i class="bi bi-chevron-right"></i></button>';
+  _updateMActionBar();
+}
+
+function trMGoPage(p){ var t=Math.ceil(_trMFiltered.length/_trMPerPage)||1; _trMPage=Math.max(1,Math.min(p,t)); renderTransferModal(); }
+function trMToggleItem(id,chk){ if(chk) _trMSelected.add(id); else _trMSelected.delete(id); renderTransferModal(); }
+function trMToggleAll(chk){
+  var s=(_trMPage-1)*_trMPerPage, sl=_trMFiltered.slice(s,s+_trMPerPage);
+  sl.forEach(function(a){ if(chk) _trMSelected.add(a.id); else _trMSelected.delete(a.id); });
+  renderTransferModal();
+}
+function _updateMActionBar(){
+  var bar=document.getElementById('trMActionBar'), cnt=document.getElementById('trMSelectedCount');
+  if(!bar) return;
+  if(_trMSelected.size>0){ bar.style.display=''; if(cnt) cnt.textContent='เลือก '+_trMSelected.size+' รายการ'; }
+  else bar.style.display='none';
+}
+
+// ── Submit transfer request ───────────────────────────────
+async function submitTransferRequest() {
+  var targetId = (document.getElementById('trMTarget')||{}).value || '';
+  var note     = ((document.getElementById('trMNote')||{}).value || '').trim();
+  if (!targetId)        { showToast('กรุณาเลือกสาขาปลายทาง','warning'); return; }
+  if (!_trMSelected.size){ showToast('กรุณาเลือกครุภัณฑ์อย่างน้อย 1 รายการ','warning'); return; }
+
+  var toBr   = App.branches.find(function(b){ return b.id===targetId; });
+  var toName = toBr ? toBr.name : '';
+  var ids    = Array.from(_trMSelected);
+  var snaps  = ids.map(function(id){
+    var a = _trAll.find(function(x){ return x.id===id; });
+    return a ? { id:a.id, code:a.asset_code, name:a.name, price:a.price } : { id:id };
+  });
+  // ใช้ branch ของ item แรกเป็น from
+  var firstA   = _trAll.find(function(x){ return x.id===ids[0]; });
+  var fromId   = firstA ? firstA.branch_id : null;
+  var fromBr   = App.branches.find(function(b){ return b.id===fromId; });
+  var fromName = fromBr ? fromBr.name : 'ไม่ระบุ';
+
+  var btn = document.getElementById('trMSubmitBtn');
+  if (btn){ btn.disabled=true; btn.innerHTML='<div class="spinner-border spinner-border-sm me-1"></div>กำลังส่ง...'; }
+
+  var res = await sb.from('asset_transfers').insert({
+    asset_ids: ids, asset_snapshots: snaps,
+    from_branch_id: fromId||null, from_branch_name: fromName,
+    to_branch_id: targetId, to_branch_name: toName,
+    status:'pending', note: note||null,
+    requested_by: App.user ? App.user.id : null
+  });
+  if (btn){ btn.disabled=false; btn.innerHTML='<i class="bi bi-send me-1"></i>ส่งคำขอโอน'; }
+  if (res.error){ showToast('เกิดข้อผิดพลาด: '+res.error.message,'danger'); return; }
+
+  bootstrap.Modal.getInstance(document.getElementById('modalTransferCreate')).hide();
+  showToast('ส่งคำขอโอนย้าย '+ids.length+' รายการ → '+toName+' เรียบร้อย — รอสาขาปลายทางยืนยัน','success');
+  _trMSelected=new Set();
+  await loadTransferPage();
+}
+
+// ── ขาเข้า (Incoming) ────────────────────────────────────
+async function _loadIncomingTransfers() {
+  var tbody = document.getElementById('trIncomingBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+  var isAdmin    = App.profile && App.profile.role === 'admin';
+  var myBranchId = App.profile ? App.profile.branch_id : null;
+
+  var q = sb.from('asset_transfers').select('*').eq('status','pending').order('requested_at',{ascending:false});
+  if (!isAdmin && myBranchId) q = q.eq('to_branch_id', myBranchId);
+  var res = await q;
+  var rows = res.data || [];
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-inbox" style="font-size:28px;display:block;margin-bottom:6px;"></i>ไม่มีรายการรอรับโอน</td></tr>';
+    return;
+  }
+  var html='';
+  rows.forEach(function(r){
+    var snaps = r.asset_snapshots||[];
+    var canAct = isAdmin || (myBranchId && r.to_branch_id===myBranchId);
+    var reqDt = r.requested_at ? new Date(r.requested_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}) : '-';
+    var assetTxt = snaps.slice(0,2).map(function(s){ return s.name||s.code||''; }).join(', ') + (snaps.length>2?' +อีก '+(snaps.length-2)+' รายการ':'');
+    html+='<tr>';
+    html+='<td style="padding:10px 12px;"><div style="font-size:13px;font-weight:600;">'+(assetTxt||r.asset_ids.length+' รายการ')+'</div><div style="font-size:11px;color:#94a3b8;">'+r.asset_ids.length+' รายการ</div></td>';
+    html+='<td style="padding:10px 12px;font-size:13px;">'+(r.from_branch_name||'ไม่ระบุ')+'</td>';
+    html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">—</td>';
+    html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+reqDt+'</td>';
+    html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+(r.note||'—')+'</td>';
+    html+='<td style="padding:10px 12px;text-align:center;">';
+    if(canAct){
+      html+='<button class="btn btn-success btn-sm me-1" onclick="respondTransfer(\''+r.id+'\',\'accepted\')"><i class="bi bi-check2"></i></button>';
+      html+='<button class="btn btn-danger btn-sm" onclick="respondTransfer(\''+r.id+'\',\'rejected\')"><i class="bi bi-x"></i></button>';
+    } else {
+      html+='<span style="font-size:11px;color:#94a3b8;">รอสาขาตอบรับ</span>';
+    }
+    html+='</td></tr>';
+  });
+  tbody.innerHTML=html;
+}
+
+// ── ขาออก (Outgoing) ─────────────────────────────────────
+async function _loadOutgoingTransfers() {
+  var tbody = document.getElementById('trOutgoingBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+  var isAdmin    = App.profile && App.profile.role === 'admin';
+  var myBranchId = App.profile ? App.profile.branch_id : null;
+
+  var q = sb.from('asset_transfers').select('*').eq('status','pending').order('requested_at',{ascending:false});
+  if (!isAdmin && myBranchId) q = q.eq('from_branch_id', myBranchId);
+  var res = await q;
+  var rows = res.data || [];
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-send" style="font-size:28px;display:block;margin-bottom:6px;"></i>ไม่มีรายการรอการยืนยัน</td></tr>';
+    return;
+  }
+  var statusCfg={ pending:{label:'รอยืนยัน',bg:'#fef3c7',color:'#92400e'}, accepted:{label:'ยอมรับแล้ว',bg:'#dcfce7',color:'#166534'}, rejected:{label:'ปฏิเสธ',bg:'#fee2e2',color:'#991b1b'} };
+  var html='';
+  rows.forEach(function(r){
+    var snaps=r.asset_snapshots||[];
+    var cfg=statusCfg[r.status]||{label:r.status,bg:'#f1f5f9',color:'#64748b'};
+    var reqDt=r.requested_at?new Date(r.requested_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'-';
+    var assetTxt=snaps.slice(0,2).map(function(s){ return s.name||s.code||''; }).join(', ')+(snaps.length>2?' +อีก '+(snaps.length-2)+' รายการ':'');
+    html+='<tr>';
+    html+='<td style="padding:10px 12px;"><div style="font-size:13px;font-weight:600;">'+(assetTxt||r.asset_ids.length+' รายการ')+'</div><div style="font-size:11px;color:#94a3b8;">'+r.asset_ids.length+' รายการ</div></td>';
+    html+='<td style="padding:10px 12px;font-size:13px;">'+(r.to_branch_name||'-')+'</td>';
+    html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+reqDt+'</td>';
+    html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+(r.note||'—')+'</td>';
+    html+='<td style="padding:10px 12px;text-align:center;"><span style="background:'+cfg.bg+';color:'+cfg.color+';font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;">'+cfg.label+'</span></td>';
+    html+='<td style="padding:10px 12px;text-align:center;">';
+    if(r.status==='pending' && isAdmin) html+='<button class="btn btn-outline-secondary btn-sm" onclick="respondTransfer(\''+r.id+'\',\'cancelled\')"><i class="bi bi-x me-1"></i>ยกเลิก</button>';
+    else html+='—';
+    html+='</td></tr>';
+  });
+  tbody.innerHTML=html;
+}
+
+async function respondTransfer(id, newStatus) {
+  var note = '';
+  if (newStatus === 'rejected') {
+    note = prompt('เหตุผลที่ปฏิเสธ (ถ้ามี):') || '';
+  }
+  var updateData = {
+    status: newStatus,
+    responded_by: App.user ? App.user.id : null,
+    responded_at: new Date().toISOString(),
+    respond_note: note || null
+  };
+  // If accepted → update assets.branch_id
+  if (newStatus === 'accepted') {
+    // Get the transfer record first
+    var tr = await sb.from('asset_transfers').select('*').eq('id',id).single();
+    if (tr.error || !tr.data) { showToast('ไม่พบข้อมูลคำขอ','danger'); return; }
+    var tData = tr.data;
+    // Update assets
+    var upd = await sb.from('assets').update({ branch_id: tData.to_branch_id }).in('id', tData.asset_ids);
+    if (upd.error) { showToast('อัปเดตสาขาไม่สำเร็จ: '+upd.error.message,'danger'); return; }
+  }
+  var res = await sb.from('asset_transfers').update(updateData).eq('id',id);
+  if (res.error) { showToast('เกิดข้อผิดพลาด: '+res.error.message,'danger'); return; }
+
+  var msgMap = { accepted:'ยอมรับการโอนย้ายเรียบร้อย — ครุภัณฑ์ย้ายสาขาแล้ว', rejected:'ปฏิเสธคำขอเรียบร้อย', cancelled:'ยกเลิกคำขอเรียบร้อย' };
+  var typeMap = { accepted:'success', rejected:'warning', cancelled:'secondary' };
+  showToast(msgMap[newStatus]||'อัปเดตแล้ว', typeMap[newStatus]||'info');
+  await loadTransferPage();
+  showTransferTab('incoming');
+}
+
+// ── ประวัติ ───────────────────────────────────────────────
+async function _loadTransferHistory() {
+  var tbody = document.getElementById('trHistoryBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+  var isAdmin    = App.profile && App.profile.role === 'admin';
+  var myBranchId = App.profile ? App.profile.branch_id : null;
+
+  var q = sb.from('asset_transfers').select('*').not('status','eq','pending').order('requested_at',{ascending:false}).limit(200);
+  if (!isAdmin && myBranchId) {
+    q = sb.from('asset_transfers').select('*').not('status','eq','pending')
+      .or('from_branch_id.eq.'+myBranchId+',to_branch_id.eq.'+myBranchId)
+      .order('requested_at',{ascending:false}).limit(200);
+  }
+  var res = await q;
+  var rows = res.data || [];
+
+  if (!rows.length) {
+    tbody.innerHTML='<tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-clock-history" style="font-size:28px;display:block;margin-bottom:6px;"></i>ยังไม่มีประวัติการโอนย้าย</td></tr>';
+    return;
+  }
+  var scfg = {
+    accepted:  {label:'ยอมรับแล้ว', bg:'#dcfce7', color:'#166534', icon:'bi-check-circle-fill'},
+    rejected:  {label:'ปฏิเสธ',     bg:'#fee2e2', color:'#991b1b', icon:'bi-x-circle-fill'},
+    cancelled: {label:'ยกเลิก',     bg:'#f1f5f9', color:'#64748b', icon:'bi-slash-circle-fill'}
+  };
+  var html='';
+  rows.forEach(function(r){
+    var cfg=scfg[r.status]||{label:r.status,bg:'#f1f5f9',color:'#64748b',icon:'bi-circle'};
+    var dt=r.requested_at?new Date(r.requested_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'-';
+    var snaps=r.asset_snapshots||[];
+    var assetTxt=snaps.slice(0,2).map(function(s){return s.name||s.code||'';}).join(', ')+(snaps.length>2?' +อีก '+(snaps.length-2)+' รายการ':'');
+    html+='<tr>';
+    html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+dt+'</td>';
+    html+='<td style="padding:10px 12px;font-size:13px;">'+(assetTxt||r.asset_ids.length+' รายการ')+'</td>';
+    html+='<td style="padding:10px 12px;font-size:13px;font-weight:600;">'+(r.from_branch_name||'ไม่ระบุ')+' <i class="bi bi-arrow-right" style="color:#4f46e5;"></i> '+(r.to_branch_name||'-')+'</td>';
+    html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+(r.note||(r.respond_note?'↩ '+r.respond_note:'—'))+'</td>';
+    html+='<td style="padding:10px 12px;text-align:center;"><span style="background:'+cfg.bg+';color:'+cfg.color+';font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;"><i class="bi '+cfg.icon+' me-1"></i>'+cfg.label+'</span></td>';
+    html+='</tr>';
+  });
+  tbody.innerHTML=html;
 }
 
 // ============================================================
