@@ -1762,7 +1762,7 @@ async function loadDashboard() {
   var dashStatusWrap = document.getElementById('dashStatus') && document.getElementById('dashStatus').closest('.d-flex');
   if (dashStatusWrap) dashStatusWrap.style.display = isBranchUser ? 'none' : '';
   var selectFields = isBranchUser
-    ? 'id, asset_code, name, status, branch_id, price, acquired_date, branches(name)'
+    ? 'id, asset_code, name, status, branch_id, price, acquired_date, location, branches(name)'
     : 'id, status, branch_id, acquired_date, branches(name)';
   var q = sb.from('assets').select(selectFields).limit(10000);
   if (App.profile && App.profile.role === 'branch') {
@@ -1902,32 +1902,42 @@ function _renderBranchActionPanel(assets) {
     html += '</div>';
 
     // Table rows
-    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:12px;">';
     html += '<thead><tr style="background:#f8fafc;">';
-    html += '<th style="padding:5px 14px;font-weight:600;color:#64748b;font-size:11px;text-align:left;width:160px;">รหัสครุภัณฑ์</th>';
-    html += '<th style="padding:5px 14px;font-weight:600;color:#64748b;font-size:11px;text-align:left;">ชื่อครุภัณฑ์</th>';
-    html += '<th style="padding:5px 14px;font-weight:600;color:#64748b;font-size:11px;text-align:center;width:60px;">อายุ</th>';
-    html += '<th style="padding:5px 14px;font-weight:600;color:#64748b;font-size:11px;text-align:right;width:110px;">ราคา (฿)</th>';
+    html += '<th style="padding:5px 12px;font-weight:600;color:#64748b;font-size:11px;text-align:left;width:140px;">รหัสครุภัณฑ์</th>';
+    html += '<th style="padding:5px 12px;font-weight:600;color:#64748b;font-size:11px;text-align:left;">ชื่อครุภัณฑ์</th>';
+    html += '<th style="padding:5px 12px;font-weight:600;color:#64748b;font-size:11px;text-align:left;width:120px;">ที่ตั้ง</th>';
+    html += '<th style="padding:5px 12px;font-weight:600;color:#64748b;font-size:11px;text-align:center;width:90px;">วันที่รับ</th>';
+    html += '<th style="padding:5px 12px;font-weight:600;color:#64748b;font-size:11px;text-align:center;width:55px;">อายุ</th>';
+    html += '<th style="padding:5px 12px;font-weight:600;color:#64748b;font-size:11px;text-align:right;width:100px;">ราคา (฿)</th>';
     html += '</tr></thead><tbody>';
     items.forEach(function(a, idx) {
       var rowBg = idx % 2 === 0 ? '#fff' : '#fafafa';
-      // อายุ
-      var ageHtml = '—';
+      // อายุ (แปลง BE → CE ก่อนคำนวณ)
+      var ageHtml = '—'; var acquiredHtml = '—';
       if (a.acquired_date) {
-        var ageYrs = Math.floor((new Date() - new Date(a.acquired_date)) / (365.25*24*3600*1000));
+        var d = new Date(a.acquired_date);
+        var grYear = d.getFullYear() >= 2500 ? d.getFullYear() - 543 : d.getFullYear();
+        var dCE = new Date(grYear, d.getMonth(), d.getDate());
+        var ageYrs = Math.floor((new Date() - dCE) / (365.25*24*3600*1000));
         var ageColor = ageYrs >= 10 ? '#dc2626' : ageYrs >= 5 ? '#f59e0b' : '#059669';
-        ageHtml = '<span style="color:' + ageColor + ';font-weight:600;">' + ageYrs + ' ปี</span>';
+        ageHtml = '<span style="color:' + ageColor + ';font-weight:700;">' + ageYrs + '</span><span style="color:#94a3b8;font-size:10px;"> ปี</span>';
+        var beY = d.getFullYear() >= 2500 ? d.getFullYear() : d.getFullYear() + 543;
+        acquiredHtml = '<span style="color:#475569;">' + d.getDate() + '/' + (d.getMonth()+1) + '/' + beY + '</span>';
       }
       // ราคา
-      var priceHtml = '—';
-      if (a.price) {
-        priceHtml = '<span style="color:#1e293b;">' + Number(a.price).toLocaleString('th-TH') + '</span>';
-      }
+      var priceHtml = '<span style="color:#94a3b8;">—</span>';
+      if (a.price) priceHtml = '<span style="color:#1e293b;font-weight:600;">' + Number(a.price).toLocaleString('th-TH') + '</span>';
+      // ที่ตั้ง
+      var locHtml = a.location ? '<span style="color:#475569;">' + a.location + '</span>' : '<span style="color:#cbd5e1;">—</span>';
+
       html += '<tr style="background:' + rowBg + ';border-bottom:1px solid #f1f5f9;cursor:pointer;" onmouseover="this.style.background=\'#f0f9ff\'" onmouseout="this.style.background=\'' + rowBg + '\'" onclick="filterDashByStatus(\'' + g.status + '\')">';
-      html += '<td style="padding:7px 14px;font-family:monospace;font-size:11px;color:#64748b;">' + (a.asset_code || '—') + '</td>';
-      html += '<td style="padding:7px 14px;color:#1e293b;">' + (a.name || '—') + '</td>';
-      html += '<td style="padding:7px 14px;text-align:center;">' + ageHtml + '</td>';
-      html += '<td style="padding:7px 14px;text-align:right;">' + priceHtml + '</td>';
+      html += '<td style="padding:5px 12px;font-family:monospace;font-size:10px;color:#64748b;white-space:nowrap;">' + (a.asset_code || '—') + '</td>';
+      html += '<td style="padding:5px 12px;color:#1e293b;">' + (a.name || '—') + '</td>';
+      html += '<td style="padding:5px 12px;">' + locHtml + '</td>';
+      html += '<td style="padding:5px 12px;text-align:center;">' + acquiredHtml + '</td>';
+      html += '<td style="padding:5px 12px;text-align:center;">' + ageHtml + '</td>';
+      html += '<td style="padding:5px 12px;text-align:right;">' + priceHtml + '</td>';
       html += '</tr>';
     });
     html += '</tbody></table>';
