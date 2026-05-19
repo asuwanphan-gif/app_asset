@@ -1581,15 +1581,17 @@ function _startApp() {
   document.getElementById('bottomnav').style.display = '';
   document.getElementById('btnMenu').style.display = '';
 
-  // Topbar — แสดงชื่อสาขาเท่านั้น
-  document.getElementById('topBranch').innerHTML =
-    p.branches ? '<span class="tb-branch">' + p.branches.name + '</span>' : '';
+  // Topbar — ซ่อนชื่อสาขา (แสดงอยู่ใน sidebar แล้ว)
+  document.getElementById('topBranch').innerHTML = '';
 
-  // Sidebar user
-  var initials = (p.full_name || p.username || 'U').charAt(0).toUpperCase();
+  // Sidebar user — แสดงชื่อหน่วยงานสำหรับ branch, ชื่อ user สำหรับ admin
+  var displayName = (p.role === 'branch' && p.branches)
+    ? p.branches.name
+    : (p.full_name || p.username || 'Admin');
+  var initials = displayName.charAt(0).toUpperCase();
   var sbAv = document.getElementById('sbAvatar');
   if (sbAv) sbAv.textContent = initials;
-  document.getElementById('sbUserName').textContent = p.full_name || p.username;
+  document.getElementById('sbUserName').textContent = displayName;
 
   // ซ่อน admin menu ถ้าไม่ใช่ admin
   var adminSection = document.getElementById('adminSection');
