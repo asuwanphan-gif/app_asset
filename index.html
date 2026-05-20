@@ -539,11 +539,14 @@
     <div class="nav-link" onclick="showPage('dashboard')"><i class="bi bi-speedometer2"></i>ภาพรวมระบบ</div>
     <div class="nav-link" onclick="showPage('inspection')"><i class="bi bi-clipboard2-check"></i>ตรวจสอบครุภัณฑ์</div>
     <div class="nav-link" onclick="showPage('assets')"><i class="bi bi-box-seam"></i>รายการครุภัณฑ์</div>
-    <div class="nav-link" onclick="showPage('disposed')" id="menuDisposed">
-      <i class="bi bi-trash3-fill"></i>จำหน่ายครุภัณฑ์
+    <div class="nav-link" onclick="showPage('repair')" id="menuRepair">
+      <i class="bi bi-wrench-adjustable"></i>แจ้งซ่อมครุภัณฑ์<span id="repairBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:0 6px;font-size:10px;font-weight:700;margin-left:6px;"></span>
     </div>
     <div class="nav-link" onclick="showPage('transfer')" id="menuTransfer">
       <i class="bi bi-arrow-left-right"></i>โอนย้ายครุภัณฑ์
+    </div>
+    <div class="nav-link" onclick="showPage('disposed')" id="menuDisposed">
+      <i class="bi bi-trash3-fill"></i>จำหน่ายครุภัณฑ์
     </div>
     <div class="nav-link" onclick="showPage('report')"><i class="bi bi-file-earmark-bar-graph"></i>รายงาน &amp; พิมพ์</div>
 
@@ -741,6 +744,165 @@
             </table>
           </div>
           <div id="assetPaging" class="p-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== REPAIR ===== -->
+    <div id="page-repair" class="page-content" style="display:none;">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div class="page-title-bar mb-0">
+          <div class="page-title-icon" style="background:linear-gradient(135deg,#fef3c7,#fde68a);"><i class="bi bi-wrench-adjustable" style="color:#b45309;"></i></div>
+          <div>
+            <div class="page-title-text">แจ้งซ่อมครุภัณฑ์</div>
+            <div class="page-title-sub">รายการรอดำเนินการ · ประวัติการซ่อม</div>
+          </div>
+        </div>
+        <button class="btn btn-warning btn-sm px-3 fw-bold" onclick="openRepairRequest()" style="font-family:Kanit;"><i class="bi bi-plus-circle me-1"></i>แจ้งซ่อมใหม่</button>
+      </div>
+
+      <!-- Tab bar -->
+      <div class="card shadow-sm mb-0">
+        <div class="card-body p-0">
+          <div class="d-flex align-items-center" style="border-bottom:1px solid #e2e8f0;">
+            <button id="repTabBtnPending" onclick="showRepairTab('pending')" style="flex:1;padding:11px 6px;border:none;background:none;font-family:Kanit;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#64748b;"><i class="bi bi-hourglass-split me-1"></i>รอดำเนินการ <span id="repPendingBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:0 6px;font-size:10px;font-weight:700;"></span></button>
+            <button id="repTabBtnHistory" onclick="showRepairTab('history')" style="flex:1;padding:11px 6px;border:none;background:none;font-family:Kanit;font-size:13px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#64748b;"><i class="bi bi-clock-history me-1"></i>ประวัติ</button>
+            <button onclick="loadRepairPage()" style="padding:8px 12px;border:none;background:none;cursor:pointer;color:#94a3b8;" title="รีเฟรช"><i class="bi bi-arrow-clockwise"></i></button>
+          </div>
+
+          <!-- TAB: รอดำเนินการ -->
+          <div id="repTabPending">
+            <div style="overflow-x:auto;">
+              <table class="table table-hover table-sm mb-0" style="font-size:13px;min-width:720px;">
+                <thead style="background:#0c1a2e;color:#fff;">
+                  <tr>
+                    <th style="padding:10px 12px;font-weight:600;">ครุภัณฑ์</th>
+                    <th style="padding:10px 12px;font-weight:600;">สาขา</th>
+                    <th style="padding:10px 12px;font-weight:600;">อาการ / ปัญหา</th>
+                    <th style="padding:10px 12px;font-weight:600;">วันที่แจ้ง</th>
+                    <th style="padding:10px 12px;font-weight:600;text-align:center;">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody id="repPendingBody">
+                  <tr><td colspan="5" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังโหลด...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB: ประวัติ -->
+          <div id="repTabHistory" style="display:none;">
+            <div style="overflow-x:auto;">
+              <table class="table table-hover table-sm mb-0" style="font-size:13px;min-width:720px;">
+                <thead style="background:#0c1a2e;color:#fff;">
+                  <tr>
+                    <th style="padding:10px 12px;font-weight:600;">วันที่แจ้ง</th>
+                    <th style="padding:10px 12px;font-weight:600;">ครุภัณฑ์</th>
+                    <th style="padding:10px 12px;font-weight:600;">สาขา</th>
+                    <th style="padding:10px 12px;font-weight:600;">อาการ</th>
+                    <th style="padding:10px 12px;font-weight:600;">หมายเหตุผล</th>
+                    <th style="padding:10px 12px;font-weight:600;text-align:center;">ผลลัพธ์</th>
+                  </tr>
+                </thead>
+                <tbody id="repHistoryBody">
+                  <tr><td colspan="6" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังโหลด...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: แจ้งซ่อมใหม่ -->
+    <div class="modal fade" id="modalRepairRequest" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header" style="background:#b45309;color:#fff;">
+            <h5 class="modal-title" style="font-family:Kanit;font-size:15px;"><i class="bi bi-wrench-adjustable me-2"></i>แจ้งซ่อมครุภัณฑ์</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Filter assets -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:13px;">ค้นหาครุภัณฑ์ที่ต้องการแจ้งซ่อม</label>
+              <div class="d-flex gap-2 flex-wrap">
+                <input id="repMSearch" type="search" class="form-control form-control-sm" placeholder="ค้นหาชื่อ / รหัส..." style="flex:2;min-width:160px;" oninput="filterRepairAssets()">
+                <select id="repMBranch" class="form-select form-select-sm" style="flex:1;min-width:140px;" onchange="filterRepairAssets()">
+                  <option value="">-- ทุกสาขา --</option>
+                </select>
+              </div>
+            </div>
+            <!-- Asset list -->
+            <div style="max-height:240px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:16px;">
+              <table class="table table-sm table-hover mb-0" style="font-size:13px;">
+                <thead style="background:#f8fafc;position:sticky;top:0;">
+                  <tr>
+                    <th style="padding:8px 10px;width:36px;"></th>
+                    <th style="padding:8px 10px;">รหัส</th>
+                    <th style="padding:8px 10px;">ชื่อรายการ</th>
+                    <th style="padding:8px 10px;">สาขา</th>
+                    <th style="padding:8px 10px;">สถานะ</th>
+                  </tr>
+                </thead>
+                <tbody id="repMAssetList">
+                  <tr><td colspan="5" class="text-center py-3 text-muted">กำลังโหลด...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- Selected asset display -->
+            <div id="repMSelected" style="display:none;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;">
+              <div style="font-weight:700;color:#92400e;margin-bottom:2px;"><i class="bi bi-check-circle-fill me-2"></i><span id="repMSelectedName"></span></div>
+              <div style="color:#b45309;font-size:11px;" id="repMSelectedBranch"></div>
+            </div>
+            <!-- Problem desc -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:13px;">อาการ / ปัญหา <span class="text-danger">*</span></label>
+              <textarea id="repMDesc" class="form-control" rows="3" placeholder="อธิบายอาการเสีย ส่วนที่ชำรุด ฯลฯ" style="font-family:Kanit;font-size:13px;"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">ยกเลิก</button>
+            <button type="button" class="btn btn-warning btn-sm px-4 fw-bold" onclick="submitRepairRequest()" id="repMSubmitBtn"><i class="bi bi-send me-1"></i>ส่งแจ้งซ่อม</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: อัปเดตผลซ่อม (admin) -->
+    <div class="modal fade" id="modalRepairResult" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header" style="background:#0c1a2e;color:#fff;">
+            <h5 class="modal-title" style="font-family:Kanit;font-size:15px;"><i class="bi bi-clipboard2-check me-2"></i>อัปเดตผลการซ่อม</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="repResultId">
+            <input type="hidden" id="repResultAssetId">
+            <div id="repResultAssetInfo" style="background:#f8fafc;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;"></div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold" style="font-size:13px;">ผลการซ่อม <span class="text-danger">*</span></label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="repResult" id="repResultOk" value="repaired">
+                  <label class="form-check-label text-success fw-bold" for="repResultOk" style="font-family:Kanit;"><i class="bi bi-check-circle-fill me-1"></i>ซ่อมเสร็จ — ใช้งานได้</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="repResult" id="repResultFail" value="unrepairable">
+                  <label class="form-check-label text-danger fw-bold" for="repResultFail" style="font-family:Kanit;"><i class="bi bi-x-octagon-fill me-1"></i>ซ่อมไม่ได้ — เสนอจำหน่าย</label>
+                </div>
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="form-label fw-semibold" style="font-size:13px;">หมายเหตุ</label>
+              <textarea id="repResultNote" class="form-control" rows="2" placeholder="รายละเอียดเพิ่มเติม" style="font-family:Kanit;font-size:13px;"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">ยกเลิก</button>
+            <button type="button" class="btn btn-primary btn-sm px-4" onclick="submitRepairResult()" id="repResultSubmitBtn"><i class="bi bi-check2 me-1"></i>บันทึกผล</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1801,6 +1963,7 @@ function showPage(page) {
   else if (page === 'assets') loadAssetsPage();
   else if (page === 'inspection') loadInspectionPage();
   else if (page === 'transfer') loadTransferPage();
+  else if (page === 'repair') loadRepairPage();
   else if (page === 'admin-users') loadAdminPage();
 }
 
@@ -2877,6 +3040,286 @@ function _loadXLSX(cb) {
   s.onload = cb;
   s.onerror = function() { showToast('โหลด XLSX ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ต', 'danger'); };
   document.head.appendChild(s);
+}
+
+// ============================================================
+// REPAIR PAGE
+// ============================================================
+var _repAllAssets = [], _repFilteredAssets = [], _repSelectedAsset = null;
+
+// ── Tab ──────────────────────────────────────────────────
+function showRepairTab(tab) {
+  ['pending','history'].forEach(function(t) {
+    var cap = t.charAt(0).toUpperCase() + t.slice(1);
+    var el  = document.getElementById('repTab' + cap);
+    var btn = document.getElementById('repTabBtn' + cap);
+    if (el)  el.style.display  = (t === tab) ? '' : 'none';
+    if (btn) {
+      btn.style.color        = (t === tab) ? '#b45309' : '#64748b';
+      btn.style.borderBottom = (t === tab) ? '2px solid #b45309' : '2px solid transparent';
+      btn.style.background   = (t === tab) ? '#fffbeb' : 'none';
+    }
+  });
+  if (tab === 'pending') _loadRepairPending();
+  if (tab === 'history') _loadRepairHistory();
+}
+
+// ── Load page ─────────────────────────────────────────────
+async function loadRepairPage() {
+  var isAdmin    = App.profile && App.profile.role === 'admin';
+  var isBranch   = App.profile && App.profile.role === 'branch';
+  var myBranchId = App.profile ? App.profile.branch_id : null;
+
+  // Populate branch filter in modal
+  var repBr = document.getElementById('repMBranch');
+  if (repBr) {
+    var cur = repBr.value;
+    while (repBr.options.length > 1) repBr.remove(1);
+    App.branches.forEach(function(b) {
+      if (isBranch && b.id !== myBranchId) return;
+      var o = document.createElement('option');
+      o.value = b.id; o.textContent = b.name;
+      repBr.appendChild(o);
+    });
+    if (cur) repBr.value = cur;
+    if (isBranch && myBranchId) repBr.value = myBranchId;
+  }
+
+  // Load damaged-fixable assets for modal
+  var q = sb.from('assets')
+    .select('id,asset_code,name,branch_id,status,branches(name)')
+    .eq('status','damaged_fixable')
+    .order('branch_id',{ascending:true}).order('asset_code',{ascending:true}).limit(5000);
+  if (isBranch && myBranchId) q = q.eq('branch_id', myBranchId);
+  var res = await q;
+  _repAllAssets = res.data || [];
+  _repSelectedAsset = null;
+  filterRepairAssets();
+
+  // Pending badge
+  var pq = sb.from('repair_requests').select('id',{count:'exact',head:true}).eq('status','pending');
+  if (isBranch && myBranchId) pq = pq.eq('branch_id', myBranchId);
+  var pr = await pq;
+  var cnt = pr.count || 0;
+  ['repairBadge','repPendingBadge'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.textContent = cnt; el.style.display = cnt > 0 ? 'inline' : 'none'; }
+  });
+
+  showRepairTab('pending');
+}
+
+// ── Modal: เลือกครุภัณฑ์ ──────────────────────────────────
+function openRepairRequest() {
+  _repSelectedAsset = null;
+  document.getElementById('repMDesc').value = '';
+  document.getElementById('repMSelected').style.display = 'none';
+  filterRepairAssets();
+  new bootstrap.Modal(document.getElementById('modalRepairRequest')).show();
+}
+
+function filterRepairAssets() {
+  var search  = ((document.getElementById('repMSearch')||{}).value||'').toLowerCase();
+  var brFil   = (document.getElementById('repMBranch')||{}).value||'';
+  var isBranch= App.profile && App.profile.role==='branch';
+  var myB     = App.profile ? App.profile.branch_id : null;
+  _repFilteredAssets = _repAllAssets.filter(function(a) {
+    var ms = !search || (a.name||'').toLowerCase().includes(search)||(a.asset_code||'').toLowerCase().includes(search);
+    var mb = !brFil  || a.branch_id === brFil;
+    var mm = !isBranch || a.branch_id === myB;
+    return ms && mb && mm;
+  });
+  renderRepairAssetList();
+}
+
+function renderRepairAssetList() {
+  var tbody = document.getElementById('repMAssetList');
+  if (!tbody) return;
+  if (!_repFilteredAssets.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-muted">ไม่พบครุภัณฑ์ที่ชำรุด ซ่อมได้</td></tr>';
+    return;
+  }
+  var html = '';
+  _repFilteredAssets.slice(0,100).forEach(function(a) {
+    var sel = _repSelectedAsset && _repSelectedAsset.id === a.id;
+    var brN = (a.branches&&a.branches.name)||'ไม่ระบุ';
+    html += '<tr style="cursor:pointer;background:'+(sel?'#fef3c7':'')+'" onclick="selectRepairAsset(\''+a.id+'\')">';
+    html += '<td style="padding:7px 10px;"><input type="radio" class="form-check-input" '+(sel?'checked':'')+' readonly></td>';
+    html += '<td style="padding:7px 10px;font-family:monospace;font-size:11px;color:#64748b;">'+(a.asset_code||'—')+'</td>';
+    html += '<td style="padding:7px 10px;font-weight:'+(sel?'700':'400')+';">'+(a.name||'—')+'</td>';
+    html += '<td style="padding:7px 10px;font-size:12px;">'+brN+'</td>';
+    html += '<td style="padding:7px 10px;">'+badgeHtml(a.status)+'</td>';
+    html += '</tr>';
+  });
+  if (_repFilteredAssets.length > 100) html += '<tr><td colspan="5" class="text-center py-2" style="font-size:11px;color:#94a3b8;">แสดง 100 รายการแรก — กรุณาค้นหาเพิ่มเติม</td></tr>';
+  tbody.innerHTML = html;
+}
+
+function selectRepairAsset(id) {
+  _repSelectedAsset = _repAllAssets.find(function(a){ return a.id===id; }) || null;
+  renderRepairAssetList();
+  var selEl   = document.getElementById('repMSelected');
+  var nameEl  = document.getElementById('repMSelectedName');
+  var brEl    = document.getElementById('repMSelectedBranch');
+  if (_repSelectedAsset && selEl) {
+    selEl.style.display = '';
+    if (nameEl) nameEl.textContent = (_repSelectedAsset.asset_code?_repSelectedAsset.asset_code+' — ':'')+(_repSelectedAsset.name||'');
+    if (brEl)   brEl.textContent   = 'สาขา: ' + ((_repSelectedAsset.branches&&_repSelectedAsset.branches.name)||'ไม่ระบุ');
+  } else if (selEl) {
+    selEl.style.display = 'none';
+  }
+}
+
+// ── Submit repair request ─────────────────────────────────
+async function submitRepairRequest() {
+  if (!_repSelectedAsset) { showToast('กรุณาเลือกครุภัณฑ์','warning'); return; }
+  var desc = (document.getElementById('repMDesc').value||'').trim();
+  if (!desc) { showToast('กรุณาระบุอาการ / ปัญหา','warning'); return; }
+
+  var btn = document.getElementById('repMSubmitBtn');
+  if (btn) { btn.disabled=true; btn.innerHTML='<div class="spinner-border spinner-border-sm me-1"></div>กำลังส่ง...'; }
+
+  var res = await sb.from('repair_requests').insert({
+    asset_id:     _repSelectedAsset.id,
+    asset_code:   _repSelectedAsset.asset_code,
+    asset_name:   _repSelectedAsset.name,
+    branch_id:    _repSelectedAsset.branch_id,
+    branch_name:  (_repSelectedAsset.branches&&_repSelectedAsset.branches.name)||'ไม่ระบุ',
+    problem_desc: desc,
+    status:       'pending',
+    requested_by: App.user ? App.user.id : null
+  });
+  if (btn) { btn.disabled=false; btn.innerHTML='<i class="bi bi-send me-1"></i>ส่งแจ้งซ่อม'; }
+  if (res.error) { showToast('เกิดข้อผิดพลาด: '+res.error.message,'danger'); return; }
+
+  bootstrap.Modal.getInstance(document.getElementById('modalRepairRequest')).hide();
+  showToast('แจ้งซ่อม '+_repSelectedAsset.name+' เรียบร้อยแล้ว — รอ admin ดำเนินการ','success');
+  await loadRepairPage();
+}
+
+// ── Load pending ──────────────────────────────────────────
+async function _loadRepairPending() {
+  var tbody = document.getElementById('repPendingBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="5" class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+  var isAdmin    = App.profile && App.profile.role === 'admin';
+  var myBranchId = App.profile ? App.profile.branch_id : null;
+
+  var q = sb.from('repair_requests').select('*').eq('status','pending').order('requested_at',{ascending:true});
+  if (!isAdmin && myBranchId) q = q.eq('branch_id', myBranchId);
+  var res = await q;
+  var rows = res.data || [];
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-check-circle" style="font-size:28px;display:block;margin-bottom:6px;color:#22c55e;"></i>ไม่มีรายการรอดำเนินการ</td></tr>';
+    return;
+  }
+  var html = '';
+  rows.forEach(function(r) {
+    var dt = r.requested_at ? new Date(r.requested_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}) : '-';
+    var daysWaiting = r.requested_at ? Math.floor((new Date()-new Date(r.requested_at))/(864e5)) : 0;
+    var urgency = daysWaiting > 14 ? '<span style="background:#fee2e2;color:#991b1b;font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:4px;">รอนาน '+daysWaiting+' วัน</span>' : '';
+    html += '<tr>';
+    html += '<td style="padding:10px 12px;"><div style="font-weight:600;font-size:13px;">'+(r.asset_name||'—')+urgency+'</div><div style="font-size:11px;color:#94a3b8;font-family:monospace;">'+(r.asset_code||'')+'</div></td>';
+    html += '<td style="padding:10px 12px;font-size:13px;">'+(r.branch_name||'—')+'</td>';
+    html += '<td style="padding:10px 12px;font-size:12px;color:#475569;">'+(r.problem_desc||'—')+'</td>';
+    html += '<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+dt+'</td>';
+    html += '<td style="padding:10px 12px;text-align:center;">';
+    if (isAdmin) {
+      html += '<button class="btn btn-sm btn-outline-primary px-3" onclick="openRepairResult(\''+r.id+'\',\''+r.asset_id+'\',\''+escHtml(r.asset_name)+'\',\''+escHtml(r.problem_desc)+'\')"><i class="bi bi-clipboard2-check me-1"></i>อัปเดตผล</button>';
+    } else {
+      html += '<span style="font-size:11px;color:#94a3b8;"><i class="bi bi-hourglass me-1"></i>รอ admin</span>';
+    }
+    html += '</td></tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+function escHtml(s) { return (s||'').replace(/'/g,"\\'"); }
+
+// ── Admin: open result modal ──────────────────────────────
+function openRepairResult(repId, assetId, assetName, problem) {
+  document.getElementById('repResultId').value = repId;
+  document.getElementById('repResultAssetId').value = assetId;
+  document.getElementById('repResultAssetInfo').innerHTML =
+    '<div style="font-weight:700;margin-bottom:4px;">' + assetName + '</div>' +
+    '<div style="font-size:12px;color:#64748b;"><i class="bi bi-exclamation-circle me-1"></i>' + problem + '</div>';
+  document.getElementById('repResultNote').value = '';
+  document.querySelectorAll('input[name="repResult"]').forEach(function(r){ r.checked=false; });
+  new bootstrap.Modal(document.getElementById('modalRepairResult')).show();
+}
+
+// ── Admin: submit result ──────────────────────────────────
+async function submitRepairResult() {
+  var repId   = document.getElementById('repResultId').value;
+  var assetId = document.getElementById('repResultAssetId').value;
+  var result  = document.querySelector('input[name="repResult"]:checked');
+  var note    = (document.getElementById('repResultNote').value||'').trim();
+  if (!result) { showToast('กรุณาเลือกผลการซ่อม','warning'); return; }
+
+  var newRepairStatus = result.value; // 'repaired' | 'unrepairable'
+  var newAssetStatus  = newRepairStatus === 'repaired' ? 'active' : 'damaged_unfixable';
+
+  var btn = document.getElementById('repResultSubmitBtn');
+  if (btn) { btn.disabled=true; btn.innerHTML='<div class="spinner-border spinner-border-sm me-1"></div>กำลังบันทึก...'; }
+
+  // อัปเดต repair record
+  var r1 = await sb.from('repair_requests').update({
+    status:       newRepairStatus,
+    resolve_note: note||null,
+    resolved_by:  App.user ? App.user.id : null,
+    resolved_at:  new Date().toISOString()
+  }).eq('id', repId);
+
+  // อัปเดต asset status อัตโนมัติ
+  var r2 = await sb.from('assets').update({ status: newAssetStatus }).eq('id', assetId);
+
+  if (btn) { btn.disabled=false; btn.innerHTML='<i class="bi bi-check2 me-1"></i>บันทึกผล'; }
+  if (r1.error||r2.error) { showToast('เกิดข้อผิดพลาด: '+((r1.error||r2.error).message),'danger'); return; }
+
+  bootstrap.Modal.getInstance(document.getElementById('modalRepairResult')).hide();
+  var msg = newRepairStatus==='repaired'
+    ? 'ซ่อมเสร็จ — สถานะครุภัณฑ์กลับเป็น "พบ / ปกติ" แล้ว'
+    : 'ซ่อมไม่ได้ — สถานะครุภัณฑ์เปลี่ยนเป็น "ชำรุด ซ่อมไม่ได้" พร้อมเสนอจำหน่าย';
+  showToast(msg, newRepairStatus==='repaired'?'success':'warning');
+  await loadRepairPage();
+}
+
+// ── Load history ──────────────────────────────────────────
+async function _loadRepairHistory() {
+  var tbody = document.getElementById('repHistoryBody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></td></tr>';
+  var isAdmin    = App.profile && App.profile.role === 'admin';
+  var myBranchId = App.profile ? App.profile.branch_id : null;
+
+  var q = sb.from('repair_requests').select('*').not('status','eq','pending').order('resolved_at',{ascending:false}).limit(300);
+  if (!isAdmin && myBranchId) q = q.eq('branch_id', myBranchId);
+  var res = await q;
+  var rows = res.data || [];
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-clock-history" style="font-size:28px;display:block;margin-bottom:6px;"></i>ยังไม่มีประวัติการซ่อม</td></tr>';
+    return;
+  }
+  var scfg = {
+    repaired:     {label:'ซ่อมเสร็จ',    bg:'#dcfce7',color:'#166534',icon:'bi-check-circle-fill'},
+    unrepairable: {label:'ซ่อมไม่ได้',   bg:'#fee2e2',color:'#991b1b',icon:'bi-x-octagon-fill'}
+  };
+  var html = '';
+  rows.forEach(function(r) {
+    var cfg = scfg[r.status]||{label:r.status,bg:'#f1f5f9',color:'#64748b',icon:'bi-circle'};
+    var dt  = r.requested_at ? new Date(r.requested_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}) : '-';
+    html += '<tr>';
+    html += '<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+dt+'</td>';
+    html += '<td style="padding:10px 12px;"><div style="font-weight:600;font-size:13px;">'+(r.asset_name||'—')+'</div><div style="font-size:11px;font-family:monospace;color:#94a3b8;">'+(r.asset_code||'')+'</div></td>';
+    html += '<td style="padding:10px 12px;font-size:13px;">'+(r.branch_name||'—')+'</td>';
+    html += '<td style="padding:10px 12px;font-size:12px;color:#475569;">'+(r.problem_desc||'—')+'</td>';
+    html += '<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+(r.resolve_note||'—')+'</td>';
+    html += '<td style="padding:10px 12px;text-align:center;"><span style="background:'+cfg.bg+';color:'+cfg.color+';font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;"><i class="bi '+cfg.icon+' me-1"></i>'+cfg.label+'</span></td>';
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
 }
 
 // ============================================================
