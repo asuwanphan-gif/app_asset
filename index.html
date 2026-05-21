@@ -72,9 +72,9 @@
     border:1px solid rgba(255,255,255,.07);
   }
   .sb-user-avatar{
-    width:28px;height:28px;border-radius:50%;flex-shrink:0;
-    background:linear-gradient(135deg,#3b82f6,#8b5cf6);
-    display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:700;
+    width:28px;height:28px;border-radius:8px;flex-shrink:0;
+    background:rgba(255,255,255,.12);
+    display:flex;align-items:center;justify-content:center;font-size:16px;color:rgba(255,255,255,.75);
   }
   .sb-user-name{font-size:12px;color:rgba(255,255,255,.75);font-weight:600;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 
@@ -530,7 +530,7 @@
     </div>
     <div class="sb-org">คณะศิลปศาสตร์และวิทยาศาสตร์<br>มหาวิทยาลัยราชภัฏศรีสะเกษ</div>
     <div class="sb-user">
-      <div class="sb-user-avatar" id="sbAvatar">A</div>
+      <div class="sb-user-avatar" id="sbAvatar"><i class="bi bi-person-fill"></i></div>
       <div class="sb-user-name" id="sbUserName">-</div>
     </div>
   </div>
@@ -610,7 +610,7 @@
             <i class="bi bi-funnel text-warning" style="font-size:14px;flex-shrink:0;"></i>
             <select id="dashStatus" class="form-select form-select-sm" onchange="loadDashboard()">
               <option value="">ทุกสถานะ</option>
-              <option value="active">พบ / ปกติ</option>
+              <option value="active">พบ</option>
               <option value="not_found">ไม่พบ</option>
               <option value="damaged_fixable">ชำรุด ซ่อมได้</option>
               <option value="damaged_unfixable">ชำรุด ซ่อมไม่ได้</option>
@@ -689,7 +689,7 @@
             </select>
             <select id="filterStatus" class="form-select form-select-sm" onchange="filterAssetsNow()" style="min-width:130px;flex:1;">
               <option value="">-- ทุกสถานะ --</option>
-              <option value="active">พบ / ปกติ</option>
+              <option value="active">พบ</option>
               <option value="not_found">ไม่พบ</option>
               <option value="damaged_fixable">ชำรุด ซ่อมได้</option>
               <option value="damaged_unfixable">ชำรุด ซ่อมไม่ได้</option>
@@ -1014,10 +1014,11 @@
                 </select>
                 <select id="trMStatus" class="form-select form-select-sm" onchange="filterTransferModal()" style="min-width:130px;flex:1;">
                   <option value="">-- ทุกสถานะ --</option>
-                  <option value="active">พบ / ปกติ</option>
+                  <option value="active">พบ</option>
                   <option value="not_found">ไม่พบ</option>
                   <option value="damaged_fixable">ชำรุด ซ่อมได้</option>
                   <option value="damaged_unfixable">ชำรุด ซ่อมไม่ได้</option>
+                  <option value="disposal_pending">รออนุมัติจำหน่าย</option>
                 </select>
               </div>
             </div>
@@ -1178,7 +1179,7 @@
             <div class="col-md-2">
               <label class="form-label form-label-sm fw-semibold mb-1">สถานะ</label>
               <select id="fStatus" class="form-select form-select-sm">
-                <option value="active">พบ / ปกติ</option>
+                <option value="active">พบ</option>
                 <option value="not_found">ไม่พบ</option>
                 <option value="damaged_fixable">ชำรุด ซ่อมได้</option>
                 <option value="damaged_unfixable">ชำรุด ซ่อมไม่ได้</option>
@@ -1757,7 +1758,7 @@ var App = {
 };
 
 var STATUS = {
-  active:            { label: 'พบ / ปกติ',          cls: 'badge-active' },
+  active:            { label: 'พบ',          cls: 'badge-active' },
   not_found:         { label: 'ไม่พบ',               cls: 'badge-not_found' },
   damaged_fixable:   { label: 'ชำรุด ซ่อมได้',     cls: 'badge-damaged_fixable' },
   damaged_unfixable: { label: 'ชำรุด ซ่อมไม่ได้',  cls: 'badge-damaged_unfixable' },
@@ -1768,7 +1769,7 @@ var STATUS = {
 
 // สถานะที่ใช้ในการตรวจสอบครุภัณฑ์เท่านั้น (ไม่รวมสถานะเชิงบริหาร)
 var INSP_STATUS = {
-  active:            { label: 'พบ / ปกติ',          cls: 'badge-active' },
+  active:            { label: 'พบ',          cls: 'badge-active' },
   not_found:         { label: 'ไม่พบ',               cls: 'badge-not_found' },
   damaged_fixable:   { label: 'ชำรุด ซ่อมได้',     cls: 'badge-damaged_fixable' },
   damaged_unfixable: { label: 'ชำรุด ซ่อมไม่ได้',  cls: 'badge-damaged_unfixable' }
@@ -1900,9 +1901,6 @@ function _startApp() {
   var displayName = (p.role === 'branch' && p.branches)
     ? p.branches.name
     : (p.full_name || p.username || 'Admin');
-  var initials = displayName.charAt(0).toUpperCase();
-  var sbAv = document.getElementById('sbAvatar');
-  if (sbAv) sbAv.textContent = initials;
   document.getElementById('sbUserName').textContent = displayName;
 
   // ซ่อน admin menu ถ้าไม่ใช่ admin
@@ -1998,7 +1996,7 @@ async function loadBranches() {
 }
 
 function _populateBranchSelects() {
-  var selects = ['dashBranch', 'filterBranch', 'fBranch', 'inspFilterBranch', 'inspPendingBranch', 'inspDoneBranch', 'uBranch'];
+  var selects = ['dashBranch', 'filterBranch', 'fBranch', 'inspFilterBranch', 'inspPendingBranch', 'inspDoneBranch', 'uBranch', 'trMFromBranch', 'trMTarget'];
   selects.forEach(function(id) {
     var sel = document.getElementById(id);
     if (!sel) return;
@@ -2011,12 +2009,19 @@ function _populateBranchSelects() {
       nob.value = 'no_branch'; nob.textContent = 'ยังไม่ระบุสาขา';
       sel.appendChild(nob);
     }
+    var isBr = App.profile && App.profile.role === 'branch';
+    var myBr = isBr && App.profile.branch_id;
     App.branches.forEach(function(b) {
+      // trMFromBranch: branch user เห็นเฉพาะสาขาตัวเอง
+      if (id === 'trMFromBranch' && isBr && b.id !== myBr) return;
+      // trMTarget: branch user ไม่เห็นสาขาตัวเอง (ไม่โอนหาตัวเอง)
+      if (id === 'trMTarget'     && isBr && b.id === myBr) return;
       var o = document.createElement('option');
       o.value = b.id; o.textContent = b.name;
       sel.appendChild(o);
     });
     if (cur) sel.value = cur;
+    if (id === 'trMFromBranch' && isBr && myBr) sel.value = myBr;
   });
   // fBranch has no placeholder option
   var fBranch = document.getElementById('fBranch');
@@ -2111,7 +2116,7 @@ async function loadDashboard() {
 
   var cardCfg = [
     { key:'total',            label:'ทั้งหมด',          color:'#1d4ed8', bg:'#dbeafe', icon:'bi-boxes' },
-    { key:'active',           label:'พบ / ปกติ',        color:'#059669', bg:'#d1fae5', icon:'bi-check-circle-fill' },
+    { key:'active',           label:'พบ',        color:'#059669', bg:'#d1fae5', icon:'bi-check-circle-fill' },
     { key:'not_found',        label:'ไม่พบ',            color:'#ea580c', bg:'#ffedd5', icon:'bi-question-circle-fill' },
     { key:'damaged_fixable',  label:'ชำรุด ซ่อมได้',   color:'#d97706', bg:'#fef3c7', icon:'bi-tools' },
     { key:'damaged_unfixable',label:'ชำรุด ซ่อมไม่ได้',color:'#dc2626', bg:'#fee2e2', icon:'bi-x-octagon-fill' },
@@ -2340,8 +2345,8 @@ async function _renderDashChart(assets, selectedBranch) {
     if (inspectedSet.has(a.id)) bMap[n].inspected++;
   });
 
-  // เรียงตาม total มากสุดก่อน
-  var labels = Object.keys(bMap).sort(function(a,b){ return bMap[b].total - bMap[a].total; });
+  // เรียงตาม total น้อยสุด → มากสุด (ซ้าย → ขวา)
+  var labels = Object.keys(bMap).sort(function(a,b){ return bMap[a].total - bMap[b].total; });
   var shortLabels = labels.map(function(l){ return l.length > 10 ? l.substring(0,10)+'…' : l; });
   var dInspected    = labels.map(function(l){ return bMap[l].inspected; });
   var dNotInspected = labels.map(function(l){ return bMap[l].total - bMap[l].inspected; });
@@ -2359,7 +2364,7 @@ async function _renderDashChart(assets, selectedBranch) {
     options: {
       responsive:true, maintainAspectRatio:false,
       plugins: {
-        legend: { position:'top', labels:{ font:{family:'Kanit',size:12}, boxWidth:14 } },
+        legend: { position:'top', labels:{ font:{family:'Kanit',size:12}, boxWidth:14, filter: function(item){ return item.text !== '_total'; } } },
         tooltip: {
           callbacks: {
             title: function(items){ return labels[items[0].dataIndex]; },
@@ -2405,6 +2410,7 @@ async function _renderDashChart(assets, selectedBranch) {
   App._dashChart.data.datasets.push({
     label: '_total', data: totals,
     backgroundColor: 'transparent', maxBarThickness:52,
+    legend: { display: false },
     datalabels: {
       anchor:'end', align:'top',
       color:'#1e293b', font:{family:'Kanit',size:11,weight:'bold'},
@@ -2884,22 +2890,38 @@ async function showAssetDetail(id) {
     repairHtml = '<div style="font-size:13px;color:#94a3b8;text-align:center;padding:16px 0;"><i class="bi bi-tools" style="font-size:24px;display:block;margin-bottom:6px;opacity:.3;"></i>ไม่มีประวัติการซ่อม</div>';
   }
 
+  var row = function(label, val) {
+    if (!val || val === '-') return '';
+    return '<tr><td style="color:#64748b;width:130px;font-size:12px;vertical-align:top;padding:4px 8px 4px 0;">' + label + '</td><td style="font-size:13px;padding:4px 0;">' + val + '</td></tr>';
+  };
   document.getElementById('adBody').innerHTML = '<div style="padding:20px;">' +
     '<div class="row g-3">' +
       '<div class="col-md-6">' +
-        '<table class="table table-sm table-borderless">' +
-          '<tr><td style="color:#64748b;width:130px;font-size:12px;">รหัสครุภัณฑ์</td><td><strong style="font-family:monospace;">' + (a.asset_code||'-') + '</strong></td></tr>' +
-          '<tr><td style="color:#64748b;font-size:12px;">ชื่อครุภัณฑ์</td><td style="font-size:13px;">' + (a.name||'-') + '</td></tr>' +
-          '<tr><td style="color:#64748b;font-size:12px;">ประเภท</td><td style="font-size:13px;">' + (a.category||'-') + '</td></tr>' +
-          '<tr><td style="color:#64748b;font-size:12px;">ยี่ห้อ/รุ่น</td><td style="font-size:13px;">' + ([a.brand,a.model].filter(Boolean).join(' / ')||'-') + '</td></tr>' +
-          '<tr><td style="color:#64748b;font-size:12px;">Serial No.</td><td style="font-size:13px;font-family:monospace;">' + (a.serial_number||'-') + '</td></tr>' +
-          '<tr><td style="color:#64748b;font-size:12px;">สาขา</td><td style="font-size:13px;">' + ((a.branches&&a.branches.name)||'-') + '</td></tr>' +
-          '<tr><td style="color:#64748b;font-size:12px;">ที่ตั้ง</td><td style="font-size:13px;">' + (a.location||'-') + '</td></tr>' +
-          '<tr><td style="color:#64748b;font-size:12px;">ราคา</td><td style="font-size:13px;">' + fmtNum(a.price) + ' บาท</td></tr>' +
-          '<tr><td style="color:#64748b;font-size:12px;">วันที่ได้มา</td><td style="font-size:13px;">' + fmtDate(a.acquired_date) + '</td></tr>' +
-          '<tr><td style="color:#64748b;font-size:12px;">สถานะ</td><td>' + badgeHtml(a.status) + '</td></tr>' +
+        '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:6px;">ข้อมูลครุภัณฑ์</div>' +
+        '<table class="table table-sm table-borderless mb-2">' +
+          '<tr><td style="color:#64748b;width:130px;font-size:12px;padding:4px 8px 4px 0;">รหัสครุภัณฑ์</td><td><strong style="font-family:monospace;font-size:13px;">' + (a.asset_code||'-') + '</strong></td></tr>' +
+          row('รหัสเก่า',        '<span style="font-family:monospace;">'+(a.old_code||'')+'</span>') +
+          row('ชื่อครุภัณฑ์',    a.name) +
+          row('หมวด/ประเภท',     a.category) +
+          row('ยี่ห้อ/รุ่น',     [a.brand,a.model].filter(Boolean).join(' / ')) +
+          row('Serial No.',     '<span style="font-family:monospace;">'+(a.serial_number||'')+'</span>') +
+          row('จำนวน',           (a.quantity||1) + ' ' + (a.unit||'เครื่อง')) +
+          '<tr><td style="color:#64748b;font-size:12px;padding:4px 8px 4px 0;">สถานะ</td><td style="padding:4px 0;">' + badgeHtml(a.status) + '</td></tr>' +
         '</table>' +
-        (a.notes ? '<div style="background:#f8fafc;padding:10px;border-radius:8px;font-size:12px;"><strong>หมายเหตุ:</strong> ' + a.notes + '</div>' : '') +
+        '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#94a3b8;margin-bottom:6px;">ข้อมูลการได้มา</div>' +
+        '<table class="table table-sm table-borderless mb-2">' +
+          row('สาขา',           (a.branches&&a.branches.name)) +
+          row('ที่ตั้ง',         a.location) +
+          row('ผู้รับผิดชอบ',    a.custodian) +
+          row('ราคา',           fmtNum(a.price) + ' บาท') +
+          row('งบประมาณ',       a.budget_type) +
+          row('วิธีได้มา',       a.acquisition_method) +
+          row('วันที่ได้มา',     fmtDate(a.acquired_date)) +
+          (a.life_years ? row('อายุการใช้งาน', a.life_years + ' ปี') : '') +
+          row('ร้านค้า/บริษัท',  a.vendor) +
+          row('เลขที่ใบเสร็จ',   a.receipt_number) +
+        '</table>' +
+        (a.notes ? '<div style="background:#f8fafc;padding:10px;border-radius:8px;font-size:12px;border:1px solid #e2e8f0;"><strong>หมายเหตุ:</strong> ' + a.notes + '</div>' : '') +
       '</div>' +
       '<div class="col-md-6">' +
         '<div style="font-size:13px;font-weight:600;margin-bottom:8px;"><i class="bi bi-images me-1 text-muted"></i>รูปภาพ (' + photos.length + ')</div>' +
@@ -3279,7 +3301,7 @@ async function submitRepairResult() {
 
   bootstrap.Modal.getInstance(document.getElementById('modalRepairResult')).hide();
   var msg = newRepairStatus==='repaired'
-    ? 'ซ่อมเสร็จ — สถานะครุภัณฑ์กลับเป็น "พบ / ปกติ" แล้ว'
+    ? 'ซ่อมเสร็จ — สถานะครุภัณฑ์กลับเป็น "พบ" แล้ว'
     : 'ซ่อมไม่ได้ — สถานะครุภัณฑ์เปลี่ยนเป็น "ชำรุด ซ่อมไม่ได้" พร้อมเสนอจำหน่าย';
   showToast(msg, newRepairStatus==='repaired'?'success':'warning');
   await loadRepairPage();
@@ -3351,22 +3373,11 @@ async function loadTransferPage() {
   var isBranch   = App.profile && App.profile.role === 'branch';
   var myBranchId = App.profile ? App.profile.branch_id : null;
 
-  // Populate modal branch selects
-  ['trMFromBranch','trMTarget'].forEach(function(id) {
-    var sel = document.getElementById(id);
-    if (!sel) return;
-    var cur = sel.value;
-    while (sel.options.length > 1) sel.remove(1);
-    App.branches.forEach(function(b) {
-      if (id === 'trMFromBranch' && isBranch && b.id !== myBranchId) return;
-      if (id === 'trMTarget'     && isBranch && b.id === myBranchId) return;
-      var o = document.createElement('option');
-      o.value = b.id; o.textContent = b.name;
-      sel.appendChild(o);
-    });
-    if (cur) sel.value = cur;
-    if (id === 'trMFromBranch' && isBranch && myBranchId) sel.value = myBranchId;
-  });
+  // Admin เท่านั้นสร้างคำขอโอนได้ — ซ่อนปุ่มและ tab ขาออกสำหรับ branch
+  var btnCreate = document.getElementById('trBtnCreate');
+  if (btnCreate) btnCreate.style.display = isAdmin ? '' : 'none';
+  var tabOut = document.getElementById('trTabBtnOutgoing');
+  if (tabOut) tabOut.style.display = isAdmin ? '' : 'none';
 
   // Load assets for modal
   var q = sb.from('assets')
@@ -3392,9 +3403,48 @@ async function loadTransferPage() {
 }
 
 // ── Open modal ────────────────────────────────────────────
-function openTransferModal() {
+async function openTransferModal() {
   _trMSelected = new Set();
   _trMPage = 1;
+
+  // ดึงสาขา — ใช้ App.branches ถ้ามี ถ้าไม่มีดึงใหม่จาก DB
+  var branches = (App.branches && App.branches.length) ? App.branches : [];
+  if (!branches.length) {
+    var bRes = await sb.from('branches').select('id,name,code').order('code');
+    branches = App.branches = (bRes.data || []).sort(function(a, b) {
+      var na = parseInt(a.code) || 0, nb = parseInt(b.code) || 0;
+      return na !== nb ? na - nb : (a.code || '').localeCompare(b.code || '');
+    });
+  }
+
+  var isBranch   = App.profile && App.profile.role === 'branch';
+  var myBranchId = App.profile ? App.profile.branch_id : null;
+
+  // เติมสาขาต้นทาง + สาขาปลายทาง
+  ['trMFromBranch', 'trMTarget'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    while (sel.options.length > 1) sel.remove(1);
+    branches.forEach(function(b) {
+      if (id === 'trMFromBranch' && isBranch && b.id !== myBranchId) return;
+      if (id === 'trMTarget'     && isBranch && b.id === myBranchId) return;
+      var o = document.createElement('option');
+      o.value = b.id; o.textContent = b.name;
+      o.style.color = '#1a2332'; o.style.background = '#fff'; // ป้องกัน white-on-white
+      sel.appendChild(o);
+    });
+    if (id === 'trMFromBranch' && isBranch && myBranchId) sel.value = myBranchId;
+  });
+
+  // ดึงครุภัณฑ์ใหม่ทุกครั้งเพื่อให้ข้อมูลล่าสุด
+  var q = sb.from('assets')
+    .select('id,asset_code,name,branch_id,status,price,branches(name)')
+    .not('status', 'in', '("disposed","transferred")')
+    .order('branch_id', {ascending: true}).order('asset_code', {ascending: true}).limit(10000);
+  if (isBranch && myBranchId) q = q.eq('branch_id', myBranchId);
+  var res = await q;
+  _trAll = res.data || [];
+
   filterTransferModal();
   var m = new bootstrap.Modal(document.getElementById('modalTransferCreate'));
   m.show();
