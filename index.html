@@ -883,14 +883,14 @@
             <div id="repResultAssetInfo" style="background:#f8fafc;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;"></div>
             <div class="mb-3">
               <label class="form-label fw-semibold" style="font-size:13px;">ผลการซ่อม <span class="text-danger">*</span></label>
-              <div class="d-flex gap-3">
-                <div class="form-check">
+              <div class="d-flex flex-column gap-2">
+                <div class="form-check p-3 rounded" style="background:#f0fdf4;border:1px solid #bbf7d0;">
                   <input class="form-check-input" type="radio" name="repResult" id="repResultOk" value="repaired">
-                  <label class="form-check-label text-success fw-bold" for="repResultOk" style="font-family:Kanit;"><i class="bi bi-check-circle-fill me-1"></i>ซ่อมเสร็จ — ใช้งานได้</label>
+                  <label class="form-check-label fw-bold" for="repResultOk" style="font-family:Kanit;color:#166534;cursor:pointer;"><i class="bi bi-check-circle-fill me-1"></i>ซ่อมเสร็จ — ใช้งานได้</label>
                 </div>
-                <div class="form-check">
+                <div class="form-check p-3 rounded" style="background:#fff1f2;border:1px solid #fecdd3;">
                   <input class="form-check-input" type="radio" name="repResult" id="repResultFail" value="unrepairable">
-                  <label class="form-check-label text-danger fw-bold" for="repResultFail" style="font-family:Kanit;"><i class="bi bi-x-octagon-fill me-1"></i>ซ่อมไม่ได้ — เสนอจำหน่าย</label>
+                  <label class="form-check-label fw-bold" for="repResultFail" style="font-family:Kanit;color:#991b1b;cursor:pointer;"><i class="bi bi-x-octagon-fill me-1"></i>ซ่อมไม่ได้ — เสนอจำหน่าย</label>
                 </div>
               </div>
             </div>
