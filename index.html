@@ -1028,7 +1028,7 @@
                 <span id="trMSelectedCount" style="font-weight:700;font-size:13px;flex:1;"></span>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                   <span style="font-size:12px;opacity:.8;">โอนไปยัง:</span>
-                  <select id="trMTarget" class="form-select form-select-sm" style="min-width:165px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);font-family:Kanit;">
+                  <select id="trMTarget" class="form-select form-select-sm" style="min-width:165px;background:#fff;color:#1a2332;border:1px solid rgba(255,255,255,.5);font-family:Kanit;">
                     <option value="">-- เลือกสาขาปลายทาง --</option>
                   </select>
                   <input id="trMNote" type="text" class="form-control form-control-sm" placeholder="หมายเหตุ (ถ้ามี)" style="min-width:150px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);font-family:Kanit;">
@@ -3420,21 +3420,26 @@ async function openTransferModal() {
   var isBranch   = App.profile && App.profile.role === 'branch';
   var myBranchId = App.profile ? App.profile.branch_id : null;
 
-  // เติมสาขาต้นทาง + สาขาปลายทาง
-  ['trMFromBranch', 'trMTarget'].forEach(function(id) {
-    var sel = document.getElementById(id);
-    if (!sel) return;
-    while (sel.options.length > 1) sel.remove(1);
+  // เติมสาขาต้นทาง — innerHTML โดยตรง (reliable ที่สุด)
+  var selFrom = document.getElementById('trMFromBranch');
+  var selTo   = document.getElementById('trMTarget');
+  if (selFrom) {
+    var fromHtml = '<option value="">-- สาขาต้นทาง --</option>';
     branches.forEach(function(b) {
-      if (id === 'trMFromBranch' && isBranch && b.id !== myBranchId) return;
-      if (id === 'trMTarget'     && isBranch && b.id === myBranchId) return;
-      var o = document.createElement('option');
-      o.value = b.id; o.textContent = b.name;
-      o.style.color = '#1a2332'; o.style.background = '#fff'; // ป้องกัน white-on-white
-      sel.appendChild(o);
+      if (isBranch && b.id !== myBranchId) return;
+      fromHtml += '<option value="' + b.id + '">' + b.name + '</option>';
     });
-    if (id === 'trMFromBranch' && isBranch && myBranchId) sel.value = myBranchId;
-  });
+    selFrom.innerHTML = fromHtml;
+    if (isBranch && myBranchId) selFrom.value = myBranchId;
+  }
+  if (selTo) {
+    var toHtml = '<option value="">-- เลือกสาขาปลายทาง --</option>';
+    branches.forEach(function(b) {
+      if (isBranch && b.id === myBranchId) return; // ไม่โอนหาตัวเอง
+      toHtml += '<option value="' + b.id + '">' + b.name + '</option>';
+    });
+    selTo.innerHTML = toHtml;
+  }
 
   // ดึงครุภัณฑ์ใหม่ทุกครั้งเพื่อให้ข้อมูลล่าสุด
   var q = sb.from('assets')
