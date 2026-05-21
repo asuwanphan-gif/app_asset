@@ -869,6 +869,29 @@
       </div>
     </div>
 
+    <!-- Modal: ยืนยันการโอนย้าย (ยอมรับ/ปฏิเสธ) -->
+    <div class="modal fade" id="modalTransferRespond" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:16px;overflow:hidden;border:none;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+          <div class="modal-header border-0 pb-0" id="trRespondHeader" style="padding:20px 24px 12px;">
+            <h5 class="modal-title" style="font-family:Kanit;font-size:16px;font-weight:700;" id="trRespondTitle"></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" style="padding:12px 24px 8px;">
+            <div id="trRespondInfo" style="background:#f8fafc;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;"></div>
+            <div id="trRespondNoteWrap" style="display:none;">
+              <label class="form-label fw-semibold" style="font-size:13px;">เหตุผลที่ปฏิเสธ <span style="color:#94a3b8;font-weight:400;">(ถ้ามี)</span></label>
+              <textarea id="trRespondNote" class="form-control" rows="3" placeholder="ระบุเหตุผล..." style="font-family:Kanit;font-size:13px;resize:none;border-radius:10px;"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-0" style="padding:12px 24px 20px;gap:8px;">
+            <button type="button" class="btn btn-light btn-sm px-4" data-bs-dismiss="modal" style="font-family:Kanit;border-radius:8px;">ยกเลิก</button>
+            <button type="button" class="btn btn-sm px-4 fw-bold" id="trRespondConfirmBtn" onclick="confirmTransferRespond()" style="font-family:Kanit;border-radius:8px;"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal: อัปเดตผลซ่อม (admin) -->
     <div class="modal fade" id="modalRepairResult" tabindex="-1">
       <div class="modal-dialog">
@@ -3644,30 +3667,74 @@ async function _loadOutgoingTransfers() {
   tbody.innerHTML=html;
 }
 
-async function respondTransfer(id, newStatus) {
-  var note = '';
-  if (newStatus === 'rejected') {
-    note = prompt('เหตุผลที่ปฏิเสธ (ถ้ามี):') || '';
+var _trRespondId = null, _trRespondStatus = null;
+
+function respondTransfer(id, newStatus) {
+  _trRespondId = id;
+  _trRespondStatus = newStatus;
+
+  var header = document.getElementById('trRespondHeader');
+  var title  = document.getElementById('trRespondTitle');
+  var info   = document.getElementById('trRespondInfo');
+  var noteWrap = document.getElementById('trRespondNoteWrap');
+  var btn    = document.getElementById('trRespondConfirmBtn');
+  var note   = document.getElementById('trRespondNote');
+  if (note) note.value = '';
+
+  if (newStatus === 'accepted') {
+    header.style.background = 'linear-gradient(135deg,#065f46,#059669)';
+    title.style.color = '#fff'; title.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>ยืนยันการรับโอน';
+    btn.className = 'btn btn-success btn-sm px-4 fw-bold';
+    btn.innerHTML = '<i class="bi bi-check2 me-1"></i>ยืนยันรับโอน';
+    info.innerHTML = '<i class="bi bi-info-circle text-success me-2"></i>ครุภัณฑ์จะถูกย้ายมายังสาขาของคุณทันทีหลังยืนยัน';
+    if (noteWrap) noteWrap.style.display = 'none';
+  } else if (newStatus === 'rejected') {
+    header.style.background = 'linear-gradient(135deg,#7f1d1d,#dc2626)';
+    title.style.color = '#fff'; title.innerHTML = '<i class="bi bi-x-octagon-fill me-2"></i>ปฏิเสธคำขอโอน';
+    btn.className = 'btn btn-danger btn-sm px-4 fw-bold';
+    btn.innerHTML = '<i class="bi bi-x-lg me-1"></i>ปฏิเสธ';
+    info.innerHTML = '<i class="bi bi-exclamation-triangle text-warning me-2"></i>ครุภัณฑ์จะคงอยู่ที่สาขาต้นทางตามเดิม';
+    if (noteWrap) noteWrap.style.display = '';
+  } else {
+    header.style.background = 'linear-gradient(135deg,#1e293b,#475569)';
+    title.style.color = '#fff'; title.innerHTML = '<i class="bi bi-slash-circle me-2"></i>ยกเลิกคำขอโอน';
+    btn.className = 'btn btn-secondary btn-sm px-4 fw-bold';
+    btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i>ยกเลิกคำขอ';
+    info.innerHTML = '<i class="bi bi-info-circle text-muted me-2"></i>คำขอโอนจะถูกยกเลิก ไม่มีการเปลี่ยนแปลงใด';
+    if (noteWrap) noteWrap.style.display = 'none';
   }
-  var updateData = {
+
+  new bootstrap.Modal(document.getElementById('modalTransferRespond')).show();
+}
+
+async function confirmTransferRespond() {
+  var id = _trRespondId, newStatus = _trRespondStatus;
+  if (!id || !newStatus) return;
+  var note = (_trRespondStatus === 'rejected')
+    ? ((document.getElementById('trRespondNote')||{}).value||'').trim()
+    : '';
+
+  var btn = document.getElementById('trRespondConfirmBtn');
+  if (btn) { btn.disabled=true; btn.innerHTML='<div class="spinner-border spinner-border-sm me-1"></div>กำลังดำเนินการ...'; }
+
+  if (newStatus === 'accepted') {
+    var tr = await sb.from('asset_transfers').select('*').eq('id',id).single();
+    if (tr.error || !tr.data) { showToast('ไม่พบข้อมูลคำขอ','danger'); if(btn){btn.disabled=false;} return; }
+    var upd = await sb.from('assets').update({ branch_id: tr.data.to_branch_id }).in('id', tr.data.asset_ids);
+    if (upd.error) { showToast('อัปเดตสาขาไม่สำเร็จ: '+upd.error.message,'danger'); if(btn){btn.disabled=false;} return; }
+  }
+
+  var res = await sb.from('asset_transfers').update({
     status: newStatus,
     responded_by: App.user ? App.user.id : null,
     responded_at: new Date().toISOString(),
     respond_note: note || null
-  };
-  // If accepted → update assets.branch_id
-  if (newStatus === 'accepted') {
-    // Get the transfer record first
-    var tr = await sb.from('asset_transfers').select('*').eq('id',id).single();
-    if (tr.error || !tr.data) { showToast('ไม่พบข้อมูลคำขอ','danger'); return; }
-    var tData = tr.data;
-    // Update assets
-    var upd = await sb.from('assets').update({ branch_id: tData.to_branch_id }).in('id', tData.asset_ids);
-    if (upd.error) { showToast('อัปเดตสาขาไม่สำเร็จ: '+upd.error.message,'danger'); return; }
-  }
-  var res = await sb.from('asset_transfers').update(updateData).eq('id',id);
+  }).eq('id', id);
+
+  if (btn) { btn.disabled=false; }
   if (res.error) { showToast('เกิดข้อผิดพลาด: '+res.error.message,'danger'); return; }
 
+  bootstrap.Modal.getInstance(document.getElementById('modalTransferRespond')).hide();
   var msgMap = { accepted:'ยอมรับการโอนย้ายเรียบร้อย — ครุภัณฑ์ย้ายสาขาแล้ว', rejected:'ปฏิเสธคำขอเรียบร้อย', cancelled:'ยกเลิกคำขอเรียบร้อย' };
   var typeMap = { accepted:'success', rejected:'warning', cancelled:'secondary' };
   showToast(msgMap[newStatus]||'อัปเดตแล้ว', typeMap[newStatus]||'info');
