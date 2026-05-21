@@ -3242,7 +3242,7 @@ async function _loadRepairPending() {
     var daysWaiting = r.requested_at ? Math.floor((new Date()-new Date(r.requested_at))/(864e5)) : 0;
     var urgency = daysWaiting > 14 ? '<span style="background:#fee2e2;color:#991b1b;font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;margin-left:4px;">รอนาน '+daysWaiting+' วัน</span>' : '';
     html += '<tr>';
-    html += '<td style="padding:10px 12px;"><div style="font-weight:600;font-size:13px;">'+(r.asset_name||'—')+urgency+'</div><div style="font-size:11px;color:#94a3b8;font-family:monospace;">'+(r.asset_code||'')+'</div></td>';
+    html += '<td style="padding:10px 12px;white-space:nowrap;max-width:300px;overflow:hidden;text-overflow:ellipsis;"><span style="font-weight:600;font-size:13px;">'+(r.asset_name||'—')+'</span>'+(r.asset_code?'<span style="font-size:11px;font-family:monospace;color:#94a3b8;margin-left:6px;">'+r.asset_code+'</span>':'')+urgency+'</td>';
     html += '<td style="padding:10px 12px;font-size:13px;">'+(r.branch_name||'—')+'</td>';
     html += '<td style="padding:10px 12px;font-size:12px;color:#475569;">'+(r.problem_desc||'—')+'</td>';
     html += '<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+dt+'</td>';
@@ -3334,7 +3334,7 @@ async function _loadRepairHistory() {
     var dt  = r.requested_at ? new Date(r.requested_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}) : '-';
     html += '<tr>';
     html += '<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+dt+'</td>';
-    html += '<td style="padding:10px 12px;"><div style="font-weight:600;font-size:13px;">'+(r.asset_name||'—')+'</div><div style="font-size:11px;font-family:monospace;color:#94a3b8;">'+(r.asset_code||'')+'</div></td>';
+    html += '<td style="padding:10px 12px;white-space:nowrap;max-width:300px;overflow:hidden;text-overflow:ellipsis;"><span style="font-weight:600;font-size:13px;">'+(r.asset_name||'—')+'</span>'+(r.asset_code?'<span style="font-size:11px;font-family:monospace;color:#94a3b8;margin-left:6px;">'+r.asset_code+'</span>':'')+'</td>';
     html += '<td style="padding:10px 12px;font-size:13px;">'+(r.branch_name||'—')+'</td>';
     html += '<td style="padding:10px 12px;font-size:12px;color:#475569;">'+(r.problem_desc||'—')+'</td>';
     html += '<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+(r.resolve_note||'—')+'</td>';
@@ -3587,7 +3587,7 @@ async function _loadIncomingTransfers() {
     var reqDt = r.requested_at ? new Date(r.requested_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}) : '-';
     var assetTxt = snaps.slice(0,2).map(function(s){ return s.name||s.code||''; }).join(', ') + (snaps.length>2?' +อีก '+(snaps.length-2)+' รายการ':'');
     html+='<tr>';
-    html+='<td style="padding:10px 12px;"><div style="font-size:13px;font-weight:600;">'+(assetTxt||r.asset_ids.length+' รายการ')+'</div><div style="font-size:11px;color:#94a3b8;">'+r.asset_ids.length+' รายการ</div></td>';
+    html+='<td style="padding:10px 12px;white-space:nowrap;max-width:300px;overflow:hidden;text-overflow:ellipsis;"><span style="font-size:13px;font-weight:600;">'+(assetTxt||r.asset_ids.length+' รายการ')+'</span><span style="font-size:11px;color:#94a3b8;margin-left:6px;">('+r.asset_ids.length+' รายการ)</span></td>';
     html+='<td style="padding:10px 12px;font-size:13px;">'+(r.from_branch_name||'ไม่ระบุ')+'</td>';
     html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">—</td>';
     html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+reqDt+'</td>';
@@ -3629,7 +3629,7 @@ async function _loadOutgoingTransfers() {
     var reqDt=r.requested_at?new Date(r.requested_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'-';
     var assetTxt=snaps.slice(0,2).map(function(s){ return s.name||s.code||''; }).join(', ')+(snaps.length>2?' +อีก '+(snaps.length-2)+' รายการ':'');
     html+='<tr>';
-    html+='<td style="padding:10px 12px;"><div style="font-size:13px;font-weight:600;">'+(assetTxt||r.asset_ids.length+' รายการ')+'</div><div style="font-size:11px;color:#94a3b8;">'+r.asset_ids.length+' รายการ</div></td>';
+    html+='<td style="padding:10px 12px;white-space:nowrap;max-width:300px;overflow:hidden;text-overflow:ellipsis;"><span style="font-size:13px;font-weight:600;">'+(assetTxt||r.asset_ids.length+' รายการ')+'</span><span style="font-size:11px;color:#94a3b8;margin-left:6px;">('+r.asset_ids.length+' รายการ)</span></td>';
     html+='<td style="padding:10px 12px;font-size:13px;">'+(r.to_branch_name||'-')+'</td>';
     html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+reqDt+'</td>';
     html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+(r.note||'—')+'</td>';
@@ -3994,7 +3994,7 @@ async function _loadInspPending() {
 
   if (!pending.length) { tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">ครุภัณฑ์ทั้งหมดตรวจแล้ว</td></tr>'; return; }
   tbody.innerHTML = pending.map(function(a) {
-    return '<tr><td><div style="font-size:12px;color:#64748b;">' + (a.asset_code||'-') + '</div><div style="font-weight:600;">' + a.name + '</div>' + (a.brand ? '<div style="font-size:11px;color:#94a3b8;">' + a.brand + '</div>' : '') + '</td>' +
+    return '<tr><td style="white-space:nowrap;max-width:320px;overflow:hidden;text-overflow:ellipsis;"><span style="font-weight:600;">' + a.name + '</span><span style="font-size:11px;font-family:monospace;color:#94a3b8;margin-left:6px;">' + (a.asset_code||'-') + '</span>' + (a.brand ? '<span style="font-size:11px;color:#94a3b8;margin-left:4px;">· '+a.brand+'</span>' : '') + '</td>' +
       '<td style="font-size:12px;">' + ((a.branches&&a.branches.name)||'-') + '</td>' +
       '<td>' + badgeHtml(a.status) + '</td></tr>';
   }).join('');
