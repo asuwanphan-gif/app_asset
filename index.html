@@ -3547,12 +3547,14 @@ async function submitTransferRequest() {
   var btn = document.getElementById('trMSubmitBtn');
   if (btn){ btn.disabled=true; btn.innerHTML='<div class="spinner-border spinner-border-sm me-1"></div>กำลังส่ง...'; }
 
+  var reqName = App.profile ? (App.profile.full_name || App.profile.username || 'admin') : 'admin';
   var res = await sb.from('asset_transfers').insert({
     asset_ids: ids, asset_snapshots: snaps,
     from_branch_id: fromId||null, from_branch_name: fromName,
     to_branch_id: targetId, to_branch_name: toName,
     status:'pending', note: note||null,
-    requested_by: App.user ? App.user.id : null
+    requested_by: App.user ? App.user.id : null,
+    requested_by_name: reqName
   });
   if (btn){ btn.disabled=false; btn.innerHTML='<i class="bi bi-send me-1"></i>ส่งคำขอโอน'; }
   if (res.error){ showToast('เกิดข้อผิดพลาด: '+res.error.message,'danger'); return; }
@@ -3589,7 +3591,7 @@ async function _loadIncomingTransfers() {
     html+='<tr>';
     html+='<td style="padding:10px 12px;white-space:nowrap;max-width:300px;overflow:hidden;text-overflow:ellipsis;"><span style="font-size:13px;font-weight:600;">'+(assetTxt||r.asset_ids.length+' รายการ')+'</span><span style="font-size:11px;color:#94a3b8;margin-left:6px;">('+r.asset_ids.length+' รายการ)</span></td>';
     html+='<td style="padding:10px 12px;font-size:13px;">'+(r.from_branch_name||'ไม่ระบุ')+'</td>';
-    html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">—</td>';
+    html+='<td style="padding:10px 12px;font-size:12px;color:#475569;">'+(r.requested_by_name||'—')+'</td>';
     html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+reqDt+'</td>';
     html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+(r.note||'—')+'</td>';
     html+='<td style="padding:10px 12px;text-align:center;">';
