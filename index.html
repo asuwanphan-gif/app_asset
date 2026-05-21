@@ -995,15 +995,16 @@
               <table class="table table-hover table-sm mb-0" style="font-size:13px;min-width:700px;">
                 <thead style="background:#0c1a2e;color:#fff;">
                   <tr>
-                    <th style="padding:10px 12px;font-weight:600;">วันที่</th>
-                    <th style="padding:10px 12px;font-weight:600;">ครุภัณฑ์</th>
+                    <th style="padding:10px 12px;font-weight:600;width:110px;">วันที่</th>
+                    <th style="padding:10px 12px;font-weight:600;width:150px;">รหัสครุภัณฑ์</th>
+                    <th style="padding:10px 12px;font-weight:600;">ชื่อครุภัณฑ์</th>
                     <th style="padding:10px 12px;font-weight:600;">ต้นทาง → ปลายทาง</th>
                     <th style="padding:10px 12px;font-weight:600;">หมายเหตุ</th>
                     <th style="padding:10px 12px;font-weight:600;text-align:center;">ผลลัพธ์</th>
                   </tr>
                 </thead>
                 <tbody id="trHistoryBody">
-                  <tr><td colspan="5" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังโหลด...</td></tr>
+                  <tr><td colspan="6" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังโหลด...</td></tr>
                 </tbody>
               </table>
             </div>
@@ -3753,7 +3754,7 @@ async function _loadTransferHistory() {
   var rows = res.data || [];
 
   if (!rows.length) {
-    tbody.innerHTML='<tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-clock-history" style="font-size:28px;display:block;margin-bottom:6px;"></i>ยังไม่มีประวัติการโอนย้าย</td></tr>';
+    tbody.innerHTML='<tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-clock-history" style="font-size:28px;display:block;margin-bottom:6px;"></i>ยังไม่มีประวัติการโอนย้าย</td></tr>';
     return;
   }
   var scfg = {
@@ -3766,13 +3767,16 @@ async function _loadTransferHistory() {
     var cfg=scfg[r.status]||{label:r.status,bg:'#f1f5f9',color:'#64748b',icon:'bi-circle'};
     var dt=r.requested_at?new Date(r.requested_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}):'-';
     var snaps=r.asset_snapshots||[];
-    var assetTxt=snaps.slice(0,2).map(function(s){return s.name||s.code||'';}).join(', ')+(snaps.length>2?' +อีก '+(snaps.length-2)+' รายการ':'');
+    // แสดงแต่ละรายการ แยกรหัส/ชื่อ (รองรับหลายรายการ)
+    var codesTxt = snaps.map(function(s){return s.code||'';}).filter(Boolean).join(', ') || (r.asset_ids.length+' รายการ');
+    var namesTxt = snaps.slice(0,2).map(function(s){return s.name||'';}).filter(Boolean).join(', ') + (snaps.length>2?' +อีก '+(snaps.length-2):'');
     html+='<tr>';
-    html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+dt+'</td>';
-    html+='<td style="padding:10px 12px;font-size:13px;">'+(assetTxt||r.asset_ids.length+' รายการ')+'</td>';
-    html+='<td style="padding:10px 12px;font-size:13px;font-weight:600;">'+(r.from_branch_name||'ไม่ระบุ')+' <i class="bi bi-arrow-right" style="color:#4f46e5;"></i> '+(r.to_branch_name||'-')+'</td>';
+    html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;white-space:nowrap;">'+dt+'</td>';
+    html+='<td style="padding:10px 12px;font-size:11px;font-family:monospace;color:#4f46e5;white-space:nowrap;">'+codesTxt+'</td>';
+    html+='<td style="padding:10px 12px;font-size:13px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(namesTxt||'—')+'</td>';
+    html+='<td style="padding:10px 12px;font-size:13px;font-weight:600;white-space:nowrap;">'+(r.from_branch_name||'ไม่ระบุ')+' <i class="bi bi-arrow-right" style="color:#4f46e5;"></i> '+(r.to_branch_name||'-')+'</td>';
     html+='<td style="padding:10px 12px;font-size:12px;color:#64748b;">'+(r.note||(r.respond_note?'↩ '+r.respond_note:'—'))+'</td>';
-    html+='<td style="padding:10px 12px;text-align:center;"><span style="background:'+cfg.bg+';color:'+cfg.color+';font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;"><i class="bi '+cfg.icon+' me-1"></i>'+cfg.label+'</span></td>';
+    html+='<td style="padding:10px 12px;text-align:center;"><span style="background:'+cfg.bg+';color:'+cfg.color+';font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap;"><i class="bi '+cfg.icon+' me-1"></i>'+cfg.label+'</span></td>';
     html+='</tr>';
   });
   tbody.innerHTML=html;
