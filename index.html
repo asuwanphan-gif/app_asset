@@ -2542,7 +2542,7 @@ function renderAssetTable() {
   // update subtitle
   var sub = document.getElementById('assetPageSub');
   if (sub) {
-    var allTotal = (App.assets || []).length;
+    var allTotal = (App.allAssets || []).length;
     sub.textContent = total === allTotal
       ? 'ทั้งหมด ' + allTotal.toLocaleString() + ' รายการ'
       : 'แสดง ' + total.toLocaleString() + ' จาก ' + allTotal.toLocaleString() + ' รายการ';
