@@ -135,6 +135,32 @@
   }
   .sb-footer .btn-logout-red:hover{background:rgba(239,68,68,.2)!important;color:#fecaca!important;}
 
+  .sb-credit{
+    margin:0 12px 14px;padding:10px 14px 11px;
+    font-family:'Kanit',sans-serif;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:10px;flex-shrink:0;
+    display:flex;align-items:center;gap:10px;
+  }
+  .sb-credit-icon{
+    width:32px;height:32px;border-radius:8px;flex-shrink:0;
+    background:rgba(96,165,250,.15);border:1px solid rgba(96,165,250,.2);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .sb-credit-icon i{font-size:15px;color:#60a5fa;}
+  .sb-credit-body{min-width:0;flex:1;}
+  .sb-credit-label{
+    font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.4px;line-height:1;margin-bottom:3px;
+  }
+  .sb-credit-name{
+    font-size:11.5px;font-weight:700;color:rgba(255,255,255,.6);
+    line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .sb-credit-dept{
+    font-size:9.5px;color:rgba(255,255,255,.28);margin-top:2px;line-height:1.3;
+  }
+
   /* ── MAIN ─────────────────────── */
   #main{margin-left:var(--sw);min-height:100vh;transition:margin .3s;display:flex;flex-direction:column}
   #topbar{
@@ -304,9 +330,21 @@
     #sidebar.show{transform:translateX(0)}
     #main{margin-left:0}
     #bottomnav{display:flex!important}
-    #content{padding:14px;padding-bottom:76px}
+    #content{padding:10px;padding-bottom:76px}
     .stat-card .sc-num{font-size:22px!important}
     .stat-grid{gap:8px!important}
+    /* filter inputs — ป้องกัน horizontal scroll จาก min-width */
+    .card-body .form-control,
+    .card-body .form-select{min-width:0!important;}
+    /* page-header action buttons */
+    .page-header{flex-direction:column;align-items:stretch!important;gap:6px!important;}
+    .page-header>.d-flex{flex-wrap:wrap;gap:6px!important;}
+    .page-header .btn{flex:1 1 auto;min-width:80px;}
+    /* topbar text size */
+    #topPageTitle{font-size:14px!important;}
+    #topPageSub{font-size:10px!important;}
+    /* modal full-width on mobile */
+    .modal-dialog{margin:8px!important;max-width:calc(100vw - 16px)!important;}
   }
   #bottomnav{
     display:none;position:fixed;bottom:0;left:0;right:0;
@@ -597,6 +635,14 @@
       <i class="bi bi-box-arrow-left"></i>ออกจากระบบ
     </button>
   </div>
+  <div class="sb-credit">
+    <div class="sb-credit-icon"><i class="bi bi-person-badge-fill"></i></div>
+    <div class="sb-credit-body">
+      <div class="sb-credit-label">พัฒนาโดย</div>
+      <div class="sb-credit-name">อนุพันธ์ สุวรรณพันธ์</div>
+      <div class="sb-credit-dept">สาขาสาธารณสุขชุมชน</div>
+    </div>
+  </div>
 </nav>
 
 <!-- MAIN -->
@@ -631,14 +677,14 @@
       <div class="card shadow-sm mb-3 no-print" id="dashFilterBar">
         <div class="card-body py-2 px-3">
         <div class="d-flex gap-2 align-items-center flex-wrap">
-          <div id="dashBranchWrap" style="flex:1;min-width:140px;">
-            <select id="dashBranch" class="form-select form-select-sm" onchange="loadDashboard()">
-              <option value="">-- ทุกสาขา --</option>
-            </select>
-          </div>
           <div style="flex:1;min-width:130px;">
             <select id="dashYear" class="form-select form-select-sm" onchange="loadDashboard()">
               <option value="">-- ทุกปีงบ --</option>
+            </select>
+          </div>
+          <div id="dashBranchWrap" style="flex:1;min-width:140px;">
+            <select id="dashBranch" class="form-select form-select-sm" onchange="loadDashboard()">
+              <option value="">-- ทุกสาขา --</option>
             </select>
           </div>
           <div style="flex:1;min-width:130px;">
@@ -690,34 +736,7 @@
     <div id="page-report" class="page-content" style="display:none;">
       <div class="row g-3">
 
-        <div class="col-md-3">
-          <div class="card h-100 shadow-sm" style="border-radius:14px;border:1.5px solid #e0e7ff;cursor:pointer;" onclick="printRepairRequest()">
-            <div class="card-body text-center p-4">
-              <div style="width:52px;height:52px;background:linear-gradient(135deg,#fef3c7,#fed7aa);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
-                <i class="bi bi-wrench-adjustable-circle-fill" style="color:#c2410c;font-size:22px;"></i>
-              </div>
-              <div style="font-weight:700;font-size:14px;margin-bottom:4px;">ใบแจ้งซ่อมครุภัณฑ์</div>
-              <div style="font-size:12px;color:#64748b;">ฟอร์มส่งซ่อมพร้อมประวัติ</div>
-              <div style="margin-top:12px;"><span style="background:#fef3c7;color:#92400e;font-size:11px;padding:2px 10px;border-radius:20px;font-weight:600;">เลือกจากรายการซ่อม</span></div>
-            </div>
-          </div>
-        </div>
 
-        <div class="col-md-3">
-          <div class="card h-100 shadow-sm" style="border-radius:14px;border:1.5px solid #e0e7ff;cursor:pointer;" onclick="printDisposalList()">
-            <div class="card-body text-center p-4">
-              <div style="width:52px;height:52px;background:linear-gradient(135deg,#fee2e2,#fecaca);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
-                <i class="bi bi-trash3-fill" style="color:#dc2626;font-size:22px;"></i>
-              </div>
-              <div style="font-weight:700;font-size:14px;margin-bottom:4px;">บัญชีเสนอจำหน่ายครุภัณฑ์</div>
-              <div style="font-size:12px;color:#64748b;">รายการครุภัณฑ์รออนุมัติจำหน่าย</div>
-              <div style="margin-top:12px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
-                <span style="background:#fee2e2;color:#991b1b;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;">พิมพ์เสนออนุมัติ</span>
-                <span onclick="exportDisposalDocx();event.stopPropagation();" style="background:#eff6ff;color:#1e40af;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;cursor:pointer;"><i class="bi bi-file-earmark-word me-1"></i>Word</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <div class="col-md-3">
           <div class="card h-100 shadow-sm" style="border-radius:14px;border:1.5px solid #e0e7ff;">
@@ -776,7 +795,7 @@
           <button class="btn btn-sm" onclick="openImportModal()" style="background:#0284c7;color:#fff;border:none;border-radius:8px;font-family:Kanit;font-weight:600;padding:6px 14px;">
             <i class="bi bi-table me-1"></i>นำเข้าข้อมูล
           </button>
-          <button class="btn btn-sm" onclick="openBulkPhotoModal()" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;font-family:Kanit;font-weight:600;padding:6px 14px;" id="btnBulkPhoto">
+<button class="btn btn-sm" onclick="openBulkPhotoModal()" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;font-family:Kanit;font-weight:600;padding:6px 14px;" id="btnBulkPhoto">
             <i class="bi bi-images me-1"></i>นำเข้ารูปภาพ
           </button>
           <button class="btn btn-primary btn-sm" onclick="showAssetForm()" id="btnAddAsset">
@@ -874,6 +893,9 @@
     <div id="page-repair" class="page-content" style="display:none;">
       <div class="d-flex align-items-center justify-content-end flex-wrap gap-2 mb-3">
         <button class="btn btn-warning btn-sm px-3 fw-bold" onclick="openRepairRequest()" style="font-family:Kanit;"><i class="bi bi-plus-circle me-1"></i>แจ้งซ่อมใหม่</button>
+        <button class="btn btn-sm" onclick="printRepairRequest()" style="font-family:Kanit;border-radius:8px;background:#0284c7;color:#fff;font-weight:600;padding:6px 14px;">
+          <i class="bi bi-printer me-1"></i>พิมพ์ใบแจ้งซ่อม
+        </button>
       </div>
 
       <!-- Tab bar -->
@@ -1264,9 +1286,14 @@
             </button>
           </li>
         </ul>
-        <button class="btn btn-sm btn-outline-danger" onclick="printDisposalList()" style="font-family:Kanit;border-radius:8px;">
-          <i class="bi bi-printer me-1"></i>พิมพ์บัญชีเสนอจำหน่าย
-        </button>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-danger" onclick="printDisposalList()" style="font-family:Kanit;border-radius:8px;">
+            <i class="bi bi-printer me-1"></i>พิมพ์บัญชีเสนอจำหน่าย
+          </button>
+          <button class="btn btn-sm" onclick="exportDisposalDocx()" style="font-family:Kanit;border-radius:8px;background:#1e40af;color:#fff;font-weight:600;padding:6px 14px;">
+            <i class="bi bi-file-earmark-word me-1"></i>ส่งออกบัญชีเสนอจำหน่ายเป็น Word
+          </button>
+        </div>
       </div>
 
       <!-- Tab: รอพิจารณา -->
@@ -1398,8 +1425,9 @@
             <!-- HEADER ROW -->
             <tr>
               <td colspan="6" rowspan="2" style="border:1.5px solid #000;text-align:center;padding:6px 8px;font-weight:bold;font-size:14.5px;background:#fffde7;vertical-align:middle;line-height:1.5;">
-                ทะเบียนพัสดุครุภัณฑ์ ปัสสัตว์และสัตว์พาหนะ<br>
-                <span style="font-size:11px;font-weight:normal;color:#555;">มหาวิทยาลัยราชภัฏสระแก้ว</span>
+                ทะเบียนพัสดุครุภัณฑ์ ปศุสัตว์และสัตว์พาหนะ<br>
+                <span style="font-size:11px;font-weight:normal;color:#555;">มหาวิทยาลัยราชภัฏศรีสะเกษ</span><br>
+                <span style="font-size:10px;font-weight:normal;color:#555;">อำเภอเมืองศรีสะเกษ &nbsp;จังหวัดศรีสะเกษ</span>
               </td>
               <td colspan="5" style="border:1.5px solid #000;text-align:center;padding:4px 6px;font-weight:bold;font-size:12px;background:#fffde7;">
                 บันทึกการซ่อม/ปรับปรุงแก้ไขพัสดุ
@@ -2056,29 +2084,84 @@
       <h5 class="modal-title"><i class="bi bi-question-circle me-2"></i>วิธีใช้งานระบบทะเบียนครุภัณฑ์</h5>
       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
     </div>
-    <div class="modal-body" style="font-size:14px;line-height:1.8;">
-      <div class="alert alert-info mb-3"><i class="bi bi-info-circle me-2"></i>ระบบทะเบียนครุภัณฑ์ คณะศิลปศาสตร์และวิทยาศาสตร์ มหาวิทยาลัยราชภัฏศรีสะเกษ</div>
-      <h6 class="fw-bold text-primary mb-2"><i class="bi bi-people me-2"></i>ระดับสิทธิ์ผู้ใช้</h6>
+    <div class="modal-body" id="modalHelpBody" style="font-size:13.5px;line-height:1.8;">
+      <div class="alert alert-info py-2 mb-3" style="font-size:13px;">
+        <i class="bi bi-info-circle me-2"></i>ระบบทะเบียนครุภัณฑ์ คณะศิลปศาสตร์และวิทยาศาสตร์ มหาวิทยาลัยราชภัฏศรีสะเกษ
+      </div>
+
+      <!-- สิทธิ์ผู้ใช้ -->
+      <h6 class="fw-bold text-primary mb-2"><i class="bi bi-shield-check me-2"></i>ระดับสิทธิ์ผู้ใช้</h6>
       <div class="table-responsive mb-3">
-        <table class="table table-sm table-bordered">
-          <thead class="table-dark"><tr><th>ระดับ</th><th>สิทธิ์การใช้งาน</th></tr></thead>
+        <table class="table table-sm table-bordered mb-0">
+          <thead class="table-dark"><tr><th>ระดับ</th><th>สิทธิ์</th></tr></thead>
           <tbody>
-            <tr><td><span class="badge" style="background:#fef2f2;color:#b91c1c;">Admin</span></td><td>จัดการข้อมูลทั้งหมด สร้างรอบตรวจ จัดการผู้ใช้ นำเข้าข้อมูล</td></tr>
-            <tr><td><span class="badge" style="background:#eff6ff;color:#1d4ed8;">สาขา</span></td><td>เพิ่ม/แก้ไขครุภัณฑ์ของสาขาตนเอง กรอกผลตรวจ</td></tr>
+            <tr>
+              <td><span class="badge" style="background:#fef2f2;color:#b91c1c;font-size:12px;">Admin</span></td>
+              <td>จัดการข้อมูลทั้งหมด · สร้าง/ลบรอบตรวจ · แจ้งสาขา · นำเข้าข้อมูล · จัดการผู้ใช้และสาขา · ลบประวัติซ่อม/โอนย้าย</td>
+            </tr>
+            <tr>
+              <td><span class="badge" style="background:#eff6ff;color:#1d4ed8;font-size:12px;">สาขา</span></td>
+              <td>เพิ่ม/แก้ไขครุภัณฑ์ของสาขาตนเอง · กรอกผลตรวจ · เพิ่มประวัติซ่อมและโอนย้าย · ดูรายงาน</td>
+            </tr>
           </tbody>
         </table>
       </div>
-      <h6 class="fw-bold text-primary mb-2"><i class="bi bi-box-seam me-2"></i>รายการครุภัณฑ์</h6>
-      <ul>
-        <li>ค้นหาด้วยชื่อ รหัส หรือ Serial No.</li>
-        <li>กรองตามสาขาและสถานะ</li>
-        <li>เพิ่มครุภัณฑ์ใหม่พร้อมแนบรูปถ่ายตรวจรับ 2 รูป</li>
+
+      <!-- หน้าภาพรวม -->
+      <h6 class="fw-bold text-primary mb-2"><i class="bi bi-speedometer2 me-2"></i>หน้าภาพรวม (Dashboard)</h6>
+      <ul class="mb-3">
+        <li>แสดงสถิติครุภัณฑ์ทั้งหมด แยกตามสถานะ (ใช้งาน / ชำรุด / ไม่พบ / เกินอายุ)</li>
+        <li>กรองข้อมูลได้ตาม <strong>ปีงบประมาณ → สาขา → สถานะ</strong></li>
+        <li>แสดง banner รอบตรวจที่กำลังดำเนินการอยู่ พร้อมเปอร์เซ็นต์ความคืบหน้า</li>
       </ul>
-      <h6 class="fw-bold text-primary mb-2"><i class="bi bi-clipboard2-check me-2"></i>ตรวจสอบครุภัณฑ์</h6>
-      <ul>
-        <li>Admin สร้างรอบตรวจ กำหนดปีงบประมาณและช่วงวันที่</li>
-        <li>กดปุ่ม "กรอกผล" เพื่อบันทึกผลการตรวจ</li>
-        <li>เลือกสถานะแต่ละรายการ แล้วกด "บันทึกทั้งหมด"</li>
+
+      <!-- รายการครุภัณฑ์ -->
+      <h6 class="fw-bold text-primary mb-2"><i class="bi bi-box-seam me-2"></i>รายการครุภัณฑ์</h6>
+      <ul class="mb-3">
+        <li>ค้นหาด้วยชื่อ รหัส หรือ Serial No. · กรองตามปีงบ สาขา สถานะ และ รหัสครุภัณฑ์</li>
+        <li>เพิ่มครุภัณฑ์ใหม่พร้อมรูปถ่ายตรวจรับ 2 รูป</li>
+        <li>คลิกรายการเพื่อดูรายละเอียด (พ.ด. 2) แก้ไข เพิ่มประวัติซ่อม/โอนย้าย</li>
+        <li><strong>นำเข้าข้อมูล</strong> — อัปโหลด Excel ตาม template เพื่อนำเข้าหลายรายการพร้อมกัน</li>
+        <li><strong>นำเข้ารูปภาพ</strong> — อัปโหลดรูปหลายไฟล์พร้อมกัน ระบบ match ชื่อไฟล์กับรหัสครุภัณฑ์อัตโนมัติ
+          <br><span style="color:#7c3aed;font-size:12px;">→ ใช้ร่วมกับ extract_photos.py เพื่อดึงรูปจากไฟล์ Excel พ.ด. 2</span>
+        </li>
+      </ul>
+
+      <!-- ตรวจสอบครุภัณฑ์ -->
+      <h6 class="fw-bold text-primary mb-2"><i class="bi bi-clipboard2-check me-2"></i>การตรวจนับครุภัณฑ์ประจำปี</h6>
+      <ul class="mb-3">
+        <li><strong>Admin:</strong> สร้างรอบตรวจ กำหนดปีงบประมาณและช่วงวันที่ · แจ้งสาขาทางอีเมล (ต้องกรอก email สาขาก่อน) · กำกับติดตามความคืบหน้ารายสาขา · ปิดรอบตรวจเมื่อเสร็จสิ้น</li>
+        <li><strong>สาขา:</strong> กด "กรอกผล" เพื่อบันทึกผลการตรวจรายการ · เลือกสถานะแต่ละรายการแล้วกด "บันทึกทั้งหมด"</li>
+        <li>ดูประวัติรอบตรวจทั้งหมดได้ที่ปุ่ม "ประวัติรอบตรวจ"</li>
+      </ul>
+
+      <!-- ซ่อมบำรุง / โอนย้าย / จำหน่าย -->
+      <h6 class="fw-bold text-primary mb-2"><i class="bi bi-tools me-2"></i>ซ่อมบำรุง · โอนย้าย · จำหน่าย</h6>
+      <ul class="mb-3">
+        <li><strong>ซ่อมบำรุง:</strong> บันทึกวันที่ซ่อม ค่าใช้จ่าย ผู้ซ่อม ดูประวัติในแต่ละรายการ (Admin ลบประวัติได้)</li>
+        <li><strong>โอนย้าย:</strong> โอนครุภัณฑ์ข้ามสาขา ระบบบันทึกประวัติทุกครั้ง (Admin ลบประวัติได้)</li>
+        <li><strong>จำหน่าย:</strong> เปลี่ยนสถานะเป็น "รออนุมัติจำหน่าย" → Admin อนุมัติ → สถานะเปลี่ยนเป็น "จำหน่ายแล้ว"</li>
+      </ul>
+
+      <!-- รายงาน -->
+      <h6 class="fw-bold text-primary mb-2"><i class="bi bi-file-earmark-text me-2"></i>รายงานและการส่งออกไฟล์</h6>
+      <div class="table-responsive mb-3">
+        <table class="table table-sm table-bordered mb-0">
+          <thead class="table-light"><tr><th>รายงาน</th><th>รูปแบบ</th><th>รายละเอียด</th></tr></thead>
+          <tbody>
+            <tr><td>ทะเบียนครุภัณฑ์</td><td><span class="badge bg-success">Excel</span> <span class="badge bg-secondary">พิมพ์</span></td><td>36 คอลัมน์ format พ.ด. แยก sheet ตามสาขา</td></tr>
+            <tr><td>รายงานผลการตรวจนับ</td><td><span class="badge bg-success">Excel</span> <span class="badge bg-secondary">พิมพ์</span></td><td>format ส่งพัสดุ 36 คอลัมน์ แยก sheet ตามสาขา</td></tr>
+            <tr><td>รายงานผลการตรวจสอบ</td><td><span class="badge bg-success">Excel</span></td><td>รายการที่ตรวจแล้ว/ยังไม่ตรวจ ผู้ตรวจ วันที่ตรวจ</td></tr>
+            <tr><td>บัญชีเสนอจำหน่าย</td><td><span class="badge bg-primary">Word</span> <span class="badge bg-secondary">พิมพ์</span></td><td>รายการรออนุมัติจำหน่าย พร้อมช่องลงนาม</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Admin -->
+      <h6 class="fw-bold text-primary mb-2"><i class="bi bi-gear me-2"></i>การตั้งค่า (Admin เท่านั้น)</h6>
+      <ul class="mb-0">
+        <li><strong>จัดการสาขา:</strong> เพิ่ม/แก้ไขสาขา กรอก email สาขาเพื่อใช้ระบบแจ้งเตือนรอบตรวจ</li>
+        <li><strong>ผู้ใช้ระบบ:</strong> กำหนด role และสาขาให้ผู้ใช้ (เพิ่มผู้ใช้ใหม่ต้องทำผ่าน Supabase Dashboard ก่อน)</li>
       </ul>
     </div>
     <div class="modal-footer">
@@ -2252,6 +2335,9 @@
               </select>
               <div id="impAutoHint" style="display:none;font-size:11px;color:#0369a1;margin-top:4px;background:#e0f2fe;padding:4px 8px;border-radius:6px;">
                 <i class="bi bi-info-circle me-1"></i>ระบบจะอ่านตัวเลขนำหน้าจาก "ใช้ประจำที่" เช่น <b>"1 ห้อง..."</b> → สาขารหัส 1, <b>"6 ชั้น..."</b> → สาขารหัส 6
+              </div>
+              <div id="impFilterHint" style="display:none;font-size:11px;color:#166534;margin-top:4px;background:#dcfce7;padding:4px 8px;border-radius:6px;">
+                <i class="bi bi-funnel-fill me-1"></i><span id="impFilterHintText"></span>
               </div>
             </div>
           </div>
@@ -2640,13 +2726,12 @@ function _startApp() {
     : (p.full_name || p.username || 'Admin');
   document.getElementById('sbUserName').textContent = displayName;
 
-  // ซ่อน admin menu ถ้าไม่ใช่ admin
+  // ซ่อน/แสดง admin menu ตาม role (ต้อง reset ทุกครั้งเพราะ DOM ยังคงค่าเดิมจาก session ก่อน)
   var adminSection = document.getElementById('adminSection');
   var adminMenu = document.getElementById('menuAdminUsers');
-  if (p.role !== 'admin') {
-    if (adminSection) adminSection.style.display = 'none';
-    if (adminMenu) adminMenu.style.display = 'none';
-  }
+  var _isAdminRole = (p.role === 'admin');
+  if (adminSection) adminSection.style.display = _isAdminRole ? '' : 'none';
+  if (adminMenu)    adminMenu.style.display    = _isAdminRole ? '' : 'none';
 
   // ซ่อน branch filter สำหรับ branch user ทันที (synchronous ก่อน loadDashboard)
   var _bWrap = document.getElementById('dashBranchWrap');
@@ -2744,8 +2829,101 @@ function closeSidebar() {
   document.getElementById('overlay').classList.remove('show');
 }
 function showHelp() {
-  var m = new bootstrap.Modal(document.getElementById('modalHelp'));
-  m.show();
+  var role = App.profile ? App.profile.role : 'viewer';
+  var isAdmin  = role === 'admin';
+  var isBranch = role === 'branch';
+
+  var branchName = '';
+  if (isBranch && App.profile.branch_id) {
+    var _bObj = (App.branches||[]).find(function(b){ return b.id === App.profile.branch_id; });
+    branchName = (_bObj && _bObj.name) ? ' — ' + _bObj.name : '';
+  }
+
+  var roleLabel = isAdmin
+    ? '<span class="badge" style="background:#fef2f2;color:#b91c1c;font-size:12px;">Admin</span>'
+    : isBranch
+      ? '<span class="badge" style="background:#eff6ff;color:#1d4ed8;font-size:12px;">สาขา' + branchName + '</span>'
+      : '<span class="badge" style="background:#f9fafb;color:#6b7280;font-size:12px;">Viewer</span>';
+
+  var html = '<div class="alert alert-info py-2 mb-3" style="font-size:13px;">'
+    + '<i class="bi bi-person-fill me-2"></i>สิทธิ์ปัจจุบัน: ' + roleLabel + '</div>';
+
+  // ── ภาพรวม (ทุก role) ───────────────────────────────────────
+  html += '<h6 class="fw-bold text-primary mb-2"><i class="bi bi-speedometer2 me-2"></i>ภาพรวมระบบ (Dashboard)</h6>'
+    + '<ul class="mb-3">'
+    + '<li>แสดงสถิติครุภัณฑ์แยกตามสถานะ (ใช้งาน / ชำรุด / ไม่พบ / เกินอายุ)</li>'
+    + (isAdmin ? '<li>กรองข้อมูลตาม <strong>ปีงบ → สาขา → สถานะ</strong></li>' : '<li>แสดงข้อมูลเฉพาะสาขาของท่าน</li>')
+    + '<li>แสดงรอบตรวจที่กำลังดำเนินการพร้อมเปอร์เซ็นต์ความคืบหน้า</li>'
+    + '</ul>';
+
+  // ── รายการครุภัณฑ์ (ทุก role) ──────────────────────────────
+  html += '<h6 class="fw-bold text-primary mb-2"><i class="bi bi-box-seam me-2"></i>รายการครุภัณฑ์</h6>'
+    + '<ul class="mb-3">'
+    + '<li>ค้นหาด้วยชื่อ รหัส หรือ Serial No.</li>';
+  if (isAdmin) {
+    html += '<li>กรองตามปีงบ สาขา สถานะ และรหัสครุภัณฑ์</li>'
+      + '<li><strong>นำเข้าข้อมูล</strong> — อัปโหลด Excel เพื่อนำเข้าหลายรายการพร้อมกัน</li>'
+      + '<li><strong>นำเข้ารูปภาพหมู่</strong> — ระบบ match ชื่อไฟล์กับรหัสครุภัณฑ์อัตโนมัติ</li>'
+      + '<li>เพิ่ม/แก้ไข/ลบครุภัณฑ์ได้ทุกสาขา</li>';
+  } else if (isBranch) {
+    html += '<li>กรองตามปีงบ สถานะ</li>'
+      + '<li><strong>เพิ่มครุภัณฑ์ใหม่</strong>พร้อมรูปถ่ายตรวจรับ 2 รูป</li>'
+      + '<li>แก้ไขครุภัณฑ์ของสาขาตนเองได้</li>';
+  } else {
+    html += '<li>ดูรายละเอียดครุภัณฑ์ได้ (ไม่สามารถแก้ไข)</li>';
+  }
+  html += '</ul>';
+
+  // ── ตรวจสอบครุภัณฑ์ ────────────────────────────────────────
+  html += '<h6 class="fw-bold text-primary mb-2"><i class="bi bi-clipboard2-check me-2"></i>การตรวจนับครุภัณฑ์ประจำปี</h6>'
+    + '<ul class="mb-3">';
+  if (isAdmin) {
+    html += '<li>สร้างรอบตรวจ กำหนดปีงบและช่วงวันที่</li>'
+      + '<li>แจ้งสาขาทางอีเมล · กำกับติดตามความคืบหน้ารายสาขา</li>'
+      + '<li>ปิดรอบตรวจเมื่อเสร็จสิ้น · ดูประวัติรอบตรวจทั้งหมด</li>';
+  } else if (isBranch) {
+    html += '<li>กด <strong>"กรอกผล"</strong> เพื่อบันทึกผลตรวจรายการ</li>'
+      + '<li>เลือกสถานะแต่ละรายการ (พบ / ไม่พบ / ชำรุด ฯลฯ) แล้วกด "บันทึกทั้งหมด"</li>'
+      + '<li>ดูความคืบหน้าการตรวจของสาขาได้บนหน้าภาพรวม</li>';
+  } else {
+    html += '<li>ดูผลการตรวจนับของสาขาได้</li>';
+  }
+  html += '</ul>';
+
+  // ── ซ่อม / โอน / จำหน่าย ────────────────────────────────────
+  if (!role || role !== 'viewer') {
+    html += '<h6 class="fw-bold text-primary mb-2"><i class="bi bi-tools me-2"></i>ซ่อมบำรุง · โอนย้าย · จำหน่าย</h6>'
+      + '<ul class="mb-3">'
+      + '<li><strong>ซ่อมบำรุง:</strong> บันทึกวันที่ซ่อม ค่าใช้จ่าย ผู้ซ่อม'
+      + (isAdmin ? ' · Admin ลบประวัติได้' : '') + '</li>'
+      + '<li><strong>โอนย้าย:</strong> '
+      + (isAdmin ? 'Admin สร้างคำขอโอน · ' : '') + 'สาขาปลายทางกด "รับโอน" ใน tab ขาเข้า</li>'
+      + '<li><strong>จำหน่าย:</strong> เสนอรายการที่ชำรุด/เกินอายุ → '
+      + (isAdmin ? 'Admin อนุมัติจำหน่าย' : 'Admin จะพิจารณาอนุมัติ') + '</li>'
+      + '</ul>';
+  }
+
+  // ── รายงาน (ทุก role) ───────────────────────────────────────
+  html += '<h6 class="fw-bold text-primary mb-2"><i class="bi bi-file-earmark-text me-2"></i>รายงานและการส่งออกไฟล์</h6>'
+    + '<div class="table-responsive mb-3"><table class="table table-sm table-bordered mb-0">'
+    + '<thead class="table-light"><tr><th>รายงาน</th><th>รูปแบบ</th><th>หมายเหตุ</th></tr></thead><tbody>'
+    + '<tr><td>ทะเบียนครุภัณฑ์</td><td><span class="badge bg-success">Excel</span> <span class="badge bg-secondary">พิมพ์</span></td><td>บัญชีงบหน้า' + (isAdmin ? ' แยกตามสาขา' : ' เฉพาะสาขาตนเอง') + '</td></tr>'
+    + '<tr><td>รายงานผลการตรวจนับ</td><td><span class="badge bg-success">Excel</span> <span class="badge bg-secondary">พิมพ์</span></td><td>format ส่งพัสดุ' + (isAdmin ? ' แยกตามสาขา' : ' เฉพาะสาขาตนเอง') + '</td></tr>'
+    + '<tr><td>รายงานผลการตรวจสอบ</td><td><span class="badge bg-success">Excel</span></td><td>รายการตรวจแล้ว/ยังไม่ตรวจ' + (isAdmin ? '' : ' เฉพาะสาขาตนเอง') + '</td></tr>'
+    + (isAdmin ? '<tr><td>บัญชีเสนอจำหน่าย</td><td><span class="badge bg-primary">Word</span> <span class="badge bg-secondary">พิมพ์</span></td><td>รายการรออนุมัติจำหน่าย พร้อมช่องลงนาม</td></tr>' : '')
+    + '</tbody></table></div>';
+
+  // ── การตั้งค่า (Admin เท่านั้น) ─────────────────────────────
+  if (isAdmin) {
+    html += '<h6 class="fw-bold text-primary mb-2"><i class="bi bi-gear me-2"></i>การตั้งค่า (Admin เท่านั้น)</h6>'
+      + '<ul class="mb-0">'
+      + '<li><strong>จัดการสาขา:</strong> เพิ่ม/แก้ไขสาขา กรอก email เพื่อใช้ระบบแจ้งเตือน</li>'
+      + '<li><strong>ผู้ใช้ระบบ:</strong> กำหนด role และสาขา (เพิ่มผู้ใช้ใหม่ต้องทำผ่าน Supabase Dashboard ก่อน)</li>'
+      + '</ul>';
+  }
+
+  document.getElementById('modalHelpBody').innerHTML = html;
+  new bootstrap.Modal(document.getElementById('modalHelp')).show();
 }
 
 // ============================================================
@@ -2791,7 +2969,8 @@ function _populateBranchSelects() {
       // trMTarget: branch user ไม่เห็นสาขาตัวเอง (ไม่โอนหาตัวเอง)
       if (id === 'trMTarget'     && isBr && b.id === myBr) return;
       var o = document.createElement('option');
-      o.value = b.id; o.textContent = b.name;
+      o.value = b.id;
+      o.textContent = (b.code != null ? b.code + ' – ' : '') + b.name;
       sel.appendChild(o);
     });
     if (cur) sel.value = cur;
@@ -2806,7 +2985,8 @@ function _populateBranchSelects() {
     fBranch.appendChild(ph);
     App.branches.forEach(function(b) {
       var o = document.createElement('option');
-      o.value = b.id; o.textContent = b.name;
+      o.value = b.id;
+      o.textContent = (b.code != null ? b.code + ' – ' : '') + b.name;
       fBranch.appendChild(o);
     });
     // if branch user, pre-select their branch
@@ -2874,9 +3054,10 @@ async function loadDashboard() {
     q = q.eq('branch_id', branchFilter);
   }
   if (yearFilter) {
-    var fy = parseInt(yearFilter); // พ.ศ. ตรงๆ (DB เก็บเป็น พ.ศ.)
-    var fyStart = (fy - 1) + '-10-01';
-    var fyEnd   = fy + '-09-30';
+    var fy = parseInt(yearFilter); // พ.ศ. → แปลงเป็น ค.ศ. ก่อนใช้กับ DB (DB เก็บ acquired_date เป็น ค.ศ.)
+    var fyCE = fy - 543;
+    var fyStart = (fyCE - 1) + '-10-01'; // ต.ค. ปีก่อน (ค.ศ.)
+    var fyEnd   = fyCE + '-09-30';       // ก.ย. ปีนี้ (ค.ศ.)
     q = q.gte('acquired_date', fyStart).lte('acquired_date', fyEnd);
   }
   if (statusFilter) {
@@ -2891,8 +3072,7 @@ async function loadDashboard() {
   });
   // total = เฉพาะสถานะที่ยังอยู่ในระบบ (ยกเว้น disposed และ null/ไม่ระบุ)
   counts.total = counts.active + counts.not_found + counts.damaged_fixable
-               + counts.damaged_unfixable + counts.overaged + counts.disposal_pending
-               + counts.transferred;
+               + counts.damaged_unfixable + counts.overaged + counts.disposal_pending;
 
   var pct = function(n) { return counts.total ? Math.round(n / counts.total * 100) : 0; };
 
@@ -3289,6 +3469,10 @@ async function loadAssetsPage() {
   App.filteredAssets = App.allAssets;
   App.assetPage = 1;
 
+  // ซ่อนตัวกรองสาขาสำหรับ branch user (เห็นแค่สาขาตัวเองอยู่แล้ว)
+  var fbWrap = document.getElementById('filterBranch');
+  if (fbWrap) fbWrap.style.display = (App.profile && App.profile.role === 'branch') ? 'none' : '';
+
   // Populate branch filter
   _populateBranchSelects();
 
@@ -3531,7 +3715,8 @@ function updateBulkBar() {
     if (bulkSel && bulkSel.options.length <= 1) {
       (App.branches || []).forEach(function(b) {
         var o = document.createElement('option');
-        o.value = b.id; o.textContent = b.name;
+        o.value = b.id;
+        o.textContent = (b.code != null ? b.code + ' – ' : '') + b.name;
         bulkSel.appendChild(o);
       });
     }
@@ -4153,6 +4338,50 @@ async function saveRepair() {
 }
 
 // ============================================================
+// INSPECTION STATUS HELPERS (ใช้ร่วมกับ doImportModal)
+// ============================================================
+
+var _INSP_STATUS_COLS = [
+  // ⚠️ ลำดับสำคัญ: คำที่เฉพาะเจาะจงกว่าต้องอยู่ก่อน
+  // "ไม่พบ".includes("พบ")===true → not_found ต้องอยู่ก่อน active
+  // "ซ่อมไม่ได้".includes("ซ่อมได้")===true → damaged_unfixable ต้องอยู่ก่อน damaged_fixable
+  { status: 'not_found',         kws: ['ไม่พบ'] },
+  { status: 'active',            kws: ['พบ'] },
+  { status: 'damaged_unfixable', kws: ['ชำรุดซ่อมไม่ได้','ชำรุด ซ่อมไม่ได้','ซ่อมไม่ได้'] },
+  { status: 'damaged_fixable',   kws: ['ชำรุดซ่อมได้','ชำรุด ซ่อมได้','ซ่อมได้'] },
+  { status: 'disposal_pending',  kws: ['แทงจำหน่าย','เสนอจำหน่าย'] },
+];
+var _INSP_LABEL = { active:'พบ', not_found:'ไม่พบ', damaged_fixable:'ชำรุด ซ่อมได้', damaged_unfixable:'ชำรุด ซ่อมไม่ได้', disposal_pending:'แทงจำหน่าย' };
+var _INSP_COLOR = { active:'#16a34a', not_found:'#dc2626', damaged_fixable:'#d97706', damaged_unfixable:'#b91c1c', disposal_pending:'#7c3aed' };
+
+function _inspMatchStatusCol(header) {
+  var h = String(header||'').replace(/\s+/g,'');
+  for (var i=0; i<_INSP_STATUS_COLS.length; i++) {
+    var entry = _INSP_STATUS_COLS[i];
+    for (var j=0; j<entry.kws.length; j++) {
+      if (h.includes(entry.kws[j].replace(/\s+/g,''))) return entry.status;
+    }
+  }
+  return null;
+}
+
+function _inspIsMarked(val) {
+  var s = String(val||'').trim();
+  return s.length > 0 && s !== '-' && s !== '0' && s !== 'false' && s !== 'FALSE';
+}
+
+function _inspDetectStatusCols(sampleRow) {
+  // Returns { colHeader: statusValue }
+  var result = {};
+  Object.keys(sampleRow||{}).forEach(function(h) {
+    var s = _inspMatchStatusCol(h);
+    if (s) result[h] = s;
+  });
+  return result;
+}
+
+
+// ============================================================
 // IMPORT (Excel)
 // ============================================================
 var _impData = [];
@@ -4176,7 +4405,8 @@ function openImportModal() {
   while (sel.options.length > 2) sel.remove(2);
   (App.branches || []).forEach(function(b) {
     var o = document.createElement('option');
-    o.value = b.id; o.textContent = b.name;
+    o.value = b.id;
+    o.textContent = (b.code != null ? b.code + ' – ' : '') + b.name;
     sel.appendChild(o);
   });
   // branch user: pre-select own branch
@@ -4199,8 +4429,8 @@ var _SHEET_ALIAS = {
   'อาหาร': 'อาหาร',
   'สาธารณสุข': 'สาธารณสุข', 'สาธาร': 'สาธารณสุข',
   'อาชีวอนามัย': 'อาชีวอนามัย', 'อาชีว': 'อาชีวอนามัย',
-  'ศูนย์วิทย': 'วิทยาศาสตร์การกีฬา', 'วิทย': 'วิทยาศาสตร์การกีฬา', 'ศวท': 'วิทยาศาสตร์การกีฬา', 'กีฬา': 'วิทยาศาสตร์การกีฬา',
-  'สิ่งแวดล้อม': 'สิ่งแวดล้อม', 'สิ่งแวดล': 'สิ่งแวดล้อม'
+  'ศูนย์วิทย์กีฬา': 'วิทยาศาสตร์การกีฬา', 'ศูนย์วิทย': 'วิทยาศาสตร์การกีฬา', 'วิทย': 'วิทยาศาสตร์การกีฬา', 'ศวท': 'วิทยาศาสตร์การกีฬา', 'กีฬา': 'วิทยาศาสตร์การกีฬา',
+  'สิ่งแวดล้อม': 'วิทยาศาสตร์สิ่งแวดล้อม', 'สิ่งแวดล': 'วิทยาศาสตร์สิ่งแวดล้อม'
 };
 
 async function _autoDetectBranchCodesFromSheets(sheetNames) {
@@ -4212,8 +4442,14 @@ async function _autoDetectBranchCodesFromSheets(sheetNames) {
     var code = m[1];
     var raw = m[2].replace(/[ๆฯ]/g, '').trim();
     if (raw.length < 2) return;
-    // หา keyword จาก alias หรือใช้ raw ตรงๆ
-    var keyword = _SHEET_ALIAS[raw] || raw;
+    // หา keyword จาก alias: ลอง exact ก่อน แล้ว partial match
+    var keyword = _SHEET_ALIAS[raw];
+    if (!keyword) {
+      for (var ak in _SHEET_ALIAS) {
+        if (raw.indexOf(ak) >= 0 || ak.indexOf(raw) >= 0) { keyword = _SHEET_ALIAS[ak]; break; }
+      }
+    }
+    keyword = keyword || raw;
     detected.push({ code: code, keyword: keyword, raw: raw, sheet: sn });
   });
   if (!detected.length) return;
@@ -4221,12 +4457,17 @@ async function _autoDetectBranchCodesFromSheets(sheetNames) {
   var updated = [], notFound = [];
   for (var i = 0; i < detected.length; i++) {
     var d = detected[i];
-    var matched = (App.branches || []).find(function(b) {
+    var kw = d.keyword.replace(/^(สาขา|ภาค|วิชา|แผนก|ศูนย์)/, '');
+    // รวบรวมทุก branch ที่ match แล้วเลือกที่ชื่อสั้นที่สุด (specific ที่สุด)
+    // เพื่อป้องกัน "สิ่งแวดล้อม" ไป match "วิศวกรรมการจัดการ...และสิ่งแวดล้อม" แทน branch "สิ่งแวดล้อม"
+    var allMatches = (App.branches || []).filter(function(b) {
       if (!b.name) return false;
       var bn = b.name.replace(/^(สาขา|ภาค|วิชา|แผนก|ศูนย์)/, '');
-      var kw = d.keyword.replace(/^(สาขา|ภาค|วิชา|แผนก|ศูนย์)/, '');
       return bn.indexOf(kw) >= 0 || kw.indexOf(bn) >= 0 || b.name.indexOf(d.keyword) >= 0;
     });
+    // เลือก exact match ก่อน ถ้าไม่มีให้เอาชื่อสั้นสุด
+    var matched = allMatches.find(function(b) { return b.name.replace(/^สาขา/, '') === kw; })
+                  || allMatches.sort(function(a,b){ return a.name.length - b.name.length; })[0];
     if (!matched) { notFound.push(d.sheet); continue; }
     if (String(matched.code) !== String(d.code)) {
       await sb.from('branches').update({ code: d.code }).eq('id', matched.id);
@@ -4338,15 +4579,28 @@ function _sheetToRows(ws, headerRowIndex) {
 function _getImpAssetCode(r) {
   // รูปแบบใหม่: กลุ่มประเภท เช่น "6730-010-0006-68-051"
   var newCode = String(r['กลุ่มประเภท'] || '').trim();
-  if (newCode && /\d{4}-\d{3}/.test(newCode)) return newCode;
+  if (newCode && /^\d{4}-\d{3}/.test(newCode)) return newCode;
   // รูปแบบเก่า: ต่อ 3 คอลัมน์ (col 2, 3, 4)
   // XLSX.js ใช้ "Unnamed: N" สำหรับ empty header (จาก _sheetToRows)
   var p1 = String(r['รหัสเก่า'] || '').trim().replace(/\.$/, '');
   var p2 = String(r['Unnamed: 3'] || r['รหัส2'] || '').trim();
   var p3 = String(r['Unnamed: 4'] || r['รหัส3'] || '').trim();
   if (p1 && p2) return (p1 + '.' + p2 + (p3 ? p3 : '')).replace(/\s+/g,'');
-  // fallback ทั่วไป
-  return String(r.asset_code || r['รหัสครุภัณฑ์'] || r['เลขที่'] || r['รหัส'] || '').trim();
+  // ถ้า p1 มีค่าแต่ p2 ว่าง → ใช้ p1 เดี่ยว (บางสาขาเก็บรหัสไว้คอลัมน์เดียว)
+  if (p1 && /^\d{4}/.test(p1)) return p1;
+  // fallback ทั่วไป — ชื่อคอลัมน์หลากหลาย
+  var direct = String(r.asset_code || r['รหัสครุภัณฑ์'] || r['เลขที่'] || r['รหัส']
+                    || r['เลขทะเบียน'] || r['รหัสพัสดุ'] || r['รหัสทรัพย์สิน'] || '').trim();
+  if (direct) return direct;
+  // scan ทุกคอลัมน์: รูปแบบใหม่ (xxxx-xxx-...) หรือรูปแบบเก่า (xxxx.xxx หรือ xxxx-xxx)
+  var codeRxNew = /^\d{4}-\d{3}/;
+  var codeRxOld = /^\d{4}[.\-]\d/;
+  var keys = Object.keys(r);
+  for (var i = 0; i < keys.length; i++) {
+    var v = String(r[keys[i]] || '').trim();
+    if (codeRxNew.test(v) || codeRxOld.test(v)) return v;
+  }
+  return '';
 }
 
 function previewImportSheet() {
@@ -4357,9 +4611,10 @@ function previewImportSheet() {
   var autoH = isAutoSheet ? 4 : 0;
   document.getElementById('impHeaderRow').value = autoH;
   var headerRow = autoH;
-  // auto-select branch: sheets ที่มี "ใช้ประจำที่" ให้เลือก __auto__ อัตโนมัติ
+  // auto-select branch: sheets ที่มี "ใช้ประจำที่" ให้ default เป็น __auto__
+  // แต่ถ้าผู้ใช้เลือก branch ใดไว้แล้ว → ไม่บังคับเปลี่ยน (เพื่อรองรับ filter เฉพาะสาขา)
   var branchSel = document.getElementById('impBranch');
-  if (isAutoSheet && branchSel.value !== '__auto__') {
+  if (isAutoSheet && !branchSel.value) {
     branchSel.value = '__auto__';
   }
 
@@ -4370,7 +4625,7 @@ function previewImportSheet() {
   }
 
   var rows = _sheetToRows(ws, headerRow);
-  // กรองแถวที่ไม่มีชื่อครุภัณฑ์
+  // เก็บเฉพาะแถวที่มีชื่อครุภัณฑ์
   rows = rows.filter(function(r) {
     var name = String(r['ชื่อครุภัณฑ์'] || r['ชื่อ'] || r['รายการ'] || '').trim();
     return name.length > 0 && name !== 'ชื่อครุภัณฑ์';
@@ -4388,26 +4643,67 @@ function previewImportSheet() {
   var nameOk = sampleName ? '✅' : '⚠️ ไม่พบชื่อ';
 
   var cols = ['รหัสครุภัณฑ์(map)', 'ชื่อครุภัณฑ์', 'ราคา', 'วดป.ที่ได้มา', 'ใช้ประจำที่', 'ยี่ห้อ', 'รุ่น'];
+  // ถ้าไม่พบรหัส — แสดงชื่อคอลัมน์ทั้งหมดให้ user ช่วยระบุ
+  var noCodeNote = '';
+  if (!sampleCode && rows[0]) {
+    var allColNames = Object.keys(rows[0]).filter(function(k){ return k && k !== '_resolvedCode'; });
+    noCodeNote = '<div class="alert alert-warning mb-2" style="font-size:12px;padding:8px 12px;">'
+      + '<i class="bi bi-exclamation-triangle me-1"></i><b>ไม่พบคอลัมน์รหัสครุภัณฑ์</b> — คอลัมน์ที่พบในไฟล์:<br>'
+      + '<span style="font-size:11px;color:#78350f;">'
+      + allColNames.map(function(c){ return '<code style="background:#fef3c7;border:none;padding:1px 4px;">'+c+'</code>'; }).join(' ')
+      + '</span><br><small style="color:#92400e;">แจ้งชื่อคอลัมน์รหัสให้ผู้พัฒนาระบบเพิ่ม mapping</small>'
+      + '</div>';
+  }
   prev.innerHTML =
     '<div class="alert alert-success mb-2" style="font-size:12px;">' +
       '<b>' + rows.length + '</b> รายการ จาก <b>' + sheetName + '</b> (header row ' + headerRow + ')<br>' +
       'รหัส: ' + codeOk + ' <code>' + sampleCode.substring(0,30) + '</code> | ชื่อ: ' + nameOk +
     '</div>' +
-    '<div style="overflow-x:auto;max-height:200px;font-size:11px;"><table class="table table-sm table-bordered mb-0">' +
-    '<thead class="table-light"><tr>' + cols.map(function(c){ return '<th style="white-space:nowrap">'+c+'</th>'; }).join('') + '</tr></thead>' +
-    '<tbody>' + rows.slice(0,5).map(function(r) {
-      var code = _getImpAssetCode(r);
-      return '<tr>' +
-        '<td>' + code.substring(0,25) + '</td>' +
-        '<td>' + String(r['ชื่อครุภัณฑ์']||r.name||'').substring(0,30) + '</td>' +
-        '<td>' + String(r['ราคา']||'') + '</td>' +
-        '<td>' + String(r['วดป.ที่ได้มา']||'').substring(0,15) + '</td>' +
-        '<td>' + String(r['ใช้ประจำที่']||'').substring(0,20) + '</td>' +
-        '<td>' + String(r['ยี่ห้อ']||'').substring(0,15) + '</td>' +
-        '<td>' + String(r['รุ่น']||'').substring(0,15) + '</td>' +
-        '</tr>';
-    }).join('') + '</tbody></table></div>' +
-    '<div style="font-size:11px;color:#64748b;margin-top:4px;">แสดง 5 แถวแรก</div>';
+    noCodeNote +
+    '<div style="overflow-x:auto;max-height:260px;font-size:11px;"><table class="table table-sm table-bordered mb-0">' +
+    '<thead class="table-light"><tr><th>ที่</th>' + cols.map(function(c){ return '<th style="white-space:nowrap">'+c+'</th>'; }).join('') + '</tr></thead>' +
+    '<tbody>' + (function(){
+      var makeRow = function(r, idx, bg) {
+        var code = _getImpAssetCode(r);
+        var tr = '<tr' + (bg ? ' style="background:'+bg+'"' : '') + '>';
+        tr += '<td style="color:#94a3b8;font-size:10px;">' + (idx+1) + '</td>';
+        tr += '<td>' + code.substring(0,25) + '</td>';
+        tr += '<td>' + String(r['ชื่อครุภัณฑ์']||r.name||'').substring(0,30) + '</td>';
+        tr += '<td>' + String(r['ราคา']||'') + '</td>';
+        tr += '<td>' + String(r['วดป.ที่ได้มา']||'').substring(0,15) + '</td>';
+        tr += '<td>' + String(r['ใช้ประจำที่']||'').substring(0,20) + '</td>';
+        tr += '<td>' + String(r['ยี่ห้อ']||'').substring(0,15) + '</td>';
+        tr += '<td>' + String(r['รุ่น']||'').substring(0,15) + '</td>';
+        tr += '</tr>';
+        return tr;
+      };
+      var html = '';
+      var firstN = Math.min(5, rows.length);
+      for (var i=0;i<firstN;i++) html += makeRow(rows[i], i, '');
+      if (rows.length > 8) {
+        html += '<tr><td colspan="' + (cols.length+1) + '" style="text-align:center;color:#94a3b8;font-size:10px;padding:4px;">· · · ' + (rows.length - 8) + ' รายการ · · ·</td></tr>';
+        for (var j=rows.length-3;j<rows.length;j++) html += makeRow(rows[j], j, '#fefce8');
+      } else {
+        for (var k=firstN;k<rows.length;k++) html += makeRow(rows[k], k, '');
+      }
+      return html;
+    })() +
+    '</tbody></table></div>' +
+    '<div style="font-size:11px;color:#64748b;margin-top:4px;">แสดง 5 แถวแรก + <span style="background:#fef08a;padding:0 4px;border-radius:3px;">3 แถวท้าย</span> (พื้นเหลือง)</div>' +
+    (function(){
+      // แจ้ง user ถ้าตรวจพบคอลัมน์ผลตรวจสอบ
+      var detectedCols = _inspDetectStatusCols(rows[0] || {});
+      var colNames = Object.keys(detectedCols);
+      if (!colNames.length) return '';
+      var colList = colNames.map(function(c){
+        return '<span style="background:#dcfce7;color:#166534;border:1px solid #86efac;padding:1px 6px;border-radius:4px;font-size:11px;">'+c+'</span>';
+      }).join(' ');
+      return '<div class="alert alert-success mt-2 mb-0" style="font-size:12px;padding:8px 12px;">'
+        + '<i class="bi bi-clipboard2-check me-1"></i>'
+        + '<strong>ตรวจพบคอลัมน์ผลตรวจสอบ</strong> — จะนำเข้าสถานะ (พบ/ไม่พบ/ชำรุด/แทงจำหน่าย) พร้อมกับข้อมูลครุภัณฑ์<br>'
+        + '<span style="color:#166534;">คอลัมน์ที่พบ: ' + colList + '</span>'
+        + '</div>';
+    })();
   updateImpBtnState();
 }
 
@@ -4416,8 +4712,24 @@ function updateImpBtnState() {
   var hasBranch = !!branchVal;
   var hasData   = _impData.length > 0;
   document.getElementById('btnImp').disabled = !(hasBranch && hasData);
+  // ── hint: auto mode ──
   var hintEl = document.getElementById('impAutoHint');
   if (hintEl) hintEl.style.display = (branchVal === '__auto__') ? '' : 'none';
+  // ── hint: filter mode (เลือก branch เฉพาะ + sheet รวม) ──
+  var filterHintEl = document.getElementById('impFilterHint');
+  var filterTextEl = document.getElementById('impFilterHintText');
+  if (filterHintEl) {
+    var sheetEl = document.getElementById('impSheet');
+    var isAutoSheet = sheetEl && (['ส่งพัสดุ 68','รวม 46-68'].indexOf(sheetEl.value) >= 0);
+    if (isAutoSheet && branchVal && branchVal !== '__auto__') {
+      var brName = '';
+      (App.branches || []).forEach(function(b){ if (b.id === branchVal) brName = b.name; });
+      if (filterTextEl) filterTextEl.innerHTML = 'จะกรองนำเข้าเฉพาะ <b>' + brName + '</b> จาก sheet รวม (อ่าน "ใช้ประจำที่" เพื่อเทียบสาขา)';
+      filterHintEl.style.display = '';
+    } else {
+      filterHintEl.style.display = 'none';
+    }
+  }
 }
 
 function _parseThaiDate(val) {
@@ -4467,9 +4779,14 @@ async function doImportModal() {
   if (!branchId) { showToast('กรุณาเลือกสาขาก่อนนำเข้า', 'warning'); return; }
   if (!_impData.length) { showToast('ไม่มีข้อมูลให้นำเข้า', 'warning'); return; }
 
-  // Build code→id map for auto mode
+  // filterByBranch: เลือก branch เฉพาะ + sheet รวม → auto-detect ใช้ประจำที่ แต่กรองเฉพาะสาขาที่เลือก
+  var _impSheetName = document.getElementById('impSheet').value;
+  var _isAutoSheet = (['ส่งพัสดุ 68','รวม 46-68'].indexOf(_impSheetName) >= 0);
+  var filterByBranch = (!isAuto && _isAutoSheet);
+
+  // Build code→id map สำหรับ auto mode และ filter mode
   var branchCodeMap = {};
-  if (isAuto) {
+  if (isAuto || filterByBranch) {
     (App.branches || []).forEach(function(b) {
       if (b.code != null) branchCodeMap[String(b.code)] = b.id;
     });
@@ -4492,31 +4809,65 @@ async function doImportModal() {
     var total = 0;
     var skipped = 0;
 
-    // Pre-process: detect sub-item rows (no asset code, has name)
-    var _subItemMap = {}; // asset_code → [{name, brand, model, serial_number}]
-    var _lastCode = null;
+    // Pre-process: assign unique codes to ALL named rows
+    // - Rows with no code inherit parent code + "-N" suffix (sub-items become individual assets)
+    // - Duplicate codes get "-2", "-3" suffix to prevent upsert collision
+    var _processedRows = [];
+    var _lastMainCode = null;
+    var _lastParentLoc = '';   // สถานที่ของ parent row สำหรับ inherit ให้ sub-item
+    var _lastParentDate = '';  // วันที่ของ parent row
+    var _subIdx = 0;
+    var _usedCodes = {};
+
     _impData.forEach(function(r) {
       var code = _getImpAssetCode(r);
       var name = String(r['ชื่อครุภัณฑ์'] || r.name || r['ชื่อ'] || r['รายการ'] || '').trim();
-      if (code && name) {
-        _lastCode = code;
-      } else if (!code && name && _lastCode) {
-        if (!_subItemMap[_lastCode]) _subItemMap[_lastCode] = [];
-        _subItemMap[_lastCode].push({
-          name: name,
-          brand: String(r['ยี่ห้อ'] || r.brand || '').trim() || null,
-          model: String(r['รุ่น'] || r.model || '').trim() || null,
-          serial_number: String(r['S/N:  หรือ Model No:'] || r['S/N: หรือ Model No:'] || r['S/N'] || r.serial_number || '').trim() || null
-        });
-      }
-    });
-    var _hasSubItems = Object.keys(_subItemMap).length > 0;
+      if (!name) return; // skip rows without name
 
-    for (var i = 0; i < _impData.length; i += chunkSize) {
-      var chunk = _impData.slice(i, i + chunkSize).map(function(r) {
-        var code = _getImpAssetCode(r);
+      if (code) {
+        _lastMainCode = code;
+        _subIdx = 0;
+        // จดจำ loc และ date ของ parent เพื่อให้ sub-item inherit
+        var pLoc = String(r['ใช้ประจำที่'] || r['สถานที่'] || r.location || '').trim();
+        var pDate = r['วดป.ที่ได้มา'] || r.acquired_date || r['วันที่ได้มา'] || r['วันที่'] || '';
+        if (pLoc) _lastParentLoc = pLoc;
+        if (pDate) _lastParentDate = pDate;
+      } else if (_lastMainCode) {
+        // Sub-item: derive code from parent row
+        _subIdx++;
+        code = _lastMainCode + '-' + _subIdx;
+      } else {
+        skipped++;
+        return; // no parent code yet, skip
+      }
+
+      // Deduplicate: if this exact code was already used, add a counter suffix
+      if (_usedCodes[code]) {
+        _usedCodes[code]++;
+        code = code + '-' + _usedCodes[code];
+      } else {
+        _usedCodes[code] = 1;
+      }
+
+      // Sub-item ที่ไม่มีสถานที่/วันที่ → inherit จาก parent เพื่อให้ auto-detect สาขาได้
+      var rowOverride = { _resolvedCode: code };
+      if (!String(r['ใช้ประจำที่'] || r['สถานที่'] || r.location || '').trim() && _lastParentLoc) {
+        rowOverride['ใช้ประจำที่'] = _lastParentLoc;
+      }
+      if (!(r['วดป.ที่ได้มา'] || r.acquired_date || r['วันที่ได้มา'] || r['วันที่'] || '') && _lastParentDate) {
+        rowOverride['วดป.ที่ได้มา'] = _lastParentDate;
+      }
+      _processedRows.push(Object.assign({}, r, rowOverride));
+    });
+
+    // ── Detect status columns จากแถวแรก (ถ้า Excel มีคอลัมน์ผลตรวจสอบ) ──
+    var _impStatusCols = _processedRows.length ? _inspDetectStatusCols(_processedRows[0]) : {};
+    var _impStatusColNames = Object.keys(_impStatusCols);
+
+    for (var i = 0; i < _processedRows.length; i += chunkSize) {
+      var chunk = _processedRows.slice(i, i + chunkSize).map(function(r) {
+        var code = r._resolvedCode;
         var name = String(r['ชื่อครุภัณฑ์'] || r.name || r['ชื่อ'] || r['รายการ'] || '').trim();
-        if (!code || !name) { skipped++; return null; }
         // date: column "วดป.ที่ได้มา" used in both old and new format
         var rawDate = r['วดป.ที่ได้มา'] || r.acquired_date || r['วันที่ได้มา'] || r['วันที่'] || '';
         // serial: column has TWO spaces → "S/N:  หรือ Model No:"
@@ -4531,10 +4882,11 @@ async function doImportModal() {
 
         // Resolve branch_id
         var rowBranchId = branchId;
-        if (isAuto) {
+        if (isAuto || filterByBranch) {
           var locMatch = loc.match(/^(\d{1,2})[\s\-]/);
           rowBranchId = locMatch ? (branchCodeMap[locMatch[1]] || null) : null;
-          if (!rowBranchId) { skipped++; return null; }
+          if (!rowBranchId) { skipped++; return null; } // ระบุสาขาไม่ได้ → ข้าม
+          if (filterByBranch && rowBranchId !== branchId) { skipped++; return null; } // ไม่ตรงสาขาที่เลือก → ข้าม
         }
 
         return {
@@ -4550,50 +4902,160 @@ async function doImportModal() {
           location:      loc || null,
           custodian:     cust || null,
           notes:         String(r['หมายเหตุ'] || r.notes || '').trim() || null,
-          status:        'active'
+          status: (function() {
+            // ถ้า Excel มีคอลัมน์ผลตรวจสอบ (พบ/ไม่พบ/ชำรุด...) ให้ใช้ค่านั้น
+            for (var sc = 0; sc < _impStatusColNames.length; sc++) {
+              if (_inspIsMarked(r[_impStatusColNames[sc]])) return _impStatusCols[_impStatusColNames[sc]];
+            }
+            return 'active'; // default
+          })()
         };
       }).filter(Boolean);
       if (!chunk.length) continue;
       // update UI ก่อน upsert เพื่อให้ user เห็น progress ทันที
-      var pct = Math.min(Math.round((i + chunkSize) / _impData.length * 100), 100);
+      var pct = Math.min(Math.round((i + chunkSize) / _processedRows.length * 100), 100);
       var pb2 = document.getElementById('impProgressBar');
       var pl2 = document.getElementById('impProgressLabel');
       if (pb2) pb2.style.width = pct + '%';
       if (pl2) pl2.textContent = pct + '%';
-      var rowFrom = i + 1, rowTo = Math.min(i + chunkSize, _impData.length);
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก ' + rowFrom + '–' + rowTo + ' / ' + _impData.length + ' รายการ';
+      var rowFrom = i + 1, rowTo = Math.min(i + chunkSize, _processedRows.length);
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก ' + rowFrom + '–' + rowTo + ' / ' + _processedRows.length + ' รายการ';
       await new Promise(function(r){ setTimeout(r, 0); }); // yield browser render
-      var res = await sb.from('assets').upsert(chunk, { onConflict: 'asset_code' }).select('id, asset_code');
+      var res = await sb.from('assets').upsert(chunk, { onConflict: 'asset_code' });
       if (res.error) throw res.error;
       total += chunk.length;
-
-      // Insert components for this chunk if any
-      if (_hasSubItems && res.data) {
-        var compInserts = [];
-        res.data.forEach(function(row) {
-          var subs = _subItemMap[row.asset_code];
-          if (subs && subs.length) {
-            subs.forEach(function(s, si) {
-              compInserts.push({ asset_id: row.id, name: s.name, brand: s.brand, model: s.model, serial_number: s.serial_number, sort_order: si });
-            });
-          }
-        });
-        if (compInserts.length) {
-          await sb.from('asset_components').upsert(compInserts);
-        }
-      }
     }
     var msg = 'นำเข้าสำเร็จ ' + total + ' รายการ';
-    if (skipped) msg += ' (ข้าม ' + skipped + ' แถวไม่มีรหัส/ชื่อ)';
+    if (skipped) msg += ' (ข้าม ' + skipped + ' แถวที่ไม่มีข้อมูล)';
     showToast(msg, 'success');
     bootstrap.Modal.getInstance(document.getElementById('modalImport')).hide();
     loadAssetsPage();
+    // ตรวจซ้ำอัตโนมัติ
+    var _dupBranchId = isAuto ? null : (filterByBranch ? branchId : branchId);
+    setTimeout(function(){ _checkImportedDuplicates(_dupBranchId); }, 800);
   } catch(e) {
     showToast('เกิดข้อผิดพลาด: ' + e.message, 'danger');
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-upload me-1"></i>นำเข้าข้อมูล';
     if (progEl) progEl.style.display = 'none';
+  }
+}
+
+// ── ตรวจหารายการที่น่าสงสัยว่าซ้ำหลังนำเข้า ──────────────────────────────
+async function _checkImportedDuplicates(branchId) {
+  try {
+    // ดึงข้อมูลเฉพาะ field ที่จำเป็น (ไม่ join branches เพื่อหลีกเลี่ยง timeout)
+    var q = sb.from('assets').select('id,asset_code,name,branch_id').order('asset_code');
+    if (branchId) q = q.eq('branch_id', branchId);
+    var res = await q;
+    if (!res.data || !res.data.length) {
+      showToast('ไม่พบรายการซ้ำ', 'success'); return;
+    }
+
+    // map branch name จาก App.branches (local)
+    var branchNameMap = {};
+    (App.branches || []).forEach(function(b){ branchNameMap[b.id] = b.name; });
+
+    // หารหัสที่ปรากฏมากกว่า 1 ครั้ง (รหัสเหมือนกันทุกตัวอักษร)
+    var codeCounts = {};
+    res.data.forEach(function(a){
+      codeCounts[a.asset_code] = (codeCounts[a.asset_code] || 0) + 1;
+    });
+    var all = res.data.filter(function(a){
+      return codeCounts[a.asset_code] > 1;
+    });
+
+    if (!all.length) { showToast('✅ ไม่พบรายการซ้ำ', 'success'); return; }
+
+    // สร้าง modal
+    var existing = document.getElementById('modalDupCheck');
+    if (existing) existing.remove();
+
+    var rows = all.map(function(a){
+      var reason = '<span class="badge bg-warning text-dark">รหัสซ้ำ (' + codeCounts[a.asset_code] + ' รายการ)</span>';
+      var brName = branchNameMap[a.branch_id] || a.branch_id || '';
+      return '<tr>'
+        + '<td style="font-size:11px;white-space:nowrap;font-family:monospace;">' + a.asset_code + '</td>'
+        + '<td style="font-size:11px;">' + (a.name||'').substring(0,40) + '</td>'
+        + '<td style="font-size:11px;white-space:nowrap;">' + brName + '</td>'
+        + '<td>' + reason + '</td>'
+        + '<td><button class="btn btn-danger btn-sm py-0 px-2" style="font-size:11px;" onclick="_deleteSuspectAsset(\'' + a.id + '\',this)">ลบ</button></td>'
+        + '</tr>';
+    }).join('');
+
+    var html = '<div class="modal fade" id="modalDupCheck" tabindex="-1">'
+      + '<div class="modal-dialog modal-xl"><div class="modal-content">'
+      + '<div class="modal-header bg-warning bg-opacity-25">'
+      + '<h5 class="modal-title" style="font-family:Kanit;font-size:15px;">'
+      + '<i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>พบรายการที่น่าสงสัย ' + all.length + ' รายการ</h5>'
+      + '<button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>'
+      + '<div class="modal-body" style="padding:12px;">'
+      + '<p style="font-size:12px;color:#64748b;margin-bottom:8px;">รายการที่มี <b>รหัสครุภัณฑ์เหมือนกันทุกตัวอักษร</b> ในฐานข้อมูล — กรุณาตรวจสอบและเก็บไว้เพียง 1 รายการ</p>'
+      + '<div style="overflow-x:auto;max-height:420px;"><table class="table table-sm table-bordered mb-0" style="font-family:Kanit;">'
+      + '<thead class="table-light sticky-top"><tr><th>รหัสครุภัณฑ์</th><th>ชื่อ</th><th>สาขา</th><th>เหตุผล</th><th></th></tr></thead>'
+      + '<tbody>' + rows + '</tbody></table></div>'
+      + '</div>'
+      + '<div class="modal-footer d-flex justify-content-between align-items-center">'
+      + '<button class="btn btn-danger btn-sm" id="btnDeleteAllDup" onclick="_deleteAllSuspects()">'
+      + '<i class="bi bi-trash me-1"></i>ลบทั้งหมด ' + all.length + ' รายการ</button>'
+      + '<button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">ปิด (เก็บไว้ก่อน)</button>'
+      + '</div>'
+      + '</div></div></div>';
+
+    document.body.insertAdjacentHTML('beforeend', html);
+    new bootstrap.Modal(document.getElementById('modalDupCheck')).show();
+  } catch(e) {
+    showToast('ตรวจซ้ำไม่สำเร็จ: ' + e.message, 'danger');
+  }
+}
+
+async function _deleteSuspectAsset(id, btn) {
+  if (!confirm('ลบรายการนี้ออกจากฐานข้อมูล?')) return;
+  btn.disabled = true;
+  var res = await sb.from('assets').delete().eq('id', id);
+  if (res.error) { showToast('ลบไม่สำเร็จ: ' + res.error.message, 'danger'); btn.disabled = false; return; }
+  var row = btn.closest('tr');
+  if (row) row.remove();
+  showToast('ลบแล้ว', 'success');
+  loadAssetsPage();
+}
+
+async function _deleteAllSuspects() {
+  var rows = document.querySelectorAll('#modalDupCheck tbody tr');
+  var count = rows.length;
+  if (!count) { showToast('ไม่มีรายการ', 'warning'); return; }
+  if (!confirm('ลบทั้งหมด ' + count + ' รายการออกจากฐานข้อมูล?\nการกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+
+  var btn = document.getElementById('btnDeleteAllDup');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังลบ...'; }
+
+  // รวบรวม id ทั้งหมดจากปุ่มลบในแต่ละ row
+  var ids = [];
+  rows.forEach(function(r) {
+    var b = r.querySelector('button[onclick*="_deleteSuspectAsset"]');
+    if (b) {
+      var m = b.getAttribute('onclick').match(/'([^']+)'/);
+      if (m) ids.push(m[1]);
+    }
+  });
+
+  // ลบเป็น chunk (Supabase in() รองรับ max ~1000)
+  var chunkSize = 200;
+  var deleted = 0;
+  try {
+    for (var i = 0; i < ids.length; i += chunkSize) {
+      var chunk = ids.slice(i, i + chunkSize);
+      var res = await sb.from('assets').delete().in('id', chunk);
+      if (res.error) throw res.error;
+      deleted += chunk.length;
+    }
+    showToast('ลบสำเร็จ ' + deleted + ' รายการ', 'success');
+    bootstrap.Modal.getInstance(document.getElementById('modalDupCheck')).hide();
+    loadAssetsPage();
+  } catch(e) {
+    showToast('เกิดข้อผิดพลาด: ' + e.message, 'danger');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-trash me-1"></i>ลบทั้งหมด'; }
   }
 }
 
@@ -4964,7 +5426,8 @@ async function loadRepairPage() {
     App.branches.forEach(function(b) {
       if (isBranch && b.id !== myBranchId) return;
       var o = document.createElement('option');
-      o.value = b.id; o.textContent = b.name;
+      o.value = b.id;
+      o.textContent = (b.code != null ? b.code + ' – ' : '') + b.name;
       repBr.appendChild(o);
     });
     if (cur) repBr.value = cur;
@@ -5261,11 +5724,9 @@ async function loadTransferPage() {
   var isBranch   = App.profile && App.profile.role === 'branch';
   var myBranchId = App.profile ? App.profile.branch_id : null;
 
-  // Admin เท่านั้นสร้างคำขอโอนได้ — ซ่อนปุ่มและ tab ขาออกสำหรับ branch
+  // Admin เท่านั้นสร้างคำขอโอนได้ — ซ่อนเฉพาะปุ่มสร้างสำหรับ branch (tab ขาออกแสดงทุก role)
   var btnCreate = document.getElementById('trBtnCreate');
   if (btnCreate) btnCreate.style.display = isAdmin ? '' : 'none';
-  var tabOut = document.getElementById('trTabBtnOutgoing');
-  if (tabOut) tabOut.style.display = isAdmin ? '' : 'none';
 
   // Load assets for modal
   var q = sb.from('assets')
@@ -6582,9 +7043,12 @@ async function fixBranchIdByLocation() {
     }
   }
 
-  // refresh App.branches cache
+  // refresh App.branches cache (sort by code ให้ตรงกับ loadBranches)
   var brRes = await sb.from('branches').select('*');
-  if (brRes.data) App.branches = brRes.data;
+  if (brRes.data) App.branches = brRes.data.sort(function(a,b){
+    var na=parseInt(a.code)||0, nb=parseInt(b.code)||0;
+    return na!==nb ? na-nb : (a.code||'').localeCompare(b.code||'');
+  });
   populateBranchSelects();
 
   var msg = 'อัปเดตสำเร็จ ' + updated + ' รายการ' + (failed ? ' (ล้มเหลว ' + failed + ')' : '');
@@ -6980,13 +7444,14 @@ function _doPrintCard(a, type) {
   var annDep   = lifeYrs > 0 ? price / lifeYrs : 0;
   var baseYear = a.acquired_date ? _thYearPrint(a.acquired_date) : 0;
 
+  var depRate  = lifeYrs > 0 ? (100 / lifeYrs) : 0; // อัตราค่าเสื่อมต่อปี (%)
   var depRows = '';
-  for (var yr = 1; yr <= 7; yr++) {
+  for (var yr = 1; yr <= 5; yr++) {
     var bookVal = Math.max(0, price - annDep * yr);
     depRows += '<tr><td style="text-align:center">' + yr + '</td>'
       + '<td style="text-align:center">' + (baseYear > 0 ? baseYear + yr - 1 : '') + '</td>'
-      + '<td style="text-align:right">' + (annDep > 0 ? _thMoneyPrint(annDep) : '—') + '</td>'
-      + '<td style="text-align:right">' + (bookVal > 0 ? _thMoneyPrint(bookVal) : '—') + '</td>'
+      + '<td style="text-align:center">' + (depRate > 0 ? depRate.toFixed(2) + '%' : '—') + '</td>'
+      + '<td style="text-align:right">' + (price > 0 ? _thMoneyPrint(bookVal) : '—') + '</td>'
       + '<td></td></tr>';
   }
 
@@ -7028,10 +7493,10 @@ function _doPrintCard(a, type) {
     + '<tr><td class="lbl">เลขที่ใบสั่งซื้อ/ใบกำกับ</td><td>' + (a.receipt_number||'—') + '</td><td class="lbl">ผู้ขาย</td><td>' + (a.vendor||'—') + '</td></tr>'
     + '<tr><td class="lbl">ลักษณะ / หมายเหตุ</td><td colspan="3">' + (a.notes||'—') + '</td></tr>'
     + '</table>'
-    + '<div style="font-weight:700;background:#fffde7;border:1px solid #888;padding:4px 8px;margin-bottom:0;font-size:10pt;">ค่าเสื่อมราคา (วิธีเส้นตรง — อายุใช้งาน ' + lifeYrs + ' ปี)</div>'
+    + '<div style="font-weight:700;background:#fffde7;border:1px solid #888;padding:4px 8px;margin-bottom:0;font-size:10pt;">ค่าเสื่อมราคา (วิธีเส้นตรง — อัตรา ' + (depRate > 0 ? depRate.toFixed(2) : '—') + '% ต่อปี — อายุใช้งาน ' + lifeYrs + ' ปี)</div>'
     + '<table class="data" style="margin-bottom:6px;">'
     + '<thead><tr><th style="width:8%">ปีที่</th><th style="width:11%">พ.ศ.</th>'
-    + '<th style="width:20%">ค่าเสื่อมราคา (บาท)</th><th style="width:20%">มูลค่าคงเหลือ (บาท)</th><th>หมายเหตุ / ลายมือชื่อ</th></tr></thead>'
+    + '<th style="width:18%">อัตราเสื่อมราคา (%)</th><th style="width:22%">คงเหลือราคา (บาท)</th><th>ลายมือชื่อ</th></tr></thead>'
     + '<tbody>' + depRows + '</tbody></table>'
     + '<div style="font-weight:700;background:#fff9c4;border:1px solid #888;padding:4px 8px;margin-bottom:0;font-size:10pt;">ประวัติการซ่อม</div>'
     + '<table class="data">'
@@ -7056,17 +7521,20 @@ async function printRegister() {
     branches = App.branches = br.data || [];
   }
   var isBranch = App.profile && App.profile.role === 'branch';
-  var opts = '';
+  var opts = '<div style="padding:12px 16px 8px;font-size:12px;color:#94a3b8;font-family:Kanit;letter-spacing:.4px;">เลือกสาขาที่ต้องการพิมพ์</div>';
   if (!isBranch) {
-    opts += '<div onclick="confirmPrintRegister(\'all\')" style="padding:10px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;background:#f0fdf4;" onmouseover="this.style.background=\'#dcfce7\'" onmouseout="this.style.background=\'#f0fdf4\'">'
-      + '<div style="font-weight:700;color:#065f46;font-family:Kanit;"><i class="bi bi-list-ul me-2"></i>ทุกสาขา (รายการทั้งหมด)</div></div>';
+    opts += '<div onclick="confirmPrintRegister(\'all\')" style="margin:0 12px 4px;padding:10px 14px;border-radius:10px;cursor:pointer;background:#f0fdf4;display:flex;align-items:center;gap:10px;" onmouseover="this.style.background=\'#dcfce7\'" onmouseout="this.style.background=\'#f0fdf4\'">'
+      + '<div style="width:34px;height:34px;background:#d1fae5;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-collection" style="color:#065f46;font-size:15px;"></i></div>'
+      + '<div><div style="font-weight:700;color:#065f46;font-family:Kanit;font-size:13px;">ทุกสาขา</div><div style="font-size:11px;color:#6ee7b7;">รายการทั้งหมด</div></div></div>';
   }
   branches.forEach(function(b) {
     if (isBranch && b.id !== App.profile.branch_id) return;
-    opts += '<div onclick="confirmPrintRegister(\'' + b.id + '\')" style="padding:10px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;" onmouseover="this.style.background=\'#f0f6ff\'" onmouseout="this.style.background=\'#fff\'">'
-      + '<div style="font-weight:600;font-family:Kanit;">' + (b.name||b.code) + '</div></div>';
+    opts += '<div onclick="confirmPrintRegister(\'' + b.id + '\')" style="margin:0 12px 4px;padding:10px 14px;border-radius:10px;cursor:pointer;background:#f8fafc;display:flex;align-items:center;gap:10px;" onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'#f8fafc\'">'
+      + '<div style="width:34px;height:34px;background:#dbeafe;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-building" style="color:#1d4ed8;font-size:14px;"></i></div>'
+      + '<div style="font-weight:600;font-family:Kanit;font-size:13px;color:#1e293b;">' + (b.name||b.code) + '</div></div>';
   });
-  document.getElementById('printSelectTitle').textContent = 'เลือกสาขา — ท.ก. 3 ทะเบียนครุภัณฑ์ (50-10-06)';
+  opts += '<div style="height:8px;"></div>';
+  document.getElementById('printSelectTitle').innerHTML = '<i class="bi bi-printer me-2"></i>พิมพ์ทะเบียนครุภัณฑ์';
   document.getElementById('printSelectSearch').style.display = 'none';
   document.getElementById('printSelectList').innerHTML = opts;
   _printCallback = null;
@@ -7195,15 +7663,20 @@ function _doPrintRepairRequest(r) {
 // ══════════════════════════════════════════════════════════════
 // บัญชีเสนอจำหน่ายครุภัณฑ์
 // ══════════════════════════════════════════════════════════════
-async function printDisposalList() {
+async function _fetchDisposalAssets() {
   var isBranch = App.profile && App.profile.role === 'branch';
   var q = sb.from('assets')
     .select('id,asset_code,name,price,acquired_date,location,custodian,notes,status,category,branches(name)')
     .in('status', ['disposal_pending','damaged_unfixable','overaged']).order('asset_code');
   if (isBranch && App.profile.branch_id) q = q.eq('branch_id', App.profile.branch_id);
   var res = await q;
-  if (!(res.data||[]).length) { showToast('ไม่มีรายการที่เสนอจำหน่าย','info'); return; }
-  _doPrintDisposalList(res.data);
+  return res.data || [];
+}
+
+async function printDisposalList() {
+  var assets = await _fetchDisposalAssets();
+  if (!assets.length) { showToast('ไม่มีรายการที่เสนอจำหน่าย','info'); return; }
+  _doPrintDisposalList(assets);
 }
 
 function _doPrintDisposalList(assets) {
@@ -7257,13 +7730,7 @@ function _doPrintDisposalList(assets) {
 
 // ── บัญชีเสนอจำหน่าย → Word (.doc) ────────────────────────────
 async function exportDisposalDocx() {
-  var isBranch = App.profile && App.profile.role === 'branch';
-  var q = sb.from('assets')
-    .select('id,asset_code,name,price,acquired_date,location,custodian,notes,status,category,branches(name)')
-    .in('status', ['disposal_pending','damaged_unfixable','overaged']).order('asset_code');
-  if (isBranch && App.profile.branch_id) q = q.eq('branch_id', App.profile.branch_id);
-  var res = await q;
-  var assets = res.data || [];
+  var assets = await _fetchDisposalAssets();
   if (!assets.length) { showToast('ไม่มีรายการที่เสนอจำหน่าย', 'info'); return; }
 
   var today = new Date().toLocaleDateString('th-TH', {year:'numeric', month:'long', day:'numeric'});
@@ -7473,7 +7940,10 @@ async function printAssetSubmissionReport() {
 
   // branch label for header
   var branchLabel = 'ทุกสาขา';
-  if (isBranch && App.profile.branch_name) branchLabel = App.profile.branch_name;
+  if (isBranch && App.profile.branch_id) {
+    var _bObj = (App.branches||[]).find(function(b){ return b.id === App.profile.branch_id; });
+    branchLabel = (_bObj && _bObj.name) || App.profile.branch_id;
+  }
 
   // group by branch
   var byBranch = {};
@@ -7835,17 +8305,20 @@ async function exportRegisterExcel(branchId) {
       branches = App.branches = br.data || [];
     }
     var isBranchRole = App.profile && App.profile.role === 'branch';
-    var opts = '';
+    var opts = '<div style="padding:12px 16px 8px;font-size:12px;color:#94a3b8;font-family:Kanit;letter-spacing:.4px;">เลือกสาขาที่ต้องการส่งออก</div>';
     if (!isBranchRole) {
-      opts += '<div onclick="exportRegisterExcel(\'all\');bootstrap.Modal.getInstance(document.getElementById(\'modalPrintSelect\')).hide();" style="padding:10px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;background:#f0fdf4;" onmouseover="this.style.background=\'#dcfce7\'" onmouseout="this.style.background=\'#f0fdf4\'">'
-        + '<div style="font-weight:700;color:#065f46;font-family:Kanit;"><i class="bi bi-list-ul me-2"></i>ทุกสาขา (รายการทั้งหมด)</div></div>';
+      opts += '<div onclick="exportRegisterExcel(\'all\');bootstrap.Modal.getInstance(document.getElementById(\'modalPrintSelect\')).hide();" style="margin:0 12px 4px;padding:10px 14px;border-radius:10px;cursor:pointer;background:#f0fdf4;display:flex;align-items:center;gap:10px;" onmouseover="this.style.background=\'#dcfce7\'" onmouseout="this.style.background=\'#f0fdf4\'">'
+        + '<div style="width:34px;height:34px;background:#d1fae5;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-collection" style="color:#065f46;font-size:15px;"></i></div>'
+        + '<div><div style="font-weight:700;color:#065f46;font-family:Kanit;font-size:13px;">ทุกสาขา</div><div style="font-size:11px;color:#6ee7b7;">รายการทั้งหมด</div></div></div>';
     }
     branches.forEach(function(b) {
       if (isBranchRole && b.id !== App.profile.branch_id) return;
-      opts += '<div onclick="exportRegisterExcel(\'' + b.id + '\');bootstrap.Modal.getInstance(document.getElementById(\'modalPrintSelect\')).hide();" style="padding:10px 14px;border-bottom:1px solid #f1f5f9;cursor:pointer;" onmouseover="this.style.background=\'#f0f6ff\'" onmouseout="this.style.background=\'#fff\'">'
-        + '<div style="font-weight:600;font-family:Kanit;">' + (b.name||b.code) + '</div></div>';
+      opts += '<div onclick="exportRegisterExcel(\'' + b.id + '\');bootstrap.Modal.getInstance(document.getElementById(\'modalPrintSelect\')).hide();" style="margin:0 12px 4px;padding:10px 14px;border-radius:10px;cursor:pointer;background:#f8fafc;display:flex;align-items:center;gap:10px;" onmouseover="this.style.background=\'#eff6ff\'" onmouseout="this.style.background=\'#f8fafc\'">'
+        + '<div style="width:34px;height:34px;background:#dbeafe;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="bi bi-building" style="color:#1d4ed8;font-size:14px;"></i></div>'
+        + '<div style="font-weight:600;font-family:Kanit;font-size:13px;color:#1e293b;">' + (b.name||b.code) + '</div></div>';
     });
-    document.getElementById('printSelectTitle').textContent = 'เลือกสาขา — ส่งออก Excel ทะเบียนครุภัณฑ์';
+    opts += '<div style="height:8px;"></div>';
+    document.getElementById('printSelectTitle').innerHTML = '<i class="bi bi-file-earmark-spreadsheet me-2"></i>ส่งออก Excel ทะเบียนครุภัณฑ์';
     document.getElementById('printSelectSearch').style.display = 'none';
     document.getElementById('printSelectList').innerHTML = opts;
     _printCallback = null;
