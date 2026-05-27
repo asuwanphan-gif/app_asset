@@ -2769,7 +2769,14 @@ async function doLogin() {
 
 async function _loadProfile(user) {
   App.user = user || (await sb.auth.getUser()).data.user;
-  var res = await sb.from('profiles').select('*, branches(name)').eq('id', App.user.id).single();
+  // แยก 2 query เพื่อหลีกเลี่ยง PostgREST embedding ที่ทำให้ 500 เมื่อมี RLS
+  var res = await sb.from('profiles').select('*').eq('id', App.user.id).single();
+  if (res.data && res.data.branch_id) {
+    var bRes = await sb.from('branches').select('name').eq('id', res.data.branch_id).single();
+    res.data.branches = bRes.data ? { name: bRes.data.name } : null;
+  } else if (res.data) {
+    res.data.branches = null;
+  }
   App.profile = res.data;
 }
 
