@@ -8007,11 +8007,15 @@ async function _doPrintInspReport(insp) {
 async function printAssetSubmissionReport() {
   var isBranch = App.profile && App.profile.role === 'branch';
   var assQ = sb.from('assets')
-    .select('id,asset_code,name,category,brand,model,serial_number,price,budget,acquired_date,custodian,location,status,branch_id,acquisition_method,vendor,receipt_number,unit,quantity,life_years,branches(name,code)')
+    .select('id,asset_code,name,category,brand,model,serial_number,price,budget,acquired_date,custodian,location,status,branch_id,acquisition_method,vendor,receipt_number,unit,quantity,life_years')
     .neq('status','disposed').order('asset_code').limit(10000);
   if (isBranch && App.profile.branch_id) assQ = assQ.eq('branch_id', App.profile.branch_id);
   var assRes = await assQ;
+  if (assRes.error) { showToast('โหลดข้อมูลไม่ได้: ' + assRes.error.message, 'danger'); return; }
   var assets = assRes.data || [];
+  // ใช้ App.branches แทน embedding (ป้องกัน 500 จาก PostgREST RLS)
+  var _branchMap = {};
+  (App.branches||[]).forEach(function(b){ _branchMap[b.id] = b.name; });
 
   var inspStatusMap = {};
   if (App.currentInspectionId && App.currentInspectionId !== '__none__') {
@@ -8028,7 +8032,7 @@ async function printAssetSubmissionReport() {
   var byBranch = {};
   var branchOrder = [];
   assets.forEach(function(a) {
-    var bName = (a.branches && a.branches.name) || 'ไม่ระบุสาขา';
+    var bName = _branchMap[a.branch_id] || 'ไม่ระบุสาขา';
     if (!byBranch[bName]) { byBranch[bName] = []; branchOrder.push(bName); }
     byBranch[bName].push(a);
   });
@@ -8247,11 +8251,14 @@ async function exportAssetSubmissionExcel() {
   try {
     var isBranch = App.profile && App.profile.role === 'branch';
     var assQ = sb.from('assets')
-      .select('id,asset_code,name,category,brand,model,serial_number,price,budget,acquired_date,custodian,location,status,branch_id,acquisition_method,vendor,receipt_number,unit,quantity,life_years,branches(name,code)')
+      .select('id,asset_code,name,category,brand,model,serial_number,price,budget,acquired_date,custodian,location,status,branch_id,acquisition_method,vendor,receipt_number,unit,quantity,life_years')
       .neq('status','disposed').order('asset_code').limit(10000);
     if (isBranch && App.profile.branch_id) assQ = assQ.eq('branch_id', App.profile.branch_id);
     var assRes = await assQ;
+    if (assRes.error) { showToast('โหลดข้อมูลไม่ได้: ' + assRes.error.message, 'danger'); return; }
     var assets = assRes.data || [];
+    var _branchMap = {};
+    (App.branches||[]).forEach(function(b){ _branchMap[b.id] = b.name; });
 
     var inspStatusMap = {};
     if (App.currentInspectionId && App.currentInspectionId !== '__none__') {
@@ -8287,7 +8294,7 @@ async function exportAssetSubmissionExcel() {
     var byBranch = {};
     var branchOrder = [];
     assets.forEach(function(a) {
-      var bName = (a.branches && a.branches.name) || 'ไม่ระบุสาขา';
+      var bName = _branchMap[a.branch_id] || 'ไม่ระบุสาขา';
       if (!byBranch[bName]) { byBranch[bName] = []; branchOrder.push(bName); }
       byBranch[bName].push(a);
     });
@@ -8477,7 +8484,7 @@ async function exportRegisterExcel(branchId) {
     var byBranch = {};
     var branchOrder = [];
     assets.forEach(function(a) {
-      var bName = (a.branches && a.branches.name) || 'ไม่ระบุสาขา';
+      var bName = _branchMap[a.branch_id] || 'ไม่ระบุสาขา';
       if (!byBranch[bName]) { byBranch[bName] = []; branchOrder.push(bName); }
       byBranch[bName].push(a);
     });
@@ -8590,11 +8597,14 @@ async function printInspectionResultReport() {
   try {
     var isBranch = App.profile && App.profile.role === 'branch';
     var assQ = sb.from('assets')
-      .select('id,asset_code,name,status,branch_id,branches(name)')
+      .select('id,asset_code,name,status,branch_id')
       .neq('status','disposed').order('asset_code').limit(10000);
     if (isBranch && App.profile.branch_id) assQ = assQ.eq('branch_id', App.profile.branch_id);
     var assRes = await assQ;
+    if (assRes.error) { showToast('โหลดข้อมูลไม่ได้: ' + assRes.error.message, 'danger'); return; }
     var assets = assRes.data || [];
+    var _branchMapP = {};
+    (App.branches||[]).forEach(function(b){ _branchMapP[b.id] = b.name; });
 
     var itemsRes = await sb.from('inspection_items')
       .select('asset_id,status,inspected_at,inspected_by,profiles(full_name,username)')
@@ -8621,7 +8631,7 @@ async function printInspectionResultReport() {
       var inspDate = item && item.inspected_at ? fmtDate(item.inspected_at) : '';
       var inspector = item && item.profiles ? (item.profiles.full_name || item.profiles.username || '') : '';
       var inspResult = done ? (statusLabel[item.status] || item.status || 'ตรวจแล้ว') : '';
-      var bName = (a.branches && a.branches.name) || '—';
+      var bName = _branchMapP[a.branch_id] || '—';
       var rowBg = !done ? 'background:#fff7ed;' : (seq % 2 === 0 ? 'background:#f8fafc;' : '');
       rows += '<tr style="' + rowBg + '">'
         + '<td style="text-align:center;">' + seq + '</td>'
@@ -8690,11 +8700,14 @@ async function exportInspectionResultExcel() {
   try {
     var isBranch = App.profile && App.profile.role === 'branch';
     var assQ = sb.from('assets')
-      .select('id,asset_code,name,status,branch_id,branches(name)')
+      .select('id,asset_code,name,status,branch_id')
       .neq('status','disposed').order('asset_code').limit(10000);
     if (isBranch && App.profile.branch_id) assQ = assQ.eq('branch_id', App.profile.branch_id);
     var assRes = await assQ;
+    if (assRes.error) { showToast('โหลดข้อมูลไม่ได้: ' + assRes.error.message, 'danger'); return; }
     var assets = assRes.data || [];
+    var _branchMapE = {};
+    (App.branches||[]).forEach(function(b){ _branchMapE[b.id] = b.name; });
 
     var itemsRes = await sb.from('inspection_items')
       .select('asset_id,status,inspected_at,inspected_by,profiles(full_name,username)')
@@ -8743,7 +8756,7 @@ async function exportInspectionResultExcel() {
         seq,
         a.asset_code||'',
         a.name||'',
-        (a.branches && a.branches.name) || '',
+        _branchMapE[a.branch_id] || '',
         statusLabel[a.status] || a.status || '',
         done ? 'ตรวจแล้ว' : 'ยังไม่ตรวจ',
         inspResult,
