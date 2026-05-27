@@ -8465,11 +8465,17 @@ async function exportRegisterExcel(branchId) {
   showToast('กำลังสร้างไฟล์ Excel...', 'info');
   try {
     var assQ = sb.from('assets')
-      .select('id,asset_code,name,category,brand,model,serial_number,price,budget_type,acquired_date,custodian,location,status,branch_id,branches(name,code)')
+      .select('id,asset_code,name,category,brand,model,serial_number,price,budget_type,acquired_date,custodian,location,status,branch_id,acquisition_method,vendor,serial_number,unit,quantity,life_years')
       .neq('status','disposed').order('asset_code').limit(10000);
     if (branchId !== 'all') assQ = assQ.eq('branch_id', branchId);
     var assRes = await assQ;
+    if (assRes.error) { showToast('โหลดข้อมูลไม่ได้: ' + assRes.error.message, 'danger'); return; }
     var assets = assRes.data || [];
+    if (!assets.length) { showToast('ไม่มีข้อมูลครุภัณฑ์', 'warning'); return; }
+
+    // ใช้ App.branches แทน embedding (ป้องกัน 500 จาก PostgREST RLS)
+    var _branchMap = {};
+    (App.branches||[]).forEach(function(b){ _branchMap[b.id] = b.name; });
 
     var nowYear = new Date().getFullYear() + 543;
 
