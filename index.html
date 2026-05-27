@@ -8001,13 +8001,12 @@ async function _doPrintInspReport(insp) {
 async function printAssetSubmissionReport() {
   var isBranch = App.profile && App.profile.role === 'branch';
   var assQ = sb.from('assets')
-    .select('id,asset_code,name,category,brand,model,serial_number,price,budget,acquired_date,custodian,location,status,branch_id,branches(name,code)')
+    .select('id,asset_code,name,category,brand,model,serial_number,price,budget,acquired_date,custodian,location,status,branch_id,acquisition_method,vendor,receipt_number,unit,quantity,life_years,branches(name,code)')
     .neq('status','disposed').order('asset_code').limit(10000);
   if (isBranch && App.profile.branch_id) assQ = assQ.eq('branch_id', App.profile.branch_id);
   var assRes = await assQ;
   var assets = assRes.data || [];
 
-  // fetch inspection items if current inspection exists
   var inspStatusMap = {};
   if (App.currentInspectionId && App.currentInspectionId !== '__none__') {
     var itemsRes = await sb.from('inspection_items')
@@ -8017,19 +8016,9 @@ async function printAssetSubmissionReport() {
 
   var today = new Date().toLocaleDateString('th-TH', {year:'numeric', month:'long', day:'numeric'});
   var nowYear = new Date().getFullYear() + 543;
-
-  // determine fiscal year label
   var fiscalYear = nowYear;
   if (App.currentInspection && App.currentInspection.fiscal_year) fiscalYear = App.currentInspection.fiscal_year;
 
-  // branch label for header
-  var branchLabel = 'ทุกสาขา';
-  if (isBranch && App.profile.branch_id) {
-    var _bObj = (App.branches||[]).find(function(b){ return b.id === App.profile.branch_id; });
-    branchLabel = (_bObj && _bObj.name) || App.profile.branch_id;
-  }
-
-  // group by branch
   var byBranch = {};
   var branchOrder = [];
   assets.forEach(function(a) {
@@ -8039,182 +8028,199 @@ async function printAssetSubmissionReport() {
   });
   branchOrder.sort();
 
+  // 37 cols: A B C D E F G H I J K L M N O P Q R S T U V W X Y Z AA AB AC AD AE AF AG AH AI AJ AK
   var colW = [
-    '3%','3%','3%','7%','5%','3%','3%','3%','3%','8%',
-    '10%','4%','4%','6%','2%','2%','4%','3%','3%','3%',
-    '4%','5%','2%','2%','4%','2%','2%','3%','2%','2%',
-    '2%','2%','2%','2%','2%','3%'
+    '3%','4%','1.5%','3%','1.5%','4%','5%','2.5%','2.5%','2.5%','3%','10%','4%','4%','5%','2%',
+    '2%','3%','4%','3.5%','4%','5%','3.5%','7%','4%','2%','4%','2%','4%','3%',
+    '2%','2%','2.5%','2.5%','2%','2%','3%'
   ];
-  var colHeaders = [
-    'ลำดับ','วงปีใช้สำ','รหัสเก่า','ชื่อหน่วยงาน','กลุ่มประเภท','ชนิด','ลักษณะ','ปี',
-    'ครุภัณฑ์ลำดับที่','รหัสครุภัณฑ์','ชื่อครุภัณฑ์','ยี่ห้อ','รุ่น','S/N หรือ หมายเลขเครื่อง',
-    'ตัวที่','จำนวน','ราคา','งบ','วิธีการได้มา','สถานที่/ปลก.','เลขที่ใบสั่งซื้อ',
-    'ใช้ประจำที่','กอง/คละ','ใบเบิก','ผู้รับผิดชอบ/ผู้รับเงิน','อายุครุภัณฑ์',
-    'ระยะเวลา','หมวด','พบ','ไม่พบ','จำนวนใช้ได้','ชำรุดซ่อมได้','ชำรุดซ่อมไม่ได้',
-    'โอนส่ง/จำหน่าย','แทะ','หมายเหตุ'
-  ];
-
   var colgroup = '<colgroup>' + colW.map(function(w){ return '<col style="width:'+w+'">'; }).join('') + '</colgroup>';
-  var thead = '<thead><tr>' + colHeaders.map(function(h){ return '<th>'+h+'</th>'; }).join('') + '</tr></thead>';
+
+  // Header with colspan for C:E (รหัสเก่า) and Q:R (จำนวน)
+  var thead = '<thead><tr style="background:#dbeafe;vertical-align:middle;">'
+    + '<th>ลำดับ</th>'
+    + '<th>วดป.<br>ที่ได้มา</th>'
+    + '<th colspan="3">รหัสเก่า</th>'
+    + '<th>ชื่อ<br>หน่วยงาน</th>'
+    + '<th>กลุ่มประเภท</th>'
+    + '<th>ชนิด</th>'
+    + '<th>ลักษณะ</th>'
+    + '<th>ปี</th>'
+    + '<th>ครุภัณฑ์<br>ลำดับที่</th>'
+    + '<th>ชื่อครุภัณฑ์</th>'
+    + '<th>ยี่ห้อ</th>'
+    + '<th>รุ่น</th>'
+    + '<th>S/N: หรือ<br>Model No:</th>'
+    + '<th>อ้างอิง<br>ตัวที่</th>'
+    + '<th colspan="2">จำนวน</th>'
+    + '<th>ราคา</th>'
+    + '<th>งบ</th>'
+    + '<th>วิธีการ<br>ได้มา</th>'
+    + '<th>ร้านค้า/<br>บริษัท/หจก.</th>'
+    + '<th>เลขที่<br>ใบส่งของ/<br>ใบเสร็จ</th>'
+    + '<th>ใช้ประจำที่</th>'
+    + '<th>กอง/คณะ</th>'
+    + '<th>ใบเบิก</th>'
+    + '<th>ผู้รับเซ็น<br>รับครุภัณฑ์</th>'
+    + '<th>อายุการ<br>ใช้งาน<br>อย่างต่ำ</th>'
+    + '<th>ประเภท<br>ครุภัณฑ์</th>'
+    + '<th>หมวด</th>'
+    + '<th>พบ</th>'
+    + '<th>ไม่พบ</th>'
+    + '<th>ชำรุด<br>ซ่อมได้</th>'
+    + '<th>ชำรุด<br>ซ่อมไม่ได้</th>'
+    + '<th>โอนย้าย</th>'
+    + '<th>แทง<br>จำหน่าย</th>'
+    + '<th>หมายเหตุ</th>'
+    + '</tr></thead>';
 
   var rows = '';
   var globalSeq = 0;
+  var gTotal = 0, gFound = 0, gNotFound = 0, gFixable = 0, gUnfixable = 0, gTransferred = 0, gDisposed = 0;
 
   branchOrder.forEach(function(bName) {
     var items = byBranch[bName];
-    // branch header row
-    rows += '<tr class="branch-hdr"><td colspan="36">สาขา: ' + bName + '</td></tr>';
-
-    var bSeq = 0;
-    var bTotal = 0, bActive = 0, bFixable = 0, bUnfixable = 0, bTransferred = 0, bNotFound = 0;
+    rows += '<tr class="branch-hdr"><td colspan="37">สาขา: ' + bName + '</td></tr>';
+    var bSeq = 0, bTotal = 0, bFound = 0, bNotFound = 0, bFixable = 0, bUnfixable = 0, bTransferred = 0, bDisposed = 0;
 
     items.forEach(function(a) {
-      globalSeq++;
-      bSeq++;
-
-      // acquired year BE short (e.g. 60)
-      var acqYearFull = 0;
-      var acqYearShort = '';
+      globalSeq++; bSeq++;
+      var acqDate = '';
       if (a.acquired_date) {
         var d = new Date(a.acquired_date);
-        if (!isNaN(d)) {
-          acqYearFull = d.getFullYear() + 543;
-          acqYearShort = String(acqYearFull).slice(-2);
-        }
+        if (!isNaN(d)) acqDate = d.getDate() + '/' + (d.getMonth()+1) + '/' + String(d.getFullYear()+543).slice(-2);
       }
-
-      // age in years
-      var ageYears = '';
-      if (a.acquired_date) {
-        var ad = new Date(a.acquired_date);
-        if (!isNaN(ad)) {
-          var now = new Date();
-          ageYears = Math.floor((now - ad) / (365.25 * 24 * 3600 * 1000));
-        }
-      }
-
-      // price formatted
-      var priceStr = '';
-      if (a.price || a.price === 0) {
-        priceStr = Number(a.price).toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2});
-      }
-
-      // determine พบ/ไม่พบ
-      var hasInspData = Object.keys(inspStatusMap).length > 0;
       var rawStatus = a.status || '';
-      var inspFound;
-      if (hasInspData) {
-        inspFound = inspStatusMap[a.id] !== undefined ? (inspStatusMap[a.id] !== 'not_found') : (rawStatus !== 'not_found');
-      } else {
-        inspFound = rawStatus !== 'not_found';
-      }
-
-      var isActive        = rawStatus === 'active' || rawStatus === 'overaged';
-      var isDamagedFix    = rawStatus === 'damaged_fixable';
-      var isDamagedUnfix  = rawStatus === 'damaged_unfixable';
-      var isTransferred   = rawStatus === 'transferred' || rawStatus === 'disposed' || rawStatus === 'disposal_pending';
-      var isNotFound      = rawStatus === 'not_found';
-
-      var cPob     = inspFound ? '/' : '';
-      var cNotPob  = (!inspFound || isNotFound) ? '/' : '';
-      var cUseDai  = (isActive) ? '1' : '';
-      var cFixable = isDamagedFix ? '1' : '';
-      var cUnfix   = isDamagedUnfix ? '1' : '';
-      var cTransf  = isTransferred ? '1' : '';
+      var hasInspData = Object.keys(inspStatusMap).length > 0;
+      var inspFound = hasInspData
+        ? (inspStatusMap[a.id] !== undefined ? inspStatusMap[a.id] !== 'not_found' : rawStatus !== 'not_found')
+        : rawStatus !== 'not_found';
+      var isActive       = rawStatus === 'active' || rawStatus === 'overaged';
+      var isDamagedFix   = rawStatus === 'damaged_fixable';
+      var isDamagedUnfix = rawStatus === 'damaged_unfixable';
+      var isTransferred  = rawStatus === 'transferred';
+      var isDisposed     = rawStatus === 'disposed' || rawStatus === 'disposal_pending';
+      var isNotFound     = rawStatus === 'not_found';
 
       bTotal++;
-      if (!inspFound || isNotFound) bNotFound++;
-      if (isActive)       bActive++;
+      if (inspFound && !isNotFound) bFound++; else bNotFound++;
       if (isDamagedFix)   bFixable++;
       if (isDamagedUnfix) bUnfixable++;
       if (isTransferred)  bTransferred++;
+      if (isDisposed)     bDisposed++;
 
+      var priceStr = (a.price || a.price === 0) ? Number(a.price).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
+
+      // 37 cells: A→AK
       var cells = [
-        globalSeq,                          // 1 ลำดับ
-        acqYearShort,                       // 2 วงปีใช้สำ
-        '',                                 // 3 รหัสเก่า
-        bName,                              // 4 ชื่อหน่วยงาน
-        a.category||'',                     // 5 กลุ่มประเภท
-        '',                                 // 6 ชนิด
-        '',                                 // 7 ลักษณะ
-        acqYearShort,                       // 8 ปี
-        bSeq,                               // 9 ครุภัณฑ์ลำดับที่
-        a.asset_code||'',                   // 10 รหัสครุภัณฑ์
-        a.name||'',                         // 11 ชื่อครุภัณฑ์
-        a.brand||'',                        // 12 ยี่ห้อ
-        a.model||'',                        // 13 รุ่น
-        a.serial_number||'',               // 14 S/N
-        '',                                 // 15 ตัวที่
-        '1',                                // 16 จำนวน
-        priceStr,                           // 17 ราคา
-        a.budget||'',                       // 18 งบ
-        '',                                 // 19 วิธีการได้มา
-        '',                                 // 20 สถานที่/ปลก.
-        '',                                 // 21 เลขที่ใบสั่งซื้อ
-        a.location||'',                     // 22 ใช้ประจำที่
-        '',                                 // 23 กอง/คละ
-        '',                                 // 24 ใบเบิก
-        a.custodian||'',                    // 25 ผู้รับผิดชอบ
-        ageYears,                           // 26 อายุครุภัณฑ์
-        '',                                 // 27 ระยะเวลา
-        a.category||'',                     // 28 หมวด
-        cPob,                               // 29 พบ
-        cNotPob,                            // 30 ไม่พบ
-        cUseDai,                            // 31 จำนวนใช้ได้
-        cFixable,                           // 32 ชำรุดซ่อมได้
-        cUnfix,                             // 33 ชำรุดซ่อมไม่ได้
-        cTransf,                            // 34 โอนส่ง/จำหน่าย
-        '',                                 // 35 แทะ
-        ''                                  // 36 หมายเหตุ
+        globalSeq,                        // A ลำดับ
+        acqDate,                          // B วดป.ที่ได้มา
+        '', '', '',                       // C D E รหัสเก่า
+        'มรภ.ศก.',                        // F ชื่อหน่วยงาน
+        a.asset_code||'',                 // G กลุ่มประเภท
+        '', '', '',                       // H I J ชนิด ลักษณะ ปี
+        bSeq,                             // K ครุภัณฑ์ลำดับที่
+        a.name||'',                       // L ชื่อครุภัณฑ์
+        a.brand||'',                      // M ยี่ห้อ
+        a.model||'',                      // N รุ่น
+        a.serial_number||'',              // O S/N
+        '',                               // P อ้างอิงตัวที่
+        a.quantity||1,                    // Q จำนวน
+        a.unit||'เครื่อง',               // R หน่วย
+        priceStr,                         // S ราคา
+        a.budget||'',                     // T งบ
+        a.acquisition_method||'',         // U วิธีการได้มา
+        a.vendor||'',                     // V ร้านค้า/บริษัท
+        a.receipt_number||'',             // W เลขที่ใบส่งของ
+        a.location||'',                   // X ใช้ประจำที่
+        'คณะศิลปศาสตร์และวิทยาศาสตร์',  // Y กอง/คณะ
+        '',                               // Z ใบเบิก
+        a.custodian||'',                  // AA ผู้รับเซ็นรับครุภัณฑ์
+        a.life_years||'',                 // AB อายุการใช้งานอย่างต่ำ
+        a.category||'',                   // AC ประเภทครุภัณฑ์
+        'ครุภัณฑ์',                       // AD หมวด
+        inspFound ? '/' : '',             // AE พบ
+        (!inspFound||isNotFound)?'/':'',  // AF ไม่พบ
+        isDamagedFix ? '/' : '',          // AG ชำรุดซ่อมได้
+        isDamagedUnfix ? '/' : '',        // AH ชำรุดซ่อมไม่ได้
+        isTransferred ? '/' : '',         // AI โอนย้าย
+        isDisposed ? '/' : '',            // AJ แทงจำหน่าย
+        ''                                // AK หมายเหตุ
       ];
-
-      rows += '<tr>' + cells.map(function(c, i){
-        var align = (i === 0 || i === 8 || i === 14 || i === 15 || i === 25 || i >= 28)
-          ? 'text-align:center;' : '';
-        return '<td style="' + align + '">' + c + '</td>';
+      var centerIdx = new Set([0,10,15,16,27,29,30,31,32,33,34,35]);
+      rows += '<tr>' + cells.map(function(c,i){
+        return '<td style="' + (centerIdx.has(i)?'text-align:center;':'') + '">' + (c==null?'':c) + '</td>';
       }).join('') + '</tr>';
     });
 
-    // subtotal row
+    gTotal+=bTotal; gFound+=bFound; gNotFound+=bNotFound;
+    gFixable+=bFixable; gUnfixable+=bUnfixable; gTransferred+=bTransferred; gDisposed+=bDisposed;
+
     rows += '<tr class="subtotal-row">'
-      + '<td colspan="15" style="text-align:right;font-weight:700;">รวมสาขา ' + bName + '</td>'
+      + '<td colspan="10" style="text-align:right;font-weight:700;">รวมสาขา ' + bName + '</td>'
       + '<td style="text-align:center;font-weight:700;">' + bTotal + '</td>'
-      + '<td colspan="12"></td>'
-      + '<td style="text-align:center;font-weight:700;">' + (bTotal - bNotFound) + '</td>'
+      + '<td colspan="18"></td>'
+      + '<td style="text-align:center;font-weight:700;">' + bFound + '</td>'
       + '<td style="text-align:center;font-weight:700;">' + bNotFound + '</td>'
-      + '<td style="text-align:center;font-weight:700;">' + bActive + '</td>'
       + '<td style="text-align:center;font-weight:700;">' + bFixable + '</td>'
       + '<td style="text-align:center;font-weight:700;">' + bUnfixable + '</td>'
       + '<td style="text-align:center;font-weight:700;">' + bTransferred + '</td>'
-      + '<td colspan="2"></td>'
-      + '</tr>';
+      + '<td style="text-align:center;font-weight:700;">' + bDisposed + '</td>'
+      + '<td></td></tr>';
   });
+
+  // Grand total
+  rows += '<tr style="background:#bfdbfe;font-weight:700;">'
+    + '<td colspan="10" style="text-align:right;">รวมทั้งหมด</td>'
+    + '<td style="text-align:center;">' + gTotal + '</td>'
+    + '<td colspan="18"></td>'
+    + '<td style="text-align:center;">' + gFound + '</td>'
+    + '<td style="text-align:center;">' + gNotFound + '</td>'
+    + '<td style="text-align:center;">' + gFixable + '</td>'
+    + '<td style="text-align:center;">' + gUnfixable + '</td>'
+    + '<td style="text-align:center;">' + gTransferred + '</td>'
+    + '<td style="text-align:center;">' + gDisposed + '</td>'
+    + '<td></td></tr>';
+
+  // Summary block + signature
+  var summaryHtml = '<div style="margin-top:14px;font-size:8pt;line-height:1.8;">'
+    + '<div>1. รายการครุภัณฑ์ที่ทำการตรวจสอบมีทั้งหมด &nbsp;&nbsp;&nbsp; <strong>' + gTotal + '</strong> &nbsp; รายการ</div>'
+    + '<div>2. รายการครุภัณฑ์ที่อยู่ในสภาพ ใช้งานได้ &nbsp;&nbsp;&nbsp; <strong>' + gFound + '</strong> &nbsp; รายการ</div>'
+    + '<div>3. รายการครุภัณฑ์ที่อยู่ในสภาพ ชำรุดสามารถซ่อมได้ &nbsp;&nbsp;&nbsp; <strong>' + gFixable + '</strong> &nbsp; รายการ</div>'
+    + '<div>4. รายการครุภัณฑ์ที่อยู่ในสภาพ ชำรุดไม่สามารถซ่อมได้ &nbsp;&nbsp;&nbsp; <strong>' + gUnfixable + '</strong> &nbsp; รายการ</div>'
+    + '<div>5. รายการครุภัณฑ์ที่ไม่พบตามบัญชี &nbsp;&nbsp;&nbsp; <strong>' + gNotFound + '</strong> &nbsp; รายการ</div>'
+    + '</div>'
+    + '<div style="margin-top:18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 16px;font-size:7.5pt;text-align:center;">'
+    + '<div>ลงชื่อ......................................................ประธานกรรมการ<br><small>ลงชื่อ.....................</small><br>(ผู้ช่วยศาสตราจารย์ ดร.อัฐพร  กิ่งบู)</div>'
+    + '<div>ลงชื่อ..........................................รองประธานกรรมการ<br><small>ลงชื่อ.....................</small><br>(นางจุฑามณี  รุ้งแก้ว)</div>'
+    + '<div>ลงชื่อ........................................................กรรมการ<br><small>ลงชื่อ.....................</small><br>(นางสาวมนัญญา  นาคสิงห์ทอง)</div>'
+    + '</div>'
+    + '<div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 16px;font-size:7.5pt;text-align:center;">'
+    + '<div></div>'
+    + '<div>ลงชื่อ........................................................กรรมการ<br><small>ลงชื่อ.....................</small><br>(นายชาญชัย  ยาศรี)</div>'
+    + '<div>ลงชื่อ..........................................กรรมการและเลขานุการ<br><small>ลงชื่อ.....................</small><br>(นางแสงมณี  วงศ์สุวรรณ)</div>'
+    + '</div>';
 
   var extraStyle = [
     '@page{size:A4 landscape;margin:8mm}',
-    'body{font-size:7pt}',
-    'h1{font-size:11pt;margin-bottom:2px}',
-    'h2{font-size:9pt;margin-bottom:2px}',
-    '.sub-hdr{font-size:8pt;color:#444;margin-bottom:6px;text-align:center}',
+    'body{font-size:7pt;font-family:Kanit,Sarabun,Arial,sans-serif}',
+    'h1{font-size:10pt;margin:0 0 2px;text-align:center}',
+    'h2,h3{font-size:8pt;margin:0 0 2px;text-align:center}',
     'table.sub{width:100%;border-collapse:collapse;table-layout:fixed}',
-    'table.sub th{border:1px solid #555;padding:2px 2px;background:#dbeafe;font-weight:700;font-size:7pt;text-align:center;white-space:nowrap;overflow:hidden}',
-    'table.sub td{border:1px solid #aaa;padding:1px 2px;font-size:7pt;vertical-align:middle;overflow:hidden;white-space:nowrap}',
-    'tr.branch-hdr td{background:#bfdbfe;font-weight:700;font-size:7.5pt;padding:2px 4px}',
-    'tr.subtotal-row td{background:#fef9c3;font-size:7pt}',
+    'table.sub th{border:1px solid #555;padding:1px 2px;background:#dbeafe;font-weight:700;font-size:6.5pt;text-align:center;line-height:1.2;white-space:normal}',
+    'table.sub td{border:1px solid #aaa;padding:1px 2px;font-size:6.5pt;vertical-align:middle;overflow:hidden;white-space:nowrap}',
+    'tr.branch-hdr td{background:#bfdbfe;font-weight:700;font-size:7pt;padding:2px 4px}',
+    'tr.subtotal-row td{background:#fef9c3;font-size:6.5pt}',
     '@media print{.no-print{display:none!important}}'
   ].join('\n');
 
   var html = _printHead(extraStyle)
-    + '<div style="text-align:center;margin-bottom:6px;">'
-    + '<h1>รายงานการตรวจสอบพัสดุประจำปี ปีงบประมาณ ' + fiscalYear + '</h1>'
-    + '<h2>คณะ/หน่วยงาน : ' + branchLabel + '</h2>'
-    + '<div class="sub-hdr">ณ วันที่ ' + today + '</div>'
-    + '</div>'
-    + '<table class="sub">'
-    + colgroup
-    + thead
-    + '<tbody>' + rows + '</tbody>'
-    + '</table>'
+    + '<h1>รายละเอียดการตรวจสอบพัสดุประจำปี ปีงบประมาณ ' + fiscalYear + '</h1>'
+    + '<h2>คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์</h2>'
+    + '<h3>คงเหลือ ณ วันที่ ' + today + '</h3>'
+    + '<table class="sub" style="margin-top:6px;">' + colgroup + thead
+    + '<tbody>' + rows + '</tbody></table>'
+    + summaryHtml
     + '</' + 'body></' + 'html>';
 
   _openPrintWin(html);
@@ -8235,7 +8241,7 @@ async function exportAssetSubmissionExcel() {
   try {
     var isBranch = App.profile && App.profile.role === 'branch';
     var assQ = sb.from('assets')
-      .select('id,asset_code,name,category,brand,model,serial_number,price,budget,acquired_date,custodian,location,status,branch_id,branches(name,code)')
+      .select('id,asset_code,name,category,brand,model,serial_number,price,budget,acquired_date,custodian,location,status,branch_id,acquisition_method,vendor,receipt_number,unit,quantity,life_years,branches(name,code)')
       .neq('status','disposed').order('asset_code').limit(10000);
     if (isBranch && App.profile.branch_id) assQ = assQ.eq('branch_id', App.profile.branch_id);
     var assRes = await assQ;
@@ -8251,17 +8257,27 @@ async function exportAssetSubmissionExcel() {
     var nowYear = new Date().getFullYear() + 543;
     var fiscalYear = nowYear;
     if (App.currentInspection && App.currentInspection.fiscal_year) fiscalYear = App.currentInspection.fiscal_year;
+    var todayTH = new Date().toLocaleDateString('th-TH', {year:'numeric', month:'long', day:'numeric'});
 
+    // 37 column headers matching Excel ส่งพัสดุ 68 (A→AK)
     var colHeaders = [
-      'ลำดับ','วงปีใช้สำ','รหัสเก่า','ชื่อหน่วยงาน','กลุ่มประเภท','ชนิด','ลักษณะ','ปี',
-      'ครุภัณฑ์ลำดับที่','รหัสครุภัณฑ์','ชื่อครุภัณฑ์','ยี่ห้อ','รุ่น','หมายเลขเครื่อง',
-      'ตัวที่','จำนวน','ราคา','งบ','วิธีการได้มา','สถานที่/ปลก.','เลขที่ใบสั่งซื้อ',
-      'ใช้ประจำที่','กอง/คละ','ใบเบิก','ผู้รับผิดชอบ','อายุครุภัณฑ์',
-      'ระยะเวลา','หมวด','พบ','ไม่พบ','จำนวนใช้ได้','ชำรุดซ่อมได้','ชำรุดซ่อมไม่ได้',
-      'โอนส่ง/จำหน่าย','แทะ','หมายเหตุ'
+      'ลำดับ','วดป.ที่ได้มา','รหัสเก่า','','',
+      'ชื่อหน่วยงาน','กลุ่มประเภท','ชนิด','ลักษณะ','ปี',
+      'ครุภัณฑ์ลำดับที่','ชื่อครุภัณฑ์','ยี่ห้อ','รุ่น','S/N: หรือ Model No:',
+      'อ้างอิง\nตัวที่','จำนวน','','ราคา','งบ',
+      'วิธีการได้มา','ร้านค้า/บริษัท/หจก.','เลขที่เล่มที่\nใบส่งของ/ใบเสร็จ','ใช้ประจำที่','กอง/คณะ',
+      'ใบเบิก','ผู้รับเซ็นรับครุภัณฑ์','อายุการใช้งาน\nอย่างต่ำ','ประเภทครุภัณฑ์','หมวด',
+      'พบ','ไม่พบ','ชำรุด\nซ่อมได้','ชำรุด\nซ่อมไม่ได้','โอนย้าย','แทงจำหน่าย','หมายเหตุ'
     ];
 
-    // group by branch
+    // Column widths (chars) matching Excel proportions
+    var colWidths = [
+      {wch:7},{wch:10},{wch:6},{wch:10},{wch:4},{wch:8},{wch:11},{wch:6},{wch:8},{wch:10},
+      {wch:9},{wch:38},{wch:9},{wch:9},{wch:11},{wch:7},{wch:6},{wch:7},{wch:10},{wch:9},
+      {wch:13},{wch:20},{wch:14},{wch:30},{wch:13},{wch:7},{wch:10},{wch:7},{wch:11},{wch:7},
+      {wch:6},{wch:7},{wch:8},{wch:9},{wch:8},{wch:9},{wch:10}
+    ];
+
     var byBranch = {};
     var branchOrder = [];
     assets.forEach(function(a) {
@@ -8272,105 +8288,126 @@ async function exportAssetSubmissionExcel() {
     branchOrder.sort();
 
     var wb = XLSX.utils.book_new();
-    var summaryRows = [['ชื่อสาขา','ทั้งหมด','พบ','ไม่พบ','ชำรุดซ่อมได้','ชำรุดซ่อมไม่ได้','โอน/จำหน่าย']];
+    var summaryRows = [['ชื่อสาขา','ทั้งหมด','พบ','ไม่พบ','ชำรุดซ่อมได้','ชำรุดซ่อมไม่ได้','โอนย้าย','แทงจำหน่าย']];
 
     branchOrder.forEach(function(bName) {
       var items = byBranch[bName];
       var sheetData = [];
-      sheetData.push(['รายงานการตรวจสอบพัสดุประจำปี ปีงบประมาณ ' + fiscalYear]);
-      sheetData.push(['คณะ/หน่วยงาน : ' + bName]);
-      sheetData.push([]);
-      sheetData.push(colHeaders);
 
-      var bSeq = 0;
-      var bTotal = 0, bFound = 0, bNotFound = 0, bFixable = 0, bUnfixable = 0, bTransferred = 0;
+      // Rows 1–4: title block (matching Excel ส่งพัสดุ 68)
+      sheetData.push(['รายละเอียดการตรวจสอบพัสดุประจำปี ปีงบประมาณ ' + fiscalYear]);
+      sheetData.push(['คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์']);
+      sheetData.push(['คงเหลือ ณ วันที่ ' + todayTH]);
+      sheetData.push([]);           // Row 4 blank spacer
+      sheetData.push(colHeaders);   // Row 5 headers
+
+      var bSeq = 0, bTotal = 0, bFound = 0, bNotFound = 0, bFixable = 0, bUnfixable = 0, bTransferred = 0, bDisposed = 0;
 
       items.forEach(function(a) {
         bSeq++;
-        var acqYearShort = '';
+        var acqDate = '';
         if (a.acquired_date) {
           var d = new Date(a.acquired_date);
-          if (!isNaN(d)) acqYearShort = String(d.getFullYear() + 543).slice(-2);
-        }
-        var ageYears = '';
-        if (a.acquired_date) {
-          var ad = new Date(a.acquired_date);
-          if (!isNaN(ad)) ageYears = Math.floor((Date.now() - ad) / (365.25*24*3600*1000));
+          if (!isNaN(d)) acqDate = d.getDate() + '/' + (d.getMonth()+1) + '/' + String(d.getFullYear()+543).slice(-2);
         }
         var rawStatus = a.status || '';
         var hasInspData = Object.keys(inspStatusMap).length > 0;
-        var inspFound;
-        if (hasInspData) {
-          inspFound = inspStatusMap[a.id] !== undefined ? (inspStatusMap[a.id] !== 'not_found') : (rawStatus !== 'not_found');
-        } else {
-          inspFound = rawStatus !== 'not_found';
-        }
+        var inspFound = hasInspData
+          ? (inspStatusMap[a.id] !== undefined ? inspStatusMap[a.id] !== 'not_found' : rawStatus !== 'not_found')
+          : rawStatus !== 'not_found';
         var isActive       = rawStatus === 'active' || rawStatus === 'overaged';
         var isDamagedFix   = rawStatus === 'damaged_fixable';
         var isDamagedUnfix = rawStatus === 'damaged_unfixable';
-        var isTransferred  = rawStatus === 'transferred' || rawStatus === 'disposed' || rawStatus === 'disposal_pending';
+        var isTransferred  = rawStatus === 'transferred';
+        var isDisposed     = rawStatus === 'disposed' || rawStatus === 'disposal_pending';
         var isNotFound     = rawStatus === 'not_found';
 
         bTotal++;
-        if (!inspFound || isNotFound) bNotFound++; else bFound++;
+        if (inspFound && !isNotFound) bFound++; else bNotFound++;
         if (isDamagedFix)   bFixable++;
         if (isDamagedUnfix) bUnfixable++;
         if (isTransferred)  bTransferred++;
+        if (isDisposed)     bDisposed++;
 
         sheetData.push([
-          bSeq,                           // ลำดับ
-          acqYearShort,                   // วงปีใช้สำ
-          '',                             // รหัสเก่า
-          bName,                          // ชื่อหน่วยงาน
-          a.category||'',                 // กลุ่มประเภท
-          '',                             // ชนิด
-          '',                             // ลักษณะ
-          acqYearShort,                   // ปี
-          bSeq,                           // ครุภัณฑ์ลำดับที่
-          a.asset_code||'',               // รหัสครุภัณฑ์
-          a.name||'',                     // ชื่อครุภัณฑ์
-          a.brand||'',                    // ยี่ห้อ
-          a.model||'',                    // รุ่น
-          a.serial_number||'',            // หมายเลขเครื่อง
-          '',                             // ตัวที่
-          1,                              // จำนวน
-          a.price ? parseFloat(a.price) : '', // ราคา (numeric)
-          a.budget||'',                   // งบ
-          '',                             // วิธีการได้มา
-          '',                             // สถานที่/ปลก.
-          '',                             // เลขที่ใบสั่งซื้อ
-          a.location||'',                 // ใช้ประจำที่
-          '',                             // กอง/คละ
-          '',                             // ใบเบิก
-          a.custodian||'',                // ผู้รับผิดชอบ
-          ageYears,                       // อายุครุภัณฑ์
-          '',                             // ระยะเวลา
-          a.category||'',                 // หมวด
-          inspFound ? '/' : '',           // พบ
-          (!inspFound || isNotFound) ? '/' : '', // ไม่พบ
-          isActive ? 1 : '',              // จำนวนใช้ได้
-          isDamagedFix ? 1 : '',          // ชำรุดซ่อมได้
-          isDamagedUnfix ? 1 : '',        // ชำรุดซ่อมไม่ได้
-          isTransferred ? 1 : '',         // โอนส่ง/จำหน่าย
-          '',                             // แทะ
-          ''                              // หมายเหตุ
+          bSeq,                                  // A  ลำดับ
+          acqDate,                               // B  วดป.ที่ได้มา
+          '', '', '',                            // C D E รหัสเก่า
+          'มรภ.ศก.',                             // F  ชื่อหน่วยงาน
+          a.asset_code||'',                      // G  กลุ่มประเภท
+          '', '', '',                            // H I J ชนิด ลักษณะ ปี
+          bSeq,                                  // K  ครุภัณฑ์ลำดับที่
+          a.name||'',                            // L  ชื่อครุภัณฑ์
+          a.brand||'',                           // M  ยี่ห้อ
+          a.model||'',                           // N  รุ่น
+          a.serial_number||'',                   // O  S/N
+          '',                                    // P  อ้างอิงตัวที่
+          a.quantity||1,                         // Q  จำนวน
+          a.unit||'เครื่อง',                     // R  หน่วย
+          a.price ? parseFloat(a.price) : '',    // S  ราคา (numeric)
+          a.budget||'',                          // T  งบ
+          a.acquisition_method||'',              // U  วิธีการได้มา
+          a.vendor||'',                          // V  ร้านค้า/บริษัท/หจก.
+          a.receipt_number||'',                  // W  เลขที่ใบส่งของ/ใบเสร็จ
+          a.location||'',                        // X  ใช้ประจำที่
+          'คณะศิลปศาสตร์และวิทยาศาสตร์',        // Y  กอง/คณะ
+          '',                                    // Z  ใบเบิก
+          a.custodian||'',                       // AA ผู้รับเซ็นรับครุภัณฑ์
+          a.life_years||'',                      // AB อายุการใช้งานอย่างต่ำ
+          a.category||'',                        // AC ประเภทครุภัณฑ์
+          'ครุภัณฑ์',                            // AD หมวด
+          inspFound ? '/' : '',                  // AE พบ
+          (!inspFound||isNotFound) ? '/' : '',   // AF ไม่พบ
+          isDamagedFix ? '/' : '',               // AG ชำรุดซ่อมได้
+          isDamagedUnfix ? '/' : '',             // AH ชำรุดซ่อมไม่ได้
+          isTransferred ? '/' : '',              // AI โอนย้าย
+          isDisposed ? '/' : '',                 // AJ แทงจำหน่าย
+          ''                                     // AK หมายเหตุ
         ]);
       });
 
-      summaryRows.push([bName, bTotal, bFound, bNotFound, bFixable, bUnfixable, bTransferred]);
+      // Summary rows (matching Excel format)
+      sheetData.push([]);
+      var sumR = sheetData.length; // 0-indexed row of first summary line
+      sheetData.push(['1. รายการครุภัณฑ์ที่ทำการตรวจสอบมีทั้งหมด','','','','','','',bTotal,'รายการ']);
+      sheetData.push(['2. รายการครุภัณฑ์ที่อยู่ในสภาพ ใช้งานได้','','','','','','',bFound,'รายการ']);
+      sheetData.push(['3. รายการครุภัณฑ์ที่อยู่ในสภาพ ชำรุดสามารถซ่อมได้','','','','','','',bFixable,'รายการ']);
+      sheetData.push(['4. รายการครุภัณฑ์ที่อยู่ในสภาพ ชำรุดไม่สามารถซ่อมได้','','','','','','',bUnfixable,'รายการ']);
+      sheetData.push(['5. รายการครุภัณฑ์ที่ไม่พบตามบัญชี','','','','','','',bNotFound,'รายการ']);
+
+      // Signature block (3 columns)
+      sheetData.push([]);
+      sheetData.push(['ลงชื่อ...................................ประธานกรรมการ','','','','','','','ลงชื่อ.............................รองประธานกรรมการ','','','','','','','ลงชื่อ.......................................กรรมการ']);
+      sheetData.push(['(ผู้ช่วยศาสตราจารย์ ดร.อัฐพร  กิ่งบู)','','','','','','','(นางจุฑามณี  รุ้งแก้ว)','','','','','','','(นางสาวมนัญญา  นาคสิงห์ทอง)']);
+      sheetData.push([]);
+      sheetData.push(['','','','','','','','ลงชื่อ.......................................กรรมการ','','','','','','','ลงชื่อ..........................กรรมการและเลขานุการ']);
+      sheetData.push(['','','','','','','','(นายชาญชัย  ยาศรี)','','','','','','','(นางแสงมณี  วงศ์สุวรรณ)']);
+
+      summaryRows.push([bName, bTotal, bFound, bNotFound, bFixable, bUnfixable, bTransferred, bDisposed]);
 
       var ws = XLSX.utils.aoa_to_sheet(sheetData);
-      // safe sheet name (31 chars max, no special chars)
+      ws['!cols'] = colWidths;
+
+      // Merged cells: title rows A:AK, header C:E and Q:R
+      ws['!merges'] = [
+        {s:{r:0,c:0}, e:{r:0,c:36}},  // Row 1: title
+        {s:{r:1,c:0}, e:{r:1,c:36}},  // Row 2: หน่วยงาน
+        {s:{r:2,c:0}, e:{r:2,c:36}},  // Row 3: วันที่
+        {s:{r:3,c:0}, e:{r:3,c:36}},  // Row 4: blank
+        {s:{r:4,c:2}, e:{r:4,c:4}},   // Row 5: C-E รหัสเก่า
+        {s:{r:4,c:16},{e:{r:4,c:17}}} // Row 5: Q-R จำนวน
+      ];
+
       var safeName = bName.replace(/[\\\/\*\?\[\]:]/g,'').slice(0,28);
       XLSX.utils.book_append_sheet(wb, ws, safeName);
     });
 
     // Summary sheet
     var wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSummary['!cols'] = [{wch:30},{wch:9},{wch:7},{wch:7},{wch:10},{wch:12},{wch:9},{wch:10}];
     XLSX.utils.book_append_sheet(wb, wsSummary, 'รวม');
 
-    var yearCE = new Date().getFullYear();
-    _xlsxDownload(wb, 'รายงานตรวจสอบพัสดุ_' + yearCE + '.xlsx');
+    _xlsxDownload(wb, 'รายละเอียดการตรวจสอบพัสดุ_' + fiscalYear + '.xlsx');
     showToast('ดาวน์โหลด Excel สำเร็จ', 'success');
   } catch(e) {
     showToast('เกิดข้อผิดพลาด: ' + e.message, 'danger');
