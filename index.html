@@ -8213,7 +8213,7 @@ async function printAssetSubmissionReport() {
 
   var extraStyle = [
     '@page{size:A4 landscape;margin:8mm}',
-    'body{font-size:7pt;font-family:Kanit,Sarabun,Arial,sans-serif}',
+    'body{font-size:7pt;font-family:\'TH Sarabun New\',\'TH SarabunPSK\',Sarabun,Arial,sans-serif}',
     'h1{font-size:10pt;margin:0 0 2px;text-align:center}',
     'h2,h3{font-size:8pt;margin:0 0 2px;text-align:center}',
     'table.sub{width:100%;border-collapse:collapse;table-layout:fixed}',
@@ -8339,16 +8339,16 @@ async function exportAssetSubmissionExcel(fiscalYearParam) {
     // ── Style definitions (xlsx-js-style) ────────────────────
     var TB = { top:{style:'thin',color:{rgb:'000000'}}, bottom:{style:'thin',color:{rgb:'000000'}},
                left:{style:'thin',color:{rgb:'000000'}}, right:{style:'thin',color:{rgb:'000000'}} };
-    var FN = 'Angsana New';
+    var FN = 'TH Sarabun New';
     var sTitle  = { font:{name:FN,sz:16,bold:true}, alignment:{horizontal:'center',vertical:'center'} };
-    var sSub    = { font:{name:FN,sz:14},            alignment:{horizontal:'center',vertical:'center'} };
-    var sHdr    = { font:{name:FN,sz:14,bold:true}, fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'}, border:TB, alignment:{horizontal:'center',vertical:'center',wrapText:true} };
-    var sBranch = { font:{name:FN,sz:14,bold:true}, fill:{fgColor:{rgb:'DEEAF1'},patternType:'solid'}, border:TB };
-    var sStot   = { font:{name:FN,sz:14,bold:true}, fill:{fgColor:{rgb:'FFF2CC'},patternType:'solid'}, border:TB };
-    var sGtot   = { font:{name:FN,sz:14,bold:true}, fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'}, border:TB };
-    var sDataL  = { font:{name:FN,sz:14}, border:TB, alignment:{vertical:'center',wrapText:false} };
-    var sDataC  = { font:{name:FN,sz:14}, border:TB, alignment:{horizontal:'center',vertical:'center'} };
-    var sSumTxt = { font:{name:FN,sz:14} };
+    var sSub    = { font:{name:FN,sz:15},            alignment:{horizontal:'center',vertical:'center'} };
+    var sHdr    = { font:{name:FN,sz:15,bold:true}, fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'}, border:TB, alignment:{horizontal:'center',vertical:'center',wrapText:true} };
+    var sBranch = { font:{name:FN,sz:15,bold:true}, fill:{fgColor:{rgb:'DEEAF1'},patternType:'solid'}, border:TB };
+    var sStot   = { font:{name:FN,sz:15,bold:true}, fill:{fgColor:{rgb:'FFF2CC'},patternType:'solid'}, border:TB };
+    var sGtot   = { font:{name:FN,sz:15,bold:true}, fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'}, border:TB };
+    var sDataL  = { font:{name:FN,sz:15}, border:TB, alignment:{vertical:'center',wrapText:false} };
+    var sDataC  = { font:{name:FN,sz:15}, border:TB, alignment:{horizontal:'center',vertical:'center'} };
+    var sSumTxt = { font:{name:FN,sz:15} };
     var ctrSet  = {0:1,10:1,15:1,16:1,17:1,29:1,30:1,31:1,32:1,33:1,34:1,35:1};
 
     // ── Sheet เดียว รวมทุกสาขา ────────────────────────────────
@@ -8546,7 +8546,7 @@ async function exportRegisterExcel(branchId) {
   showToast('กำลังสร้างไฟล์ Excel...', 'info');
   try {
     var assQ = sb.from('assets')
-      .select('id,asset_code,name,category,brand,model,serial_number,price,budget_type,acquired_date,custodian,location,status,branch_id,acquisition_method,vendor,serial_number,unit,quantity,life_years')
+      .select('id,asset_code,name,category,brand,model,serial_number,price,budget_type,acquired_date,custodian,location,status,branch_id,acquisition_method,vendor,unit,quantity,life_years')
       .neq('status','disposed').order('asset_code').limit(10000);
     if (branchId !== 'all') assQ = assQ.eq('branch_id', branchId);
     var assRes = await assQ;
@@ -8559,46 +8559,97 @@ async function exportRegisterExcel(branchId) {
     (App.branches||[]).forEach(function(b){ _branchMap[b.id] = b.name; });
 
     var nowYear = new Date().getFullYear() + 543;
+    var todayTH = new Date().toLocaleDateString('th-TH', {year:'numeric', month:'long', day:'numeric'});
 
-    var colHeaders = [
-      'ลำดับ','วงปีใช้สำ','รหัสเก่า','ชื่อหน่วยงาน','กลุ่มประเภท','ชนิด','ลักษณะ','ปี',
+    // 36 column headers สำหรับทะเบียนครุภัณฑ์
+    var colHeaders36 = [
+      'ลำดับ','วดป.ที่ได้มา','รหัสเก่า','ชื่อหน่วยงาน','กลุ่มประเภท','ชนิด','ลักษณะ','ปี',
       'ครุภัณฑ์ลำดับที่','รหัสครุภัณฑ์','ชื่อครุภัณฑ์','ยี่ห้อ','รุ่น','หมายเลขเครื่อง',
-      'ตัวที่','จำนวน','ราคา','งบ','วิธีการได้มา','สถานที่/ปลก.','เลขที่ใบสั่งซื้อ',
-      'ใช้ประจำที่','กอง/คละ','ใบเบิก','ผู้รับผิดชอบ','อายุครุภัณฑ์',
+      'ตัวที่','จำนวน','ราคา (บาท)','งบ','วิธีการได้มา','สถานที่/ปลก.','เลขที่ใบสั่งซื้อ',
+      'ใช้ประจำที่','กอง/คณะ','ใบเบิก','ผู้รับผิดชอบ','อายุครุภัณฑ์',
       'ระยะเวลา','หมวด','พบ','ไม่พบ','จำนวนใช้ได้','ชำรุดซ่อมได้','ชำรุดซ่อมไม่ได้',
       'โอนส่ง/จำหน่าย','แทะ','หมายเหตุ'
     ];
+    var NC = 36; // number of columns
+
+    var colWidths36 = [
+      {wch:6},{wch:10},{wch:7},{wch:14},{wch:12},{wch:6},{wch:7},{wch:5},
+      {wch:8},{wch:14},{wch:36},{wch:9},{wch:9},{wch:14},
+      {wch:6},{wch:6},{wch:12},{wch:9},{wch:12},{wch:12},{wch:14},
+      {wch:28},{wch:14},{wch:7},{wch:12},{wch:8},
+      {wch:8},{wch:12},{wch:5},{wch:6},{wch:8},{wch:9},{wch:10},
+      {wch:10},{wch:6},{wch:10}
+    ];
+
+    // ── Style definitions (xlsx-js-style) ────────────────────
+    var TB36 = { top:{style:'thin',color:{rgb:'000000'}}, bottom:{style:'thin',color:{rgb:'000000'}},
+                 left:{style:'thin',color:{rgb:'000000'}}, right:{style:'thin',color:{rgb:'000000'}} };
+    var FN36 = 'TH Sarabun New';
+    var sTitle36  = { font:{name:FN36,sz:16,bold:true}, alignment:{horizontal:'center',vertical:'center'} };
+    var sSub36    = { font:{name:FN36,sz:15},            alignment:{horizontal:'center',vertical:'center'} };
+    var sHdr36    = { font:{name:FN36,sz:15,bold:true}, fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'}, border:TB36, alignment:{horizontal:'center',vertical:'center',wrapText:true} };
+    var sBranch36 = { font:{name:FN36,sz:15,bold:true}, fill:{fgColor:{rgb:'DEEAF1'},patternType:'solid'}, border:TB36 };
+    var sStot36   = { font:{name:FN36,sz:15,bold:true}, fill:{fgColor:{rgb:'FFF2CC'},patternType:'solid'}, border:TB36 };
+    var sGtot36   = { font:{name:FN36,sz:15,bold:true}, fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'}, border:TB36 };
+    var sDataL36  = { font:{name:FN36,sz:15}, border:TB36, alignment:{vertical:'center',wrapText:false} };
+    var sDataC36  = { font:{name:FN36,sz:15}, border:TB36, alignment:{horizontal:'center',vertical:'center'} };
+    var sSumTxt36 = { font:{name:FN36,sz:15} };
+    var ctrSet36  = {0:1,1:1,7:1,8:1,14:1,15:1,25:1,28:1,29:1,30:1,31:1,32:1,33:1,34:1};
 
     // group by branch
-    var byBranch = {};
-    var branchOrder = [];
+    var byBranch36 = {};
+    var branchOrder36 = [];
     assets.forEach(function(a) {
       var bName = _branchMap[a.branch_id] || 'ไม่ระบุสาขา';
-      if (!byBranch[bName]) { byBranch[bName] = []; branchOrder.push(bName); }
-      byBranch[bName].push(a);
+      if (!byBranch36[bName]) { byBranch36[bName] = []; branchOrder36.push(bName); }
+      byBranch36[bName].push(a);
     });
-    branchOrder.sort();
+    branchOrder36.sort();
 
     var wb = XLSX.utils.book_new();
-    var summaryRows = [['ชื่อสาขา','ทั้งหมด','ใช้งาน','ชำรุดซ่อมได้','ชำรุดซ่อมไม่ได้','โอน/จำหน่าย']];
 
-    branchOrder.forEach(function(bName) {
-      var items = byBranch[bName];
-      var sheetData = [];
-      sheetData.push(['ทะเบียนครุภัณฑ์ ปีงบประมาณ ' + nowYear]);
-      sheetData.push(['คณะ/หน่วยงาน : ' + bName]);
-      sheetData.push([]);
-      sheetData.push(colHeaders);
+    // ── สร้าง sheet เดียว (all branches รวมกัน หรือสาขาเดียว) ──
+    var allData36 = [], rowTypes36 = [];
+    var _push36 = function(row, type) { allData36.push(row); rowTypes36.push(type||''); };
 
-      var bSeq = 0;
-      var bTotal = 0, bActive = 0, bFixable = 0, bUnfixable = 0, bTransferred = 0;
+    // Title block (4 rows)
+    _push36(['ทะเบียนครุภัณฑ์ ปีงบประมาณ ' + nowYear], 'title');
+    _push36(['คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์'], 'sub');
+    _push36([], '');
+    _push36(['คงเหลือ ณ วันที่ ' + todayTH], 'sub');
+
+    // Header row (single row — ทะเบียนครุภัณฑ์ has 36 cols, no sub-header needed)
+    _push36(colHeaders36, 'hdr');
+
+    var merges36 = [
+      {s:{r:0,c:0},e:{r:0,c:NC-1}},
+      {s:{r:1,c:0},e:{r:1,c:NC-1}},
+      {s:{r:2,c:0},e:{r:2,c:NC-1}},
+      {s:{r:3,c:0},e:{r:3,c:NC-1}},
+    ];
+
+    var gTotal36=0, gActive36=0, gFixable36=0, gUnfixable36=0, gTransferred36=0;
+
+    branchOrder36.forEach(function(bName) {
+      var items = byBranch36[bName];
+
+      var bHdr36 = []; for(var ci=0;ci<NC;ci++) bHdr36.push(ci===0?'สาขา : '+bName:'');
+      _push36(bHdr36, 'branch');
+      merges36.push({s:{r:allData36.length-1,c:0},e:{r:allData36.length-1,c:NC-1}});
+
+      var bSeq36=0, bTotal36=0, bActive36=0, bFixable36=0, bUnfixable36=0, bTransferred36=0;
 
       items.forEach(function(a) {
-        bSeq++;
+        bSeq36++;
         var acqYearShort = '';
         if (a.acquired_date) {
           var d = new Date(a.acquired_date);
           if (!isNaN(d)) acqYearShort = String(d.getFullYear() + 543).slice(-2);
+        }
+        var acqDate = '';
+        if (a.acquired_date) {
+          var d2 = new Date(a.acquired_date);
+          if (!isNaN(d2)) acqDate = d2.getDate()+'/'+(d2.getMonth()+1)+'/'+String(d2.getFullYear()+543).slice(-2);
         }
         var ageYears = '';
         if (a.acquired_date) {
@@ -8606,68 +8657,103 @@ async function exportRegisterExcel(branchId) {
           if (!isNaN(ad)) ageYears = Math.floor((Date.now() - ad) / (365.25*24*3600*1000));
         }
         var rawStatus = a.status || '';
-        var isActive       = rawStatus === 'active' || rawStatus === 'overaged';
-        var isDamagedFix   = rawStatus === 'damaged_fixable';
-        var isDamagedUnfix = rawStatus === 'damaged_unfixable';
-        var isTransferred  = rawStatus === 'transferred' || rawStatus === 'disposal_pending';
-        var isNotFound     = rawStatus === 'not_found';
+        var isActive36       = rawStatus === 'active' || rawStatus === 'overaged';
+        var isDamagedFix36   = rawStatus === 'damaged_fixable';
+        var isDamagedUnfix36 = rawStatus === 'damaged_unfixable';
+        var isTransferred36  = rawStatus === 'transferred' || rawStatus === 'disposal_pending';
+        var isNotFound36     = rawStatus === 'not_found';
 
-        bTotal++;
-        if (isActive)       bActive++;
-        if (isDamagedFix)   bFixable++;
-        if (isDamagedUnfix) bUnfixable++;
-        if (isTransferred)  bTransferred++;
+        bTotal36++;
+        gTotal36++;
+        if (isActive36)       { bActive36++;     gActive36++; }
+        if (isDamagedFix36)   { bFixable36++;    gFixable36++; }
+        if (isDamagedUnfix36) { bUnfixable36++;  gUnfixable36++; }
+        if (isTransferred36)  { bTransferred36++; gTransferred36++; }
 
-        sheetData.push([
-          bSeq,                           // ลำดับ
-          acqYearShort,                   // วงปีใช้สำ
-          '',                             // รหัสเก่า
-          bName,                          // ชื่อหน่วยงาน
-          a.category||'',                 // กลุ่มประเภท
-          '',                             // ชนิด
-          '',                             // ลักษณะ
-          acqYearShort,                   // ปี
-          bSeq,                           // ครุภัณฑ์ลำดับที่
-          a.asset_code||'',               // รหัสครุภัณฑ์
-          a.name||'',                     // ชื่อครุภัณฑ์
-          a.brand||'',                    // ยี่ห้อ
-          a.model||'',                    // รุ่น
-          a.serial_number||'',            // หมายเลขเครื่อง
-          '',                             // ตัวที่
-          1,                              // จำนวน
-          a.price ? parseFloat(a.price) : '', // ราคา
+        _push36([
+          bSeq36,                              // ลำดับ
+          acqDate,                             // วดป.ที่ได้มา
+          '',                                  // รหัสเก่า
+          bName,                               // ชื่อหน่วยงาน
+          a.category||'',                      // กลุ่มประเภท
+          '',                                  // ชนิด
+          '',                                  // ลักษณะ
+          acqYearShort,                        // ปี
+          bSeq36,                              // ครุภัณฑ์ลำดับที่
+          a.asset_code||'',                    // รหัสครุภัณฑ์
+          a.name||'',                          // ชื่อครุภัณฑ์
+          a.brand||'',                         // ยี่ห้อ
+          a.model||'',                         // รุ่น
+          a.serial_number||'',                 // หมายเลขเครื่อง
+          '',                                  // ตัวที่
+          a.quantity||1,                       // จำนวน
+          a.price ? parseFloat(a.price) : '',  // ราคา (บาท)
           a.budget_type||'',                   // งบ
-          '',                             // วิธีการได้มา
-          '',                             // สถานที่/ปลก.
-          '',                             // เลขที่ใบสั่งซื้อ
-          a.location||'',                 // ใช้ประจำที่
-          '',                             // กอง/คละ
-          '',                             // ใบเบิก
-          a.custodian||'',                // ผู้รับผิดชอบ
-          ageYears,                       // อายุครุภัณฑ์
-          '',                             // ระยะเวลา
-          a.category||'',                 // หมวด
-          (!isNotFound) ? '/' : '',       // พบ
-          isNotFound ? '/' : '',          // ไม่พบ
-          isActive ? 1 : '',              // จำนวนใช้ได้
-          isDamagedFix ? 1 : '',          // ชำรุดซ่อมได้
-          isDamagedUnfix ? 1 : '',        // ชำรุดซ่อมไม่ได้
-          isTransferred ? 1 : '',         // โอนส่ง/จำหน่าย
-          '',                             // แทะ
-          ''                              // หมายเหตุ
-        ]);
+          a.acquisition_method||'',            // วิธีการได้มา
+          '',                                  // สถานที่/ปลก.
+          '',                                  // เลขที่ใบสั่งซื้อ
+          a.location||'',                      // ใช้ประจำที่
+          'คณะศิลปศาสตร์และวิทยาศาสตร์',      // กอง/คณะ
+          '',                                  // ใบเบิก
+          a.custodian||'',                     // ผู้รับผิดชอบ
+          ageYears,                            // อายุครุภัณฑ์
+          a.life_years||'',                    // ระยะเวลา
+          a.category||'',                      // หมวด
+          (!isNotFound36) ? '/' : '',          // พบ
+          isNotFound36 ? '/' : '',             // ไม่พบ
+          isActive36 ? (a.quantity||1) : '',   // จำนวนใช้ได้
+          isDamagedFix36 ? (a.quantity||1) : '', // ชำรุดซ่อมได้
+          isDamagedUnfix36 ? (a.quantity||1) : '', // ชำรุดซ่อมไม่ได้
+          isTransferred36 ? (a.quantity||1) : '', // โอนส่ง/จำหน่าย
+          '',                                  // แทะ
+          ''                                   // หมายเหตุ
+        ], 'data');
       });
 
-      summaryRows.push([bName, bTotal, bActive, bFixable, bUnfixable, bTransferred]);
-
-      var ws = XLSX.utils.aoa_to_sheet(sheetData);
-      var safeName = bName.replace(/[\\\/\*\?\[\]:]/g,'').slice(0,28);
-      XLSX.utils.book_append_sheet(wb, ws, safeName);
+      var stHdr36 = []; for(var ci2=0;ci2<NC;ci2++) stHdr36.push(ci2===0?'รวมสาขา '+bName+' จำนวน '+bTotal36+' รายการ':'');
+      _push36(stHdr36, 'stotal');
+      merges36.push({s:{r:allData36.length-1,c:0},e:{r:allData36.length-1,c:NC-1}});
     });
 
-    // Summary sheet
-    var wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
-    XLSX.utils.book_append_sheet(wb, wsSummary, 'รวม');
+    // Grand total
+    _push36([], '');
+    var gtHdr36 = []; for(var ci3=0;ci3<NC;ci3++) gtHdr36.push(ci3===0?'รวมทั้งหมด จำนวน '+gTotal36+' รายการ':'');
+    _push36(gtHdr36, 'gtotal');
+    merges36.push({s:{r:allData36.length-1,c:0},e:{r:allData36.length-1,c:NC-1}});
+
+    var ws36 = XLSX.utils.aoa_to_sheet(allData36);
+    ws36['!cols'] = colWidths36;
+    ws36['!merges'] = merges36;
+
+    // ── Apply cell styles ────────────────────────────────────
+    rowTypes36.forEach(function(type, ri) {
+      if (!type) return;
+      for (var ci = 0; ci < NC; ci++) {
+        var addr = XLSX.utils.encode_cell({r:ri, c:ci});
+        if (!ws36[addr]) ws36[addr] = {v:'', t:'s'};
+        if      (type==='title')  ws36[addr].s = sTitle36;
+        else if (type==='sub')    ws36[addr].s = sSub36;
+        else if (type==='hdr')    ws36[addr].s = sHdr36;
+        else if (type==='branch') ws36[addr].s = sBranch36;
+        else if (type==='stotal') ws36[addr].s = sStot36;
+        else if (type==='gtotal') ws36[addr].s = sGtot36;
+        else if (type==='data')   ws36[addr].s = ctrSet36[ci] ? sDataC36 : sDataL36;
+        else if (type==='sum')    ws36[addr].s = sSumTxt36;
+      }
+    });
+
+    // ── Row heights ──────────────────────────────────────────
+    ws36['!rows'] = rowTypes36.map(function(type) {
+      if (type==='title')  return {hpt:28};
+      if (type==='sub')    return {hpt:20};
+      if (type==='hdr')    return {hpt:36};
+      if (type==='branch') return {hpt:20};
+      if (type==='stotal'||type==='gtotal') return {hpt:18};
+      if (type==='data')   return {hpt:16};
+      return {hpt:14};
+    });
+
+    XLSX.utils.book_append_sheet(wb, ws36, 'ทะเบียนครุภัณฑ์');
 
     var yearCE = new Date().getFullYear();
     _xlsxDownload(wb, 'ทะเบียนครุภัณฑ์_' + yearCE + '.xlsx');
@@ -8711,7 +8797,45 @@ async function printInspectionResultReport() {
     var notInspected = total - inspected;
     var pct = total > 0 ? Math.round(inspected/total*100) : 0;
 
-    var rows = '';
+    // สรุปตามสาขา
+    var branchStats = {};
+    var branchOrderP = [];
+    assets.forEach(function(a) {
+      var bName = _branchMapP[a.branch_id] || 'ไม่ระบุสาขา';
+      if (!branchStats[bName]) { branchStats[bName] = {total:0,done:0}; branchOrderP.push(bName); }
+      branchStats[bName].total++;
+      if (itemMap[a.id]) branchStats[bName].done++;
+    });
+    branchOrderP.sort();
+
+    // Summary table by branch
+    var branchTableRows = '';
+    branchOrderP.forEach(function(bn, idx) {
+      var s = branchStats[bn];
+      var bPct = s.total > 0 ? Math.round(s.done/s.total*100) : 0;
+      branchTableRows += '<tr>'
+        + '<td style="text-align:center;">'+(idx+1)+'</td>'
+        + '<td>'+bn+'</td>'
+        + '<td style="text-align:center;">'+s.total+'</td>'
+        + '<td style="text-align:center;color:#15803d;font-weight:700;">'+s.done+'</td>'
+        + '<td style="text-align:center;color:#dc2626;font-weight:700;">'+(s.total-s.done)+'</td>'
+        + '<td style="text-align:center;">'
+          + '<div style="display:inline-flex;align-items:center;gap:4px;width:90px;">'
+          + '<div style="background:#e5e7eb;border-radius:3px;height:8px;width:60px;overflow:hidden;">'
+          + '<div style="background:#16a34a;height:100%;width:'+bPct+'%;"></div></div>'
+          + '<span>'+bPct+'%</span></div>'
+        + '</td>'
+        + '</tr>';
+    });
+
+    // Chart data JSON for inline Chart.js
+    var chartLabels = JSON.stringify(branchOrderP);
+    var chartDone   = JSON.stringify(branchOrderP.map(function(bn){ return branchStats[bn].done; }));
+    var chartNotDone= JSON.stringify(branchOrderP.map(function(bn){ return branchStats[bn].total - branchStats[bn].done; }));
+    var chartHeight = Math.max(200, branchOrderP.length * 32 + 60);
+
+    // Detail table rows
+    var detailRows = '';
     var seq = 0;
     assets.forEach(function(a) {
       seq++;
@@ -8722,7 +8846,7 @@ async function printInspectionResultReport() {
       var inspResult = done ? (statusLabel[item.status] || item.status || 'ตรวจแล้ว') : '';
       var bName = _branchMapP[a.branch_id] || '—';
       var rowBg = !done ? 'background:#fff7ed;' : (seq % 2 === 0 ? 'background:#f8fafc;' : '');
-      rows += '<tr style="' + rowBg + '">'
+      detailRows += '<tr style="' + rowBg + '">'
         + '<td style="text-align:center;">' + seq + '</td>'
         + '<td style="font-family:monospace;font-size:6.5pt;">' + (a.asset_code||'') + '</td>'
         + '<td>' + (a.name||'') + '</td>'
@@ -8738,7 +8862,7 @@ async function printInspectionResultReport() {
 
     var extraStyle = [
       '@page{size:A4 landscape;margin:10mm}',
-      'body{font-size:7.5pt;font-family:Kanit,Sarabun,Arial,sans-serif}',
+      'body{font-size:7.5pt;font-family:\'TH Sarabun New\',\'TH SarabunPSK\',Sarabun,Arial,sans-serif}',
       'h1{font-size:10pt;margin:0 0 2px;text-align:center}',
       'h2,h3{font-size:8.5pt;margin:0 0 2px;text-align:center}',
       '.summary-box{display:flex;gap:16px;justify-content:center;margin:8px 0;font-size:8pt;}',
@@ -8746,11 +8870,17 @@ async function printInspectionResultReport() {
       'table.rpt{width:100%;border-collapse:collapse;}',
       'table.rpt th{border:1px solid #555;padding:3px 4px;background:#dbeafe;font-weight:700;font-size:7pt;text-align:center;}',
       'table.rpt td{border:1px solid #ccc;padding:2px 4px;font-size:7pt;vertical-align:middle;}',
+      'table.bsum{width:60%;margin:0 auto 10px;border-collapse:collapse;}',
+      'table.bsum th{border:1px solid #555;padding:3px 6px;background:#bdd7ee;font-weight:700;font-size:7.5pt;text-align:center;}',
+      'table.bsum td{border:1px solid #ccc;padding:2px 5px;font-size:7.5pt;vertical-align:middle;}',
+      '.chart-wrap{text-align:center;margin:10px 0;page-break-inside:avoid;}',
+      '.section-title{font-size:8.5pt;font-weight:700;margin:10px 0 4px;border-bottom:1px solid #999;padding-bottom:2px;}',
       '@media print{.no-print{display:none!important}}'
     ].join('\n');
 
     var html = _printHead(extraStyle)
-      + '<h1>รายงานผลการตรวจสอบพัสดุประจำปี ปีงบประมาณ ' + fiscalYear + '</h1>'
+      + '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></' + 'script>'
+      + '<h1>รายงานผลการตรวจสอบพัสดุ ปีงบประมาณ ' + fiscalYear + '</h1>'
       + '<h2>คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์</h2>'
       + '<h3>ณ วันที่ ' + today + '</h3>'
       + '<div class="summary-box">'
@@ -8758,17 +8888,40 @@ async function printInspectionResultReport() {
       + '<span class="s-chip" style="background:#dcfce7;color:#15803d;">ตรวจแล้ว: ' + inspected.toLocaleString('th-TH') + ' รายการ (' + pct + '%)</span>'
       + '<span class="s-chip" style="background:#fee2e2;color:#dc2626;">ยังไม่ตรวจ: ' + notInspected.toLocaleString('th-TH') + ' รายการ (' + (100-pct) + '%)</span>'
       + '</div>'
+      + '<div class="section-title">สรุปผลการตรวจสอบตามสาขา</div>'
+      + '<table class="bsum"><thead><tr>'
+      + '<th style="width:5%;">ลำดับ</th><th style="width:35%;">สาขา</th>'
+      + '<th style="width:12%;">ทั้งหมด</th><th style="width:12%;">ตรวจแล้ว</th>'
+      + '<th style="width:12%;">ยังไม่ตรวจ</th><th style="width:24%;">%ความคืบหน้า</th>'
+      + '</tr></thead><tbody>' + branchTableRows + '</tbody></table>'
+      + '<div class="chart-wrap">'
+      + '<canvas id="insp_chart" style="max-width:100%;page-break-inside:avoid;" width="700" height="' + chartHeight + '"></canvas>'
+      + '</div>'
+      + '<div class="section-title">รายละเอียดครุภัณฑ์ทั้งหมด</div>'
       + '<table class="rpt"><thead><tr>'
       + '<th style="width:3%;">ลำดับ</th>'
       + '<th style="width:10%;">รหัสครุภัณฑ์</th>'
-      + '<th style="width:30%;">ชื่อครุภัณฑ์</th>'
+      + '<th style="width:28%;">ชื่อครุภัณฑ์</th>'
       + '<th style="width:12%;">สาขา</th>'
       + '<th style="width:9%;">สถานะปัจจุบัน</th>'
       + '<th style="width:10%;">ผลการตรวจ</th>'
       + '<th style="width:9%;">ผลที่ตรวจพบ</th>'
       + '<th style="width:9%;">วันที่ตรวจ</th>'
-      + '<th style="width:8%;">ผู้ตรวจ</th>'
-      + '</tr></thead><tbody>' + rows + '</tbody></table>'
+      + '<th style="width:10%;">ผู้ตรวจ</th>'
+      + '</tr></thead><tbody>' + detailRows + '</tbody></table>'
+      + '<script>'
+      + '(function(){'
+      + 'var labels=' + chartLabels + ';'
+      + 'var done=' + chartDone + ';'
+      + 'var notDone=' + chartNotDone + ';'
+      + 'var ctx=document.getElementById("insp_chart").getContext("2d");'
+      + 'new Chart(ctx,{type:"bar",data:{labels:labels,datasets:['
+      + '{label:"ตรวจแล้ว",data:done,backgroundColor:"rgba(22,163,74,0.75)",stack:"s"},'
+      + '{label:"ยังไม่ตรวจ",data:notDone,backgroundColor:"rgba(249,115,22,0.75)",stack:"s"}'
+      + ']},options:{indexAxis:"y",responsive:false,plugins:{legend:{position:"top"},title:{display:false}},'
+      + 'scales:{x:{stacked:true,beginAtZero:true},y:{stacked:true}}}});'
+      + '})();'
+      + '</' + 'script>'
       + '</' + 'body></' + 'html>';
 
     _openPrintWin(html);
@@ -8814,24 +8967,117 @@ async function exportInspectionResultExcel() {
     var notInspectedCount = total - inspectedCount;
     var pct = total > 0 ? Math.round(inspectedCount/total*100) : 0;
 
-    var sheetData = [];
+    // สรุปตามสาขา
+    var branchStatsE = {};
+    var branchOrderE = [];
+    assets.forEach(function(a) {
+      var bName = _branchMapE[a.branch_id] || 'ไม่ระบุสาขา';
+      if (!branchStatsE[bName]) { branchStatsE[bName] = {total:0,done:0}; branchOrderE.push(bName); }
+      branchStatsE[bName].total++;
+      if (itemMap[a.id]) branchStatsE[bName].done++;
+    });
+    branchOrderE.sort();
 
-    // Row 1-3: หัวรายงาน (ตรงกับรูปแบบพิมพ์)
-    sheetData.push(['รายงานผลการตรวจสอบพัสดุประจำปี ปีงบประมาณ ' + fiscalYear]);
-    sheetData.push(['คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์']);
-    sheetData.push(['ณ วันที่ ' + todayTH]);
-    sheetData.push([]); // Row 4 spacer
+    // ── Style definitions ─────────────────────────────────────
+    var TBe = { top:{style:'thin',color:{rgb:'000000'}}, bottom:{style:'thin',color:{rgb:'000000'}},
+                left:{style:'thin',color:{rgb:'000000'}}, right:{style:'thin',color:{rgb:'000000'}} };
+    var FNe = 'TH Sarabun New';
+    var sTitleE = { font:{name:FNe,sz:16,bold:true}, alignment:{horizontal:'center',vertical:'center'} };
+    var sSubE   = { font:{name:FNe,sz:15},            alignment:{horizontal:'center',vertical:'center'} };
+    var sHdrE   = { font:{name:FNe,sz:15,bold:true}, fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'}, border:TBe, alignment:{horizontal:'center',vertical:'center',wrapText:true} };
+    var sDataLE = { font:{name:FNe,sz:15}, border:TBe, alignment:{vertical:'center'} };
+    var sDataCE = { font:{name:FNe,sz:15}, border:TBe, alignment:{horizontal:'center',vertical:'center'} };
+    var sGtotE  = { font:{name:FNe,sz:15,bold:true}, fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'}, border:TBe, alignment:{horizontal:'center',vertical:'center'} };
+    var sChipB  = { font:{name:FNe,sz:15,bold:true}, fill:{fgColor:{rgb:'DBEAFE'},patternType:'solid'}, border:TBe, alignment:{horizontal:'center',vertical:'center'} };
+    var sChipG  = { font:{name:FNe,sz:15,bold:true}, fill:{fgColor:{rgb:'DCFCE7'},patternType:'solid'}, border:TBe, alignment:{horizontal:'center',vertical:'center'} };
+    var sChipR  = { font:{name:FNe,sz:15,bold:true}, fill:{fgColor:{rgb:'FEE2E2'},patternType:'solid'}, border:TBe, alignment:{horizontal:'center',vertical:'center'} };
 
-    // Row 5: สรุปตัวเลข
-    sheetData.push(['ทั้งหมด: ' + total.toLocaleString('th-TH') + ' รายการ',
-                    '','','',
-                    'ตรวจแล้ว: ' + inspectedCount.toLocaleString('th-TH') + ' รายการ (' + pct + '%)',
-                    '','','',
-                    'ยังไม่ตรวจ: ' + notInspectedCount.toLocaleString('th-TH') + ' รายการ (' + (100-pct) + '%)']);
-    sheetData.push([]); // spacer
+    var wb = XLSX.utils.book_new();
 
-    // Row 7: headers (9 คอลัมน์ เหมือนรายงานพิมพ์)
-    sheetData.push(['ลำดับ','รหัสครุภัณฑ์','ชื่อครุภัณฑ์','สาขา','สถานะปัจจุบัน','ผลการตรวจ','ผลที่ตรวจพบ','วันที่ตรวจ','ผู้ตรวจ']);
+    // ── Sheet 1: สรุปสาขา ─────────────────────────────────────
+    var NC_S = 6;
+    var sumData = [], sumTypes = [];
+    var _pushS = function(row, type) { sumData.push(row); sumTypes.push(type||''); };
+
+    _pushS(['รายงานผลการตรวจสอบพัสดุ ปีงบประมาณ ' + fiscalYear], 'title');
+    _pushS(['คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์'], 'sub');
+    _pushS([], '');
+    _pushS(['ณ วันที่ ' + todayTH], 'sub');
+    _pushS(['ทั้งหมด: '+total+' รายการ', '', 'ตรวจแล้ว: '+inspectedCount+' รายการ ('+pct+'%)', '', 'ยังไม่ตรวจ: '+notInspectedCount+' รายการ ('+(100-pct)+'%)', ''], 'chip');
+    _pushS([], '');
+    _pushS(['ลำดับ','สาขา','ทั้งหมด','ตรวจแล้ว','ยังไม่ตรวจ','%ความคืบหน้า'], 'hdr');
+
+    var sumMerges = [
+      {s:{r:0,c:0},e:{r:0,c:NC_S-1}},
+      {s:{r:1,c:0},e:{r:1,c:NC_S-1}},
+      {s:{r:2,c:0},e:{r:2,c:NC_S-1}},
+      {s:{r:3,c:0},e:{r:3,c:NC_S-1}},
+      {s:{r:4,c:0},e:{r:4,c:1}},
+      {s:{r:4,c:2},e:{r:4,c:3}},
+      {s:{r:4,c:4},e:{r:4,c:NC_S-1}},
+      {s:{r:5,c:0},e:{r:5,c:NC_S-1}},
+    ];
+
+    branchOrderE.forEach(function(bn, idx) {
+      var s = branchStatsE[bn];
+      var bPct = s.total > 0 ? Math.round(s.done/s.total*100) : 0;
+      _pushS([idx+1, bn, s.total, s.done, s.total-s.done, bPct+'%'], 'data');
+    });
+
+    // Grand total row
+    _pushS(['รวมทั้งหมด', '', total, inspectedCount, notInspectedCount, pct+'%'], 'gtot');
+    sumMerges.push({s:{r:sumData.length-1,c:0},e:{r:sumData.length-1,c:1}});
+
+    var wsSum = XLSX.utils.aoa_to_sheet(sumData);
+    wsSum['!cols'] = [{wch:8},{wch:30},{wch:10},{wch:10},{wch:12},{wch:14}];
+    wsSum['!merges'] = sumMerges;
+
+    sumTypes.forEach(function(type, ri) {
+      if (!type) return;
+      for (var ci = 0; ci < NC_S; ci++) {
+        var addr = XLSX.utils.encode_cell({r:ri, c:ci});
+        if (!wsSum[addr]) wsSum[addr] = {v:'', t:'s'};
+        if      (type==='title') wsSum[addr].s = sTitleE;
+        else if (type==='sub')   wsSum[addr].s = sSubE;
+        else if (type==='hdr')   wsSum[addr].s = sHdrE;
+        else if (type==='data')  wsSum[addr].s = (ci===0||ci>=2) ? sDataCE : sDataLE;
+        else if (type==='gtot')  wsSum[addr].s = sGtotE;
+        else if (type==='chip') {
+          if (ci===0||ci===1) wsSum[addr].s = sChipB;
+          else if (ci===2||ci===3) wsSum[addr].s = sChipG;
+          else wsSum[addr].s = sChipR;
+        }
+      }
+    });
+
+    wsSum['!rows'] = sumTypes.map(function(t) {
+      if (t==='title') return {hpt:28};
+      if (t==='sub') return {hpt:20};
+      if (t==='hdr') return {hpt:28};
+      if (t==='gtot') return {hpt:20};
+      if (t==='data') return {hpt:18};
+      return {hpt:14};
+    });
+
+    XLSX.utils.book_append_sheet(wb, wsSum, 'สรุปสาขา');
+
+    // ── Sheet 2: รายละเอียด ───────────────────────────────────
+    var NC_D = 9;
+    var detData = [], detTypes = [];
+    var _pushD = function(row, type) { detData.push(row); detTypes.push(type||''); };
+
+    _pushD(['รายงานผลการตรวจสอบพัสดุ ปีงบประมาณ ' + fiscalYear], 'title');
+    _pushD(['คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์'], 'sub');
+    _pushD([], '');
+    _pushD(['ณ วันที่ ' + todayTH], 'sub');
+    _pushD(['ลำดับ','รหัสครุภัณฑ์','ชื่อครุภัณฑ์','สาขา','สถานะปัจจุบัน','ผลการตรวจ','ผลที่ตรวจพบ','วันที่ตรวจ','ผู้ตรวจ'], 'hdr');
+
+    var detMerges = [
+      {s:{r:0,c:0},e:{r:0,c:NC_D-1}},
+      {s:{r:1,c:0},e:{r:1,c:NC_D-1}},
+      {s:{r:2,c:0},e:{r:2,c:NC_D-1}},
+      {s:{r:3,c:0},e:{r:3,c:NC_D-1}},
+    ];
 
     var seq = 0;
     assets.forEach(function(a) {
@@ -8841,7 +9087,7 @@ async function exportInspectionResultExcel() {
       var inspDate = item && item.inspected_at ? fmtDate(item.inspected_at) : '';
       var inspector = item && item.profiles ? (item.profiles.full_name || item.profiles.username || '') : '';
       var inspResult = done ? (statusLabel[item.status] || item.status || '') : '';
-      sheetData.push([
+      _pushD([
         seq,
         a.asset_code||'',
         a.name||'',
@@ -8851,29 +9097,41 @@ async function exportInspectionResultExcel() {
         inspResult,
         inspDate,
         inspector
-      ]);
+      ], 'data');
     });
 
-    var wb = XLSX.utils.book_new();
-    var ws = XLSX.utils.aoa_to_sheet(sheetData);
+    // Grand total row
+    _pushD(['รวมทั้งหมด', '', '', '', '', total+' รายการ', inspectedCount+' ตรวจแล้ว', notInspectedCount+' ยังไม่ตรวจ', pct+'%'], 'gtot');
+    detMerges.push({s:{r:detData.length-1,c:0},e:{r:detData.length-1,c:4}});
 
-    // Column widths
-    ws['!cols'] = [
-      {wch:7},{wch:16},{wch:42},{wch:18},{wch:14},{wch:12},{wch:14},{wch:12},{wch:14}
-    ];
+    var wsDet = XLSX.utils.aoa_to_sheet(detData);
+    wsDet['!cols'] = [{wch:7},{wch:16},{wch:40},{wch:18},{wch:14},{wch:12},{wch:14},{wch:12},{wch:14}];
+    wsDet['!merges'] = detMerges;
 
-    // Merged cells: title rows A:I (cols 0-8), summary row spans
-    ws['!merges'] = [
-      {s:{r:0,c:0}, e:{r:0,c:8}},  // Row 1: ชื่อรายงาน
-      {s:{r:1,c:0}, e:{r:1,c:8}},  // Row 2: หน่วยงาน
-      {s:{r:2,c:0}, e:{r:2,c:8}},  // Row 3: วันที่
-      {s:{r:3,c:0}, e:{r:3,c:8}},  // Row 4: spacer
-      {s:{r:4,c:0}, e:{r:4,c:3}},  // Row 5: ทั้งหมด
-      {s:{r:4,c:4}, e:{r:4,c:7}},  // Row 5: ตรวจแล้ว
-      {s:{r:4,c:8}, e:{r:4,c:8}}   // Row 5: ยังไม่ตรวจ
-    ];
+    detTypes.forEach(function(type, ri) {
+      if (!type) return;
+      for (var ci = 0; ci < NC_D; ci++) {
+        var addr = XLSX.utils.encode_cell({r:ri, c:ci});
+        if (!wsDet[addr]) wsDet[addr] = {v:'', t:'s'};
+        if      (type==='title') wsDet[addr].s = sTitleE;
+        else if (type==='sub')   wsDet[addr].s = sSubE;
+        else if (type==='hdr')   wsDet[addr].s = sHdrE;
+        else if (type==='data')  wsDet[addr].s = (ci===0||ci>=4) ? sDataCE : sDataLE;
+        else if (type==='gtot')  wsDet[addr].s = sGtotE;
+      }
+    });
 
-    XLSX.utils.book_append_sheet(wb, ws, 'ผลตรวจสอบ');
+    wsDet['!rows'] = detTypes.map(function(t) {
+      if (t==='title') return {hpt:28};
+      if (t==='sub') return {hpt:20};
+      if (t==='hdr') return {hpt:28};
+      if (t==='gtot') return {hpt:20};
+      if (t==='data') return {hpt:16};
+      return {hpt:14};
+    });
+
+    XLSX.utils.book_append_sheet(wb, wsDet, 'รายละเอียด');
+
     _xlsxDownload(wb, 'รายงานผลตรวจสอบพัสดุ_' + fiscalYear + '.xlsx');
     showToast('ดาวน์โหลด Excel สำเร็จ', 'success');
   } catch(e) {
