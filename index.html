@@ -103,7 +103,7 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <style>
   :root {
     --sb: #0c1a2e;
@@ -8336,59 +8336,52 @@ async function exportAssetSubmissionExcel(fiscalYearParam) {
 
     var wb = XLSX.utils.book_new();
 
+    // ── Style definitions (xlsx-js-style) ────────────────────
+    var TB = { top:{style:'thin',color:{rgb:'000000'}}, bottom:{style:'thin',color:{rgb:'000000'}},
+               left:{style:'thin',color:{rgb:'000000'}}, right:{style:'thin',color:{rgb:'000000'}} };
+    var FN = 'Angsana New';
+    var sTitle  = { font:{name:FN,sz:16,bold:true}, alignment:{horizontal:'center',vertical:'center'} };
+    var sSub    = { font:{name:FN,sz:14},            alignment:{horizontal:'center',vertical:'center'} };
+    var sHdr    = { font:{name:FN,sz:14,bold:true}, fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'}, border:TB, alignment:{horizontal:'center',vertical:'center',wrapText:true} };
+    var sBranch = { font:{name:FN,sz:14,bold:true}, fill:{fgColor:{rgb:'DEEAF1'},patternType:'solid'}, border:TB };
+    var sStot   = { font:{name:FN,sz:14,bold:true}, fill:{fgColor:{rgb:'FFF2CC'},patternType:'solid'}, border:TB };
+    var sGtot   = { font:{name:FN,sz:14,bold:true}, fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'}, border:TB };
+    var sDataL  = { font:{name:FN,sz:14}, border:TB, alignment:{vertical:'center',wrapText:false} };
+    var sDataC  = { font:{name:FN,sz:14}, border:TB, alignment:{horizontal:'center',vertical:'center'} };
+    var sSumTxt = { font:{name:FN,sz:14} };
+    var ctrSet  = {0:1,10:1,15:1,16:1,17:1,29:1,30:1,31:1,32:1,33:1,34:1,35:1};
+
     // ── Sheet เดียว รวมทุกสาขา ────────────────────────────────
-    // โครงสร้าง: Row1=ชื่อรายงาน, Row2=คณะ, Row3=ว่าง, Row4=คงเหลือ ณ วันที่,
-    //             Row5=Header1, Row6=Header2(sub), Row7+=ข้อมูล
-    var allData = [];
-    allData.push(['รายละเอียดการตรวจสอบพัสดุประจำปี ปีงบประมาณ ' + fiscalYear]);  // r0 row1
-    allData.push(['คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์']);                  // r1 row2
-    allData.push([]);                                                                // r2 row3 blank
-    allData.push(['คงเหลือ ณ วันที่ ' + todayTH]);                                  // r3 row4
-    allData.push(colHeaders);                                                        // r4 row5 header row 1
-    allData.push(subHeaders);                                                        // r5 row6 header row 2
+    var allData = [], rowTypes = [];
+    var _push = function(row, type) { allData.push(row); rowTypes.push(type||''); };
+
+    _push(['รายละเอียดการตรวจสอบพัสดุประจำปี ปีงบประมาณ ' + fiscalYear], 'title');
+    _push(['คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์'], 'sub');
+    _push([], '');
+    _push(['คงเหลือ ณ วันที่ ' + todayTH], 'sub');
+    _push(colHeaders, 'hdr');
+    _push(subHeaders, 'hdr');
 
     var merges = [
-      // Title block rows 1-4
-      {s:{r:0,c:0},e:{r:0,c:36}},
-      {s:{r:1,c:0},e:{r:1,c:36}},
-      {s:{r:2,c:0},e:{r:2,c:36}},
-      {s:{r:3,c:0},e:{r:3,c:36}},
-      // Header row 1 horizontal merges
-      {s:{r:4,c:2},e:{r:4,c:4}},   // C:E รหัสเก่า
-      {s:{r:4,c:16},e:{r:4,c:17}}, // Q:R จำนวน (header)
-      // Vertical merges rows 5-6 for all single-column headers
-      {s:{r:4,c:0},e:{r:5,c:0}},   // A ลำดับ
-      {s:{r:4,c:1},e:{r:5,c:1}},   // B วดป.
-      {s:{r:4,c:5},e:{r:5,c:5}},   // F ชื่อหน่วยงาน
-      {s:{r:4,c:6},e:{r:5,c:6}},   // G กลุ่มประเภท
-      {s:{r:4,c:7},e:{r:5,c:7}},   // H ชนิด
-      {s:{r:4,c:8},e:{r:5,c:8}},   // I ลักษณะ
-      {s:{r:4,c:9},e:{r:5,c:9}},   // J ปี
-      {s:{r:4,c:10},e:{r:5,c:10}}, // K ครุภัณฑ์ลำดับที่
-      {s:{r:4,c:11},e:{r:5,c:11}}, // L ชื่อครุภัณฑ์
-      {s:{r:4,c:12},e:{r:5,c:12}}, // M ยี่ห้อ
-      {s:{r:4,c:13},e:{r:5,c:13}}, // N รุ่น
-      {s:{r:4,c:14},e:{r:5,c:14}}, // O S/N
-      {s:{r:4,c:15},e:{r:5,c:15}}, // P อ้างอิงตัวที่
-      {s:{r:4,c:18},e:{r:5,c:18}}, // S ราคา
-      {s:{r:4,c:19},e:{r:5,c:19}}, // T งบ
-      {s:{r:4,c:20},e:{r:5,c:20}}, // U วิธีการได้มา
-      {s:{r:4,c:21},e:{r:5,c:21}}, // V ร้านค้า
-      {s:{r:4,c:22},e:{r:5,c:22}}, // W เลขที่ใบ
-      {s:{r:4,c:23},e:{r:5,c:23}}, // X ใช้ประจำที่
-      {s:{r:4,c:24},e:{r:5,c:24}}, // Y กอง/คณะ
-      {s:{r:4,c:25},e:{r:5,c:25}}, // Z ใบเบิก
-      {s:{r:4,c:26},e:{r:5,c:26}}, // AA ผู้รับ
-      {s:{r:4,c:27},e:{r:5,c:27}}, // AB อายุการใช้งาน
-      {s:{r:4,c:28},e:{r:5,c:28}}, // AC ประเภทครุภัณฑ์
-      {s:{r:4,c:29},e:{r:5,c:29}}, // AD หมวด
-      {s:{r:4,c:30},e:{r:5,c:30}}, // AE พบ
-      {s:{r:4,c:31},e:{r:5,c:31}}, // AF ไม่พบ
-      {s:{r:4,c:32},e:{r:5,c:32}}, // AG ชำรุดซ่อมได้
-      {s:{r:4,c:33},e:{r:5,c:33}}, // AH ชำรุดซ่อมไม่ได้
-      {s:{r:4,c:34},e:{r:5,c:34}}, // AI โอนย้าย
-      {s:{r:4,c:35},e:{r:5,c:35}}, // AJ แทงจำหน่าย
-      {s:{r:4,c:36},e:{r:5,c:36}}, // AK หมายเหตุ
+      {s:{r:0,c:0},e:{r:0,c:36}}, {s:{r:1,c:0},e:{r:1,c:36}},
+      {s:{r:2,c:0},e:{r:2,c:36}}, {s:{r:3,c:0},e:{r:3,c:36}},
+      {s:{r:4,c:2},e:{r:4,c:4}},  {s:{r:4,c:16},e:{r:4,c:17}},
+      {s:{r:4,c:0},e:{r:5,c:0}},  {s:{r:4,c:1},e:{r:5,c:1}},
+      {s:{r:4,c:5},e:{r:5,c:5}},  {s:{r:4,c:6},e:{r:5,c:6}},
+      {s:{r:4,c:7},e:{r:5,c:7}},  {s:{r:4,c:8},e:{r:5,c:8}},
+      {s:{r:4,c:9},e:{r:5,c:9}},  {s:{r:4,c:10},e:{r:5,c:10}},
+      {s:{r:4,c:11},e:{r:5,c:11}},{s:{r:4,c:12},e:{r:5,c:12}},
+      {s:{r:4,c:13},e:{r:5,c:13}},{s:{r:4,c:14},e:{r:5,c:14}},
+      {s:{r:4,c:15},e:{r:5,c:15}},{s:{r:4,c:18},e:{r:5,c:18}},
+      {s:{r:4,c:19},e:{r:5,c:19}},{s:{r:4,c:20},e:{r:5,c:20}},
+      {s:{r:4,c:21},e:{r:5,c:21}},{s:{r:4,c:22},e:{r:5,c:22}},
+      {s:{r:4,c:23},e:{r:5,c:23}},{s:{r:4,c:24},e:{r:5,c:24}},
+      {s:{r:4,c:25},e:{r:5,c:25}},{s:{r:4,c:26},e:{r:5,c:26}},
+      {s:{r:4,c:27},e:{r:5,c:27}},{s:{r:4,c:28},e:{r:5,c:28}},
+      {s:{r:4,c:29},e:{r:5,c:29}},{s:{r:4,c:30},e:{r:5,c:30}},
+      {s:{r:4,c:31},e:{r:5,c:31}},{s:{r:4,c:32},e:{r:5,c:32}},
+      {s:{r:4,c:33},e:{r:5,c:33}},{s:{r:4,c:34},e:{r:5,c:34}},
+      {s:{r:4,c:35},e:{r:5,c:35}},{s:{r:4,c:36},e:{r:5,c:36}},
     ];
 
     var gTotal=0,gFound=0,gNotFound=0,gFixable=0,gUnfixable=0,gTransferred=0,gDisposed=0;
@@ -8397,9 +8390,8 @@ async function exportAssetSubmissionExcel(fiscalYearParam) {
     branchOrder.forEach(function(bName) {
       var items = byBranch[bName];
 
-      // Branch header row (span all 37 cols)
       var bHdr = []; for(var ci=0;ci<37;ci++) bHdr.push(ci===0?'สาขา : '+bName:'');
-      allData.push(bHdr);
+      _push(bHdr, 'branch');
       merges.push({s:{r:allData.length-1,c:0},e:{r:allData.length-1,c:36}});
 
       var bSeq=0,bTotal=0,bFound=0,bNotFound=0,bFixable=0,bUnfixable=0,bTransferred=0,bDisposed=0;
@@ -8429,76 +8421,81 @@ async function exportAssetSubmissionExcel(fiscalYearParam) {
         if (isTransferred) { bTransferred++; gTransferred++; }
         if (isDisposed)    { bDisposed++;   gDisposed++; }
 
-        allData.push([
-          bSeq,                                // A  ลำดับ
-          acqDate,                             // B  วดป.ที่ได้มา
-          '','','',                            // C D E รหัสเก่า (blank)
-          'มรภ.ศก.',                           // F  ชื่อหน่วยงาน
-          a.asset_code||'',                    // G  กลุ่มประเภท (รหัสครุภัณฑ์)
-          '','','',                            // H I J ชนิด ลักษณะ ปี
-          bSeq,                                // K  ครุภัณฑ์ลำดับที่
-          a.name||'',                          // L  ชื่อครุภัณฑ์
-          a.brand||'',                         // M  ยี่ห้อ
-          a.model||'',                         // N  รุ่น
-          a.serial_number||'',                 // O  S/N
-          '',                                  // P  อ้างอิงตัวที่
-          a.quantity||1,                       // Q  จำนวน
-          a.unit||'เครื่อง',                   // R  หน่วย
-          a.price?parseFloat(a.price):'',      // S  ราคา
-          a.budget_type||'',                   // T  งบ
-          a.acquisition_method||'',            // U  วิธีการได้มา
-          a.vendor||'',                        // V  ร้านค้า/บริษัท
-          a.receipt_number||'',                // W  เลขที่ใบส่งของ/ใบเสร็จ
-          a.location||'',                      // X  ใช้ประจำที่
-          'คณะศิลปศาสตร์และวิทยาศาสตร์',      // Y  กอง/คณะ
-          '',                                  // Z  ใบเบิก
-          a.custodian||'',                     // AA ผู้รับเซ็นรับครุภัณฑ์
-          a.life_years||'',                    // AB อายุการใช้งานอย่างต่ำ
-          a.category||'',                      // AC ประเภทครุภัณฑ์
-          'ครุภัณฑ์',                          // AD หมวด
-          inspFound?'/':'',                    // AE พบ
-          (!inspFound||isNotFound)?'/':'',     // AF ไม่พบ
-          isDamagedFix?'/':'',                 // AG ชำรุดซ่อมได้
-          isDamagedUnfix?'/':'',               // AH ชำรุดซ่อมไม่ได้
-          isTransferred?'/':'',                // AI โอนย้าย
-          isDisposed?'/':'',                   // AJ แทงจำหน่าย
-          ''                                   // AK หมายเหตุ
-        ]);
+        _push([
+          bSeq, acqDate, '','','', 'มรภ.ศก.', a.asset_code||'', '','','',
+          bSeq, a.name||'', a.brand||'', a.model||'', a.serial_number||'', '',
+          a.quantity||1, a.unit||'เครื่อง', a.price?parseFloat(a.price):'',
+          a.budget_type||'', a.acquisition_method||'', a.vendor||'',
+          a.receipt_number||'', a.location||'', 'คณะศิลปศาสตร์และวิทยาศาสตร์',
+          '', a.custodian||'', a.life_years||'', a.category||'', 'ครุภัณฑ์',
+          inspFound?'/':'', (!inspFound||isNotFound)?'/':'',
+          isDamagedFix?'/':'', isDamagedUnfix?'/':'',
+          isTransferred?'/':'', isDisposed?'/':'', ''
+        ], 'data');
       });
 
-      // Branch subtotal row
       var stHdr = []; for(var ci2=0;ci2<37;ci2++) stHdr.push(ci2===0?'รวมสาขา '+bName+' จำนวน '+bTotal+' รายการ':'');
-      allData.push(stHdr);
+      _push(stHdr, 'stotal');
       merges.push({s:{r:allData.length-1,c:0},e:{r:allData.length-1,c:36}});
 
       branchSummary.push([bName,bTotal,bFound,bNotFound,bFixable,bUnfixable,bTransferred,bDisposed]);
     });
 
-    // Grand total row
-    allData.push([]);
+    // Grand total
+    _push([], '');
     var gtHdr = []; for(var ci3=0;ci3<37;ci3++) gtHdr.push(ci3===0?'รวมทั้งหมด จำนวน '+gTotal+' รายการ':'');
-    allData.push(gtHdr);
+    _push(gtHdr, 'gtotal');
     merges.push({s:{r:allData.length-1,c:0},e:{r:allData.length-1,c:36}});
 
     // Summary block
-    allData.push([]);
-    allData.push(['1. รายการครุภัณฑ์ที่ทำการตรวจสอบมีทั้งหมด','','','','','','',gTotal,'รายการ']);
-    allData.push(['2. รายการครุภัณฑ์ที่อยู่ในสภาพ ใช้งานได้','','','','','','',gFound,'รายการ']);
-    allData.push(['3. รายการครุภัณฑ์ที่อยู่ในสภาพ ชำรุดสามารถซ่อมได้','','','','','','',gFixable,'รายการ']);
-    allData.push(['4. รายการครุภัณฑ์ที่อยู่ในสภาพ ชำรุดไม่สามารถซ่อมได้','','','','','','',gUnfixable,'รายการ']);
-    allData.push(['5. รายการครุภัณฑ์ที่ไม่พบตามบัญชี','','','','','','',gNotFound,'รายการ']);
+    _push([], '');
+    _push(['1. รายการครุภัณฑ์ที่ทำการตรวจสอบมีทั้งหมด','','','','','','',gTotal,'รายการ'], 'sum');
+    _push(['2. รายการครุภัณฑ์ที่อยู่ในสภาพ ใช้งานได้','','','','','','',gFound,'รายการ'], 'sum');
+    _push(['3. รายการครุภัณฑ์ที่อยู่ในสภาพ ชำรุดสามารถซ่อมได้','','','','','','',gFixable,'รายการ'], 'sum');
+    _push(['4. รายการครุภัณฑ์ที่อยู่ในสภาพ ชำรุดไม่สามารถซ่อมได้','','','','','','',gUnfixable,'รายการ'], 'sum');
+    _push(['5. รายการครุภัณฑ์ที่ไม่พบตามบัญชี','','','','','','',gNotFound,'รายการ'], 'sum');
 
     // Signature block
-    allData.push([]);
-    allData.push(['ลงชื่อ...................................ประธานกรรมการ','','','','','','','ลงชื่อ.............................รองประธานกรรมการ','','','','','','','ลงชื่อ.......................................กรรมการ']);
-    allData.push(['(ผู้ช่วยศาสตราจารย์ ดร.อัฐพร  กิ่งบู)','','','','','','','(นางจุฑามณี  รุ้งแก้ว)','','','','','','','(นางสาวมนัญญา  นาคสิงห์ทอง)']);
-    allData.push([]);
-    allData.push(['','','','','','','','ลงชื่อ.......................................กรรมการ','','','','','','','ลงชื่อ..........................กรรมการและเลขานุการ']);
-    allData.push(['','','','','','','','(นายชาญชัย  ยาศรี)','','','','','','','(นางแสงมณี  วงศ์สุวรรณ)']);
+    _push([], '');
+    _push(['ลงชื่อ...................................ประธานกรรมการ','','','','','','','ลงชื่อ.............................รองประธานกรรมการ','','','','','','','ลงชื่อ.......................................กรรมการ'], 'sig');
+    _push(['(ผู้ช่วยศาสตราจารย์ ดร.อัฐพร  กิ่งบู)','','','','','','','(นางจุฑามณี  รุ้งแก้ว)','','','','','','','(นางสาวมนัญญา  นาคสิงห์ทอง)'], 'sig');
+    _push([], '');
+    _push(['','','','','','','','ลงชื่อ.......................................กรรมการ','','','','','','','ลงชื่อ..........................กรรมการและเลขานุการ'], 'sig');
+    _push(['','','','','','','','(นายชาญชัย  ยาศรี)','','','','','','','(นางแสงมณี  วงศ์สุวรรณ)'], 'sig');
 
     var ws = XLSX.utils.aoa_to_sheet(allData);
     ws['!cols'] = colWidths;
     ws['!merges'] = merges;
+
+    // ── Apply cell styles (xlsx-js-style) ────────────────────
+    rowTypes.forEach(function(type, ri) {
+      if (!type) return;
+      for (var ci = 0; ci < 37; ci++) {
+        var addr = XLSX.utils.encode_cell({r:ri, c:ci});
+        if (!ws[addr]) ws[addr] = {v:'', t:'s'};
+        if      (type==='title')  ws[addr].s = sTitle;
+        else if (type==='sub')    ws[addr].s = sSub;
+        else if (type==='hdr')    ws[addr].s = sHdr;
+        else if (type==='branch') ws[addr].s = sBranch;
+        else if (type==='stotal') ws[addr].s = sStot;
+        else if (type==='gtotal') ws[addr].s = sGtot;
+        else if (type==='data')   ws[addr].s = ctrSet[ci] ? sDataC : sDataL;
+        else if (type==='sum')    ws[addr].s = sSumTxt;
+        else if (type==='sig')    ws[addr].s = sSumTxt;
+      }
+    });
+
+    // ── Row heights ──────────────────────────────────────────
+    ws['!rows'] = rowTypes.map(function(type) {
+      if (type==='title')  return {hpt:28};
+      if (type==='sub')    return {hpt:20};
+      if (type==='hdr')    return {hpt:36};
+      if (type==='branch') return {hpt:20};
+      if (type==='stotal'||type==='gtotal') return {hpt:18};
+      if (type==='data')   return {hpt:16};
+      return {hpt:14};
+    });
+
     XLSX.utils.book_append_sheet(wb, ws, 'รายงาน_' + fiscalYear);
 
     // Summary sheet (สรุปตามสาขา)
