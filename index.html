@@ -8007,7 +8007,7 @@ async function _doPrintInspReport(insp) {
 async function printAssetSubmissionReport() {
   var isBranch = App.profile && App.profile.role === 'branch';
   var assQ = sb.from('assets')
-    .select('id,asset_code,name,category,brand,model,serial_number,price,budget,acquired_date,custodian,location,status,branch_id,acquisition_method,vendor,receipt_number,unit,quantity,life_years')
+    .select('id,asset_code,name,category,brand,model,serial_number,price,budget_type,acquired_date,custodian,location,status,branch_id,acquisition_method,vendor,receipt_number,unit,quantity,life_years')
     .neq('status','disposed').order('asset_code').limit(10000);
   if (isBranch && App.profile.branch_id) assQ = assQ.eq('branch_id', App.profile.branch_id);
   var assRes = await assQ;
@@ -8138,7 +8138,7 @@ async function printAssetSubmissionReport() {
         a.quantity||1,                    // Q จำนวน
         a.unit||'เครื่อง',               // R หน่วย
         priceStr,                         // S ราคา
-        a.budget||'',                     // T งบ
+        a.budget_type||'',                     // T งบ
         a.acquisition_method||'',         // U วิธีการได้มา
         a.vendor||'',                     // V ร้านค้า/บริษัท
         a.receipt_number||'',             // W เลขที่ใบส่งของ
@@ -8251,7 +8251,7 @@ async function exportAssetSubmissionExcel() {
   try {
     var isBranch = App.profile && App.profile.role === 'branch';
     var assQ = sb.from('assets')
-      .select('id,asset_code,name,category,brand,model,serial_number,price,budget,acquired_date,custodian,location,status,branch_id,acquisition_method,vendor,receipt_number,unit,quantity,life_years')
+      .select('id,asset_code,name,category,brand,model,serial_number,price,budget_type,acquired_date,custodian,location,status,branch_id,acquisition_method,vendor,receipt_number,unit,quantity,life_years')
       .neq('status','disposed').order('asset_code').limit(10000);
     if (isBranch && App.profile.branch_id) assQ = assQ.eq('branch_id', App.profile.branch_id);
     var assRes = await assQ;
@@ -8360,7 +8360,7 @@ async function exportAssetSubmissionExcel() {
           a.quantity||1,                         // Q  จำนวน
           a.unit||'เครื่อง',                     // R  หน่วย
           a.price ? parseFloat(a.price) : '',    // S  ราคา (numeric)
-          a.budget||'',                          // T  งบ
+          a.budget_type||'',                          // T  งบ
           a.acquisition_method||'',              // U  วิธีการได้มา
           a.vendor||'',                          // V  ร้านค้า/บริษัท/หจก.
           a.receipt_number||'',                  // W  เลขที่ใบส่งของ/ใบเสร็จ
@@ -8465,7 +8465,7 @@ async function exportRegisterExcel(branchId) {
   showToast('กำลังสร้างไฟล์ Excel...', 'info');
   try {
     var assQ = sb.from('assets')
-      .select('id,asset_code,name,category,brand,model,serial_number,price,budget,acquired_date,custodian,location,status,branch_id,branches(name,code)')
+      .select('id,asset_code,name,category,brand,model,serial_number,price,budget_type,acquired_date,custodian,location,status,branch_id,branches(name,code)')
       .neq('status','disposed').order('asset_code').limit(10000);
     if (branchId !== 'all') assQ = assQ.eq('branch_id', branchId);
     var assRes = await assQ;
@@ -8549,7 +8549,7 @@ async function exportRegisterExcel(branchId) {
           '',                             // ตัวที่
           1,                              // จำนวน
           a.price ? parseFloat(a.price) : '', // ราคา
-          a.budget||'',                   // งบ
+          a.budget_type||'',                   // งบ
           '',                             // วิธีการได้มา
           '',                             // สถานที่/ปลก.
           '',                             // เลขที่ใบสั่งซื้อ
