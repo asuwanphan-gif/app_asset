@@ -856,6 +856,7 @@
               <div style="font-weight:700;font-size:14px;margin-bottom:4px;">รายงานผลการตรวจสอบ</div>
               <div style="font-size:12px;color:#64748b;">สรุปผลตรวจสอบรายครุภัณฑ์</div>
               <div style="margin-top:12px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+                <span onclick="printInspectionResultReport();event.stopPropagation();" style="background:#fef3c7;color:#92400e;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;cursor:pointer;"><i class="bi bi-printer me-1"></i>พิมพ์</span>
                 <span onclick="exportInspectionResultExcel();event.stopPropagation();" style="background:#fef3c7;color:#92400e;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;cursor:pointer;"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel</span>
               </div>
             </div>
@@ -3479,6 +3480,7 @@ async function _renderDashChart(assets, selectedBranch) {
       plugins: {
         legend: { position:'top', labels:{ font:{family:'Kanit',size:12}, boxWidth:14, filter: function(item){ return item.text !== '_total'; } } },
         tooltip: {
+          filter: function(item){ return item.dataset.label !== '_total'; },
           callbacks: {
             title: function(items){ return labels[items[0].dataIndex]; },
             label: function(item){
@@ -3490,8 +3492,12 @@ async function _renderDashChart(assets, selectedBranch) {
               var idx = items[0].dataIndex;
               var tot = totals[idx] || 1;
               var ins = dInspected[idx];
+              var notIns = tot - ins;
               var pct = Math.round(ins/tot*100);
-              return ['──────────────','ทั้งหมด: '+tot.toLocaleString('th-TH')+' | ตรวจแล้ว: '+ins+' ('+pct+'%)'];
+              return ['──────────────',
+                'ทั้งหมด: '+tot.toLocaleString('th-TH'),
+                'ตรวจแล้ว: '+ins.toLocaleString('th-TH')+' ('+pct+'%)',
+                'ยังไม่ตรวจ: '+notIns.toLocaleString('th-TH')+' ('+(100-pct)+'%)'];
             }
           }
         },
@@ -8572,6 +8578,105 @@ async function exportRegisterExcel(branchId) {
     showToast('ดาวน์โหลด Excel สำเร็จ', 'success');
   } catch(e) {
     showToast('เกิดข้อผิดพลาด: ' + e.message, 'danger');
+  }
+}
+
+// ── 3c-print. รายงานผลการตรวจสอบ (พิมพ์) ────────────────────
+async function printInspectionResultReport() {
+  if (!App.currentInspectionId || App.currentInspectionId === '__none__') {
+    showToast('ไม่มีรอบตรวจที่ active', 'warning'); return;
+  }
+  showLoading('กำลังโหลดข้อมูล...');
+  try {
+    var isBranch = App.profile && App.profile.role === 'branch';
+    var assQ = sb.from('assets')
+      .select('id,asset_code,name,status,branch_id,branches(name)')
+      .neq('status','disposed').order('asset_code').limit(10000);
+    if (isBranch && App.profile.branch_id) assQ = assQ.eq('branch_id', App.profile.branch_id);
+    var assRes = await assQ;
+    var assets = assRes.data || [];
+
+    var itemsRes = await sb.from('inspection_items')
+      .select('asset_id,status,inspected_at,inspected_by,profiles(full_name,username)')
+      .eq('inspection_id', App.currentInspectionId);
+    var itemMap = {};
+    (itemsRes.data||[]).forEach(function(i){ itemMap[i.asset_id] = i; });
+
+    var today = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
+    var fiscalYear = (App.currentInspection && App.currentInspection.fiscal_year) || (new Date().getFullYear()+543);
+    var statusLabel = {active:'ใช้งาน',not_found:'ไม่พบ',damaged_fixable:'ชำรุดซ่อมได้',damaged_unfixable:'ชำรุดซ่อมไม่ได้',overaged:'เกินอายุ',transferred:'โอนย้าย',disposal_pending:'รออนุมัติจำหน่าย',disposed:'จำหน่ายแล้ว'};
+
+    // สรุปรวม
+    var total = assets.length;
+    var inspected = assets.filter(function(a){ return !!itemMap[a.id]; }).length;
+    var notInspected = total - inspected;
+    var pct = total > 0 ? Math.round(inspected/total*100) : 0;
+
+    var rows = '';
+    var seq = 0;
+    assets.forEach(function(a) {
+      seq++;
+      var item = itemMap[a.id];
+      var done = !!item;
+      var inspDate = item && item.inspected_at ? fmtDate(item.inspected_at) : '';
+      var inspector = item && item.profiles ? (item.profiles.full_name || item.profiles.username || '') : '';
+      var inspResult = done ? (statusLabel[item.status] || item.status || 'ตรวจแล้ว') : '';
+      var bName = (a.branches && a.branches.name) || '—';
+      var rowBg = !done ? 'background:#fff7ed;' : (seq % 2 === 0 ? 'background:#f8fafc;' : '');
+      rows += '<tr style="' + rowBg + '">'
+        + '<td style="text-align:center;">' + seq + '</td>'
+        + '<td style="font-family:monospace;font-size:6.5pt;">' + (a.asset_code||'') + '</td>'
+        + '<td>' + (a.name||'') + '</td>'
+        + '<td>' + bName + '</td>'
+        + '<td style="text-align:center;">' + (statusLabel[a.status]||a.status||'') + '</td>'
+        + '<td style="text-align:center;font-weight:700;color:' + (done?'#16a34a':'#dc2626') + ';">'
+          + (done ? '✓ ตรวจแล้ว' : '✗ ยังไม่ตรวจ') + '</td>'
+        + '<td style="text-align:center;">' + inspResult + '</td>'
+        + '<td style="text-align:center;">' + inspDate + '</td>'
+        + '<td>' + inspector + '</td>'
+        + '</tr>';
+    });
+
+    var extraStyle = [
+      '@page{size:A4 landscape;margin:10mm}',
+      'body{font-size:7.5pt;font-family:Kanit,Sarabun,Arial,sans-serif}',
+      'h1{font-size:10pt;margin:0 0 2px;text-align:center}',
+      'h2,h3{font-size:8.5pt;margin:0 0 2px;text-align:center}',
+      '.summary-box{display:flex;gap:16px;justify-content:center;margin:8px 0;font-size:8pt;}',
+      '.s-chip{padding:4px 14px;border-radius:20px;font-weight:700;}',
+      'table.rpt{width:100%;border-collapse:collapse;}',
+      'table.rpt th{border:1px solid #555;padding:3px 4px;background:#dbeafe;font-weight:700;font-size:7pt;text-align:center;}',
+      'table.rpt td{border:1px solid #ccc;padding:2px 4px;font-size:7pt;vertical-align:middle;}',
+      '@media print{.no-print{display:none!important}}'
+    ].join('\n');
+
+    var html = _printHead(extraStyle)
+      + '<h1>รายงานผลการตรวจสอบพัสดุประจำปี ปีงบประมาณ ' + fiscalYear + '</h1>'
+      + '<h2>คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์</h2>'
+      + '<h3>ณ วันที่ ' + today + '</h3>'
+      + '<div class="summary-box">'
+      + '<span class="s-chip" style="background:#dbeafe;color:#1e40af;">ทั้งหมด: ' + total.toLocaleString('th-TH') + ' รายการ</span>'
+      + '<span class="s-chip" style="background:#dcfce7;color:#15803d;">ตรวจแล้ว: ' + inspected.toLocaleString('th-TH') + ' รายการ (' + pct + '%)</span>'
+      + '<span class="s-chip" style="background:#fee2e2;color:#dc2626;">ยังไม่ตรวจ: ' + notInspected.toLocaleString('th-TH') + ' รายการ (' + (100-pct) + '%)</span>'
+      + '</div>'
+      + '<table class="rpt"><thead><tr>'
+      + '<th style="width:3%;">ลำดับ</th>'
+      + '<th style="width:10%;">รหัสครุภัณฑ์</th>'
+      + '<th style="width:30%;">ชื่อครุภัณฑ์</th>'
+      + '<th style="width:12%;">สาขา</th>'
+      + '<th style="width:9%;">สถานะปัจจุบัน</th>'
+      + '<th style="width:10%;">ผลการตรวจ</th>'
+      + '<th style="width:9%;">ผลที่ตรวจพบ</th>'
+      + '<th style="width:9%;">วันที่ตรวจ</th>'
+      + '<th style="width:8%;">ผู้ตรวจ</th>'
+      + '</tr></thead><tbody>' + rows + '</tbody></table>'
+      + '</' + 'body></' + 'html>';
+
+    _openPrintWin(html);
+  } catch(e) {
+    showToast('เกิดข้อผิดพลาด: ' + e.message, 'danger');
+  } finally {
+    hideLoading();
   }
 }
 
