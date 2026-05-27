@@ -8257,6 +8257,8 @@ async function exportAssetSubmissionExcel() {
     var assRes = await assQ;
     if (assRes.error) { showToast('โหลดข้อมูลไม่ได้: ' + assRes.error.message, 'danger'); return; }
     var assets = assRes.data || [];
+    console.log('[Excel] assets loaded:', assets.length, '| App.branches:', (App.branches||[]).length);
+    if (!assets.length) { showToast('ไม่มีข้อมูลครุภัณฑ์ (assets = 0 รายการ)', 'warning'); return; }
     var _branchMap = {};
     (App.branches||[]).forEach(function(b){ _branchMap[b.id] = b.name; });
 
