@@ -624,14 +624,16 @@
 
 /* ── QR SCAN PAGE ───────────────────────────── */
 #page-scan{position:fixed;inset:0;z-index:2000;background:#f0f4f8;overflow-y:auto;display:none;}
+.scan-info-row{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#64748b;font-family:Kanit;margin-bottom:6px;}
+.scan-info-row i{color:#94a3b8;margin-top:2px;flex-shrink:0;width:16px;}
 .scan-status-btn{
-  width:100%;padding:14px 10px;border:2px solid #e2e8f0;border-radius:12px;
-  background:#fff;font-family:'Kanit',sans-serif;font-size:15px;font-weight:600;
-  cursor:pointer;transition:all .18s;margin-bottom:8px;display:flex;align-items:center;gap:10px;
+  padding:11px 10px;border:2px solid #e2e8f0;border-radius:12px;
+  background:#fff;font-family:'Kanit',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:8px;
+  text-align:left;width:100%;
 }
-.scan-status-btn:hover{border-color:#2563eb;background:#eff6ff;}
-.scan-status-btn.selected{border-color:currentColor;background:currentColor;color:#fff!important;}
-.scan-status-btn.selected span{color:#fff!important;}
+.scan-status-btn:active{transform:scale(.97);}
+.scan-status-btn:hover{border-color:#93c5fd;background:#eff6ff;}
 /* ── QR STICKER PRINT ───────────────────────── */
 .qr-sticker-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6mm;padding:4mm;}
 .qr-sticker-item{
@@ -1020,14 +1022,46 @@
 
     <!-- ===== SCAN PAGE (full-screen, no sidebar) ===== -->
     <div id="page-scan">
-      <div style="max-width:480px;margin:0 auto;padding:16px 14px 32px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e2e8f0;">
-          <button onclick="closeScanPage()" style="background:none;border:1px solid #e2e8f0;border-radius:8px;padding:6px 12px;cursor:pointer;font-family:Kanit;font-size:13px;color:#64748b;"><i class="bi bi-arrow-left"></i> กลับ</button>
-          <span style="font-size:15px;font-weight:700;color:#0f172a;font-family:Kanit;">ข้อมูลครุภัณฑ์</span>
+      <!-- Sticky top bar — เหมือน sidebar/topbar ของ App -->
+      <div style="position:sticky;top:0;z-index:10;background:#1a2332;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.25);">
+        <button onclick="closeScanPage()" style="background:rgba(255,255,255,.15);border:none;border-radius:8px;padding:7px 14px;color:#fff;font-family:Kanit;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <i class="bi bi-arrow-left"></i>กลับ
+        </button>
+        <div style="min-width:0;">
+          <div style="color:#fff;font-size:15px;font-weight:700;font-family:Kanit;line-height:1.2;">ข้อมูลครุภัณฑ์</div>
+          <div id="scanOrgName" style="color:rgba(255,255,255,.55);font-size:11px;font-family:Kanit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">ระบบทะเบียนครุภัณฑ์</div>
         </div>
+      </div>
+      <div style="max-width:520px;margin:0 auto;padding:14px 14px 40px;">
+        <!-- ค้นหาแทน QR -->
+        <div style="position:relative;margin-bottom:12px;">
+          <i class="bi bi-search" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:14px;pointer-events:none;z-index:1;"></i>
+          <input id="scanSearch" type="search" class="form-control" placeholder="ค้นหาชื่อ / รหัส ครุภัณฑ์..."
+            style="font-family:Kanit;border-radius:12px;padding:11px 16px 11px 38px;font-size:14px;border-color:#e2e8f0;box-shadow:0 1px 4px rgba(0,0,0,.06);"
+            oninput="onScanSearch(this.value)"
+            onblur="setTimeout(function(){var r=document.getElementById('scanSearchResults');if(r)r.style.display='none';},200)">
+          <div id="scanSearchResults" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:50;max-height:300px;overflow-y:auto;margin-top:4px;border:1px solid #e2e8f0;"></div>
+        </div>
+        <!-- Progress bar รอบสำรวจ -->
+        <div id="scanProgressCard" style="display:none;background:#fff;border-radius:14px;padding:14px 18px;margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,.08);"></div>
         <input type="hidden" id="scanAssetId">
         <div id="scanContent">
-          <div style="text-align:center;padding:60px 20px;color:#94a3b8;font-family:Kanit;"><div class="spinner-border"></div><div style="margin-top:12px;">กำลังโหลด...</div></div>
+          <div style="text-align:center;padding:60px 20px;color:#94a3b8;font-family:Kanit;"><div class="spinner-border text-primary"></div><div style="margin-top:12px;">กำลังโหลด...</div></div>
+        </div>
+      </div>
+      <!-- Drawer: รายการที่ยังไม่สำรวจ -->
+      <div id="unsvDrawer" style="display:none;position:fixed;inset:0;z-index:2100;background:rgba(15,23,42,.5);" onclick="if(event.target===this)closeUnsvDrawer()">
+        <div style="position:absolute;bottom:0;left:0;right:0;max-height:78vh;background:#fff;border-radius:20px 20px 0 0;overflow:hidden;display:flex;flex-direction:column;">
+          <div style="padding:16px 18px 12px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <div>
+              <div style="font-size:15px;font-weight:700;font-family:Kanit;color:#0f172a;"><i class="bi bi-clipboard2-check me-2" style="color:#2563eb;"></i>รายการที่ยังไม่สำรวจ</div>
+              <div id="unsvDrawerCount" style="font-size:12px;color:#94a3b8;font-family:Kanit;margin-top:2px;"></div>
+            </div>
+            <button onclick="closeUnsvDrawer()" style="background:#f1f5f9;border:none;border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:18px;color:#64748b;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+          </div>
+          <div id="unsvDrawerBody" style="overflow-y:auto;padding:14px 16px 24px;flex:1;">
+            <div style="text-align:center;padding:30px;font-family:Kanit;color:#94a3b8;"><div class="spinner-border text-primary"></div></div>
+          </div>
         </div>
       </div>
     </div>
@@ -9348,6 +9382,10 @@ function showScanPage(assetId) {
   var scanPage = document.getElementById('page-scan');
   if (scanPage) scanPage.style.display = 'block';
   document.getElementById('scanAssetId').value = assetId || '';
+  // reset search & progress
+  var ss = document.getElementById('scanSearch'); if(ss) ss.value='';
+  var sr = document.getElementById('scanSearchResults'); if(sr) sr.style.display='none';
+  _loadScanProgress();
   _loadScanAsset(assetId);
 }
 
@@ -9398,52 +9436,73 @@ async function _loadScanAsset(assetId) {
     disposal_pending:'#713f12', disposed:'#334155'
   };
 
-  var html = '';
-  // Asset info card
-  html += '<div style="background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,.08);font-family:Kanit;">';
-  html += '<div style="font-size:18px;font-weight:800;color:#0f172a;margin-bottom:6px;">' + (a.name||'—') + '</div>';
-  html += '<div style="font-size:13px;color:#64748b;margin-bottom:4px;"><i class="bi bi-upc me-2"></i>รหัส: <strong style="color:#374151;">' + (a.asset_code||'—') + '</strong></div>';
-  if (a.brand || a.model) html += '<div style="font-size:13px;color:#64748b;margin-bottom:4px;"><i class="bi bi-tag me-2"></i>' + [a.brand, a.model].filter(Boolean).join(' / ') + '</div>';
-  html += '<div style="font-size:13px;color:#64748b;margin-bottom:4px;"><i class="bi bi-diagram-3 me-2"></i>สาขา: ' + branchName + '</div>';
-  if (a.location) html += '<div style="font-size:13px;color:#64748b;margin-bottom:4px;"><i class="bi bi-geo-alt me-2"></i>' + a.location + '</div>';
-  html += '<div style="margin-top:10px;">' + badgeHtml(a.status) + '</div>';
-  html += '</div>';
+  // แสดงชื่อองค์กรใน scan header
+  var orgEl = document.getElementById('scanOrgName');
+  if (orgEl) { var sbOrg = document.querySelector('.sb-org'); if (sbOrg) orgEl.textContent = (sbOrg.textContent||'').replace(/\n/g,' ').trim(); }
 
-  // Status selection
-  html += '<div style="background:#fff;border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,.08);font-family:Kanit;">';
-  html += '<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:12px;"><i class="bi bi-pencil-square me-2"></i>บันทึกผลการตรวจ</div>';
+  var html = '';
+  // ── Asset info card ──────────────────────────────────────────
+  html += '<div style="background:#fff;border-radius:16px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.10);">';
+  // gradient header
+  html += '<div style="background:linear-gradient(135deg,#1a2332 0%,#2d4a6e 100%);padding:16px 18px 14px;">';
+  html += '<div style="font-size:17px;font-weight:800;color:#fff;line-height:1.3;margin-bottom:4px;">' + (a.name||'—') + '</div>';
+  html += '<div style="font-size:12px;color:rgba(255,255,255,.65);letter-spacing:.3px;"><i class="bi bi-upc me-1"></i>' + (a.asset_code||'—') + '</div>';
+  html += '</div>';
+  // info body
+  html += '<div style="padding:14px 18px;">';
+  if (a.brand || a.model) html += '<div class="scan-info-row"><i class="bi bi-tag-fill"></i><span>' + [a.brand, a.model].filter(Boolean).join(' / ') + '</span></div>';
+  html += '<div class="scan-info-row"><i class="bi bi-diagram-3-fill"></i><span>สาขา: <strong style="color:#374151;">' + branchName + '</strong></span></div>';
+  if (a.location) html += '<div class="scan-info-row"><i class="bi bi-geo-alt-fill"></i><span>' + a.location + '</span></div>';
+  if (a.acquired_date) html += '<div class="scan-info-row"><i class="bi bi-calendar3"></i><span>ปีงบ: <strong style="color:#374151;">' + toThaiYear(a.acquired_date) + '</strong></span></div>';
+  html += '<div style="margin-top:10px;">' + badgeHtml(a.status) + '</div>';
+  html += '</div></div>';
+
+  // ── Status selection card ────────────────────────────────────
+  html += '<div style="background:#fff;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08);font-family:Kanit;">';
+  html += '<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:14px;display:flex;align-items:center;gap:8px;">'
+        + '<span style="background:#eff6ff;color:#2563eb;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:15px;"><i class="bi bi-pencil-square"></i></span>'
+        + 'บันทึกผลการตรวจ</div>';
+  // 2-column grid
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">';
   Object.keys(STATUS).forEach(function(key) {
     var s = STATUS[key];
     var color = statusColors[key] || '#64748b';
     var isSelected = (key === a.status);
+    var bg = isSelected ? color : '#fff';
+    var txtColor = isSelected ? '#fff' : color;
     html += '<button class="scan-status-btn" id="scanBtn_' + key + '" '
-      + 'style="color:' + color + ';border-color:' + (isSelected ? color : '#e2e8f0') + ';background:' + (isSelected ? color : '#fff') + ';" '
+      + 'style="background:' + bg + ';border-color:' + (isSelected ? color : '#e2e8f0') + ';justify-content:center;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;" '
       + 'onclick="selectScanStatus(\'' + key + '\',\'' + color + '\')">'
-      + '<span class="badge" style="background:' + color + ';color:#fff;font-size:11px;min-width:80px;text-align:center;' + (isSelected ? 'outline:2px solid #fff;' : '') + '">' + s.label + '</span>'
-      + '<span style="color:' + (isSelected ? '#fff' : color) + ';">' + s.label + '</span>'
+      + '<span class="badge" style="background:' + color + ';color:#fff;font-size:10px;padding:4px 10px;border-radius:20px;' + (isSelected ? 'outline:2px solid rgba(255,255,255,.5);outline-offset:1px;' : '') + '">' + s.label + '</span>'
+      + '<span style="font-size:12px;color:' + txtColor + ';font-weight:600;">' + s.label + '</span>'
       + '</button>';
   });
-  html += '<input type="hidden" id="scanSelectedStatus" value="' + (a.status||'') + '">';
-  html += '<div style="margin-top:10px;">';
-  html += '<label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px;">หมายเหตุ</label>';
-  html += '<textarea id="scanNotes" class="form-control" rows="3" placeholder="บันทึกหมายเหตุ..." style="font-family:Kanit;font-size:13px;resize:none;border-radius:10px;"></textarea>';
   html += '</div>';
-  html += '<button class="btn btn-primary w-100 mt-3" style="font-size:15px;padding:12px;font-family:Kanit;" onclick="saveScanResult(\'' + assetId + '\')">'
-    + '<i class="bi bi-check2-circle me-2"></i>บันทึกผลการตรวจ</button>';
+  html += '<input type="hidden" id="scanSelectedStatus" value="' + (a.status||'') + '">';
+  html += '<div style="margin-bottom:14px;">';
+  html += '<label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px;"><i class="bi bi-chat-left-text me-1" style="color:#94a3b8;"></i>หมายเหตุ</label>';
+  html += '<textarea id="scanNotes" class="form-control" rows="3" placeholder="บันทึกหมายเหตุ (ถ้ามี)..." style="font-family:Kanit;font-size:13px;resize:none;border-radius:10px;border-color:#e2e8f0;"></textarea>';
+  html += '</div>';
+  html += '<button class="btn btn-primary w-100" style="font-size:15px;padding:13px;font-family:Kanit;font-weight:700;border-radius:12px;letter-spacing:.3px;" onclick="saveScanResult(\'' + assetId + '\')">'
+        + '<i class="bi bi-check2-circle me-2"></i>บันทึกผลการตรวจ</button>';
   html += '</div>';
 
-  // History
+  // ── History card ─────────────────────────────────────────────
   if (histItems.length) {
-    html += '<div style="background:#fff;border-radius:14px;padding:18px;box-shadow:0 1px 6px rgba(0,0,0,.08);font-family:Kanit;">';
-    html += '<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:12px;"><i class="bi bi-clock-history me-2"></i>ประวัติการตรวจ 5 ครั้งล่าสุด</div>';
-    histItems.forEach(function(item) {
+    html += '<div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.08);font-family:Kanit;">';
+    html += '<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:14px;display:flex;align-items:center;gap:8px;">'
+          + '<span style="background:#f0fdf4;color:#059669;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:15px;"><i class="bi bi-clock-history"></i></span>'
+          + 'ประวัติการตรวจ 5 ครั้งล่าสุด</div>';
+    histItems.forEach(function(item, idx) {
       var inspName = (item.inspections && item.inspections.name) ? item.inspections.name : 'รอบตรวจ';
       var dt = item.created_at ? fmtDate(item.created_at) : '—';
-      html += '<div style="border-bottom:1px solid #f1f5f9;padding:8px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;">';
-      html += '<div><div style="font-size:12px;font-weight:600;color:#374151;">' + inspName + '</div>';
-      html += '<div style="font-size:11px;color:#94a3b8;">' + dt + '</div>';
-      if (item.notes) html += '<div style="font-size:11px;color:#64748b;margin-top:2px;">' + item.notes + '</div>';
-      html += '</div>' + badgeHtml(item.status) + '</div>';
+      var isLast = idx === histItems.length - 1;
+      html += '<div style="' + (!isLast ? 'border-bottom:1px solid #f1f5f9;' : '') + 'padding:10px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">';
+      html += '<div style="min-width:0;">';
+      html += '<div style="font-size:12px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + inspName + '</div>';
+      html += '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">' + dt + '</div>';
+      if (item.notes) html += '<div style="font-size:11px;color:#64748b;margin-top:3px;font-style:italic;">' + item.notes + '</div>';
+      html += '</div><div style="flex-shrink:0;">' + badgeHtml(item.status) + '</div></div>';
     });
     html += '</div>';
   }
@@ -9452,25 +9511,30 @@ async function _loadScanAsset(assetId) {
 }
 
 function selectScanStatus(key, color) {
-  // Reset all
+  var colorMap = { active:'#059669', not_found:'#7c2d12', damaged_fixable:'#78350f',
+    damaged_unfixable:'#7f1d1d', overaged:'#c2410c', transferred:'#4c1d95',
+    disposal_pending:'#713f12', disposed:'#334155' };
+  // Reset all buttons
   Object.keys(STATUS).forEach(function(k) {
     var btn = document.getElementById('scanBtn_' + k);
     if (!btn) return;
-    var c2 = { active:'#059669', not_found:'#7c2d12', damaged_fixable:'#78350f',
-      damaged_unfixable:'#7f1d1d', overaged:'#c2410c', transferred:'#4c1d95',
-      disposal_pending:'#713f12', disposed:'#334155' }[k] || '#64748b';
+    var c2 = colorMap[k] || '#64748b';
     btn.style.background = '#fff';
     btn.style.borderColor = '#e2e8f0';
     var sp = btn.querySelector('span:last-child');
     if (sp) sp.style.color = c2;
+    var badge = btn.querySelector('span.badge');
+    if (badge) badge.style.outline = 'none';
   });
-  // Select clicked
+  // Highlight selected
   var btn = document.getElementById('scanBtn_' + key);
   if (btn) {
     btn.style.background = color;
     btn.style.borderColor = color;
     var sp = btn.querySelector('span:last-child');
     if (sp) sp.style.color = '#fff';
+    var badge = btn.querySelector('span.badge');
+    if (badge) badge.style.outline = '2px solid rgba(255,255,255,.5)';
   }
   var inp = document.getElementById('scanSelectedStatus');
   if (inp) inp.value = key;
@@ -9502,7 +9566,170 @@ async function saveScanResult(assetId) {
   } catch(e) { /* no active inspection — ok */ }
 
   showToast('บันทึกผลการตรวจเรียบร้อย', 'success');
+  _loadScanProgress(); // refresh progress bar
   _loadScanAsset(assetId);
+}
+
+// ============================================================
+// SCAN PAGE — Feature: Search / Progress / Unsurveyed
+// ============================================================
+var _scanSearchTimer = null;
+var _scanInspId      = null;
+var _scanBranchAssetIds = [];
+
+function onScanSearch(val) {
+  clearTimeout(_scanSearchTimer);
+  var resEl = document.getElementById('scanSearchResults');
+  if (!val || val.length < 2) { if (resEl) resEl.style.display = 'none'; return; }
+  _scanSearchTimer = setTimeout(function() { _doScanSearch(val); }, 300);
+}
+
+async function _doScanSearch(q) {
+  var resEl = document.getElementById('scanSearchResults');
+  if (!resEl) return;
+  resEl.innerHTML = '<div style="padding:12px 16px;color:#94a3b8;font-family:Kanit;font-size:13px;">กำลังค้นหา...</div>';
+  resEl.style.display = 'block';
+  var isBranch = App.profile && App.profile.role === 'branch';
+  var branchId = App.profile ? App.profile.branch_id : null;
+  var query = sb.from('assets')
+    .select('id,asset_code,name,branch_id,status')
+    .or('name.ilike.%' + q + '%,asset_code.ilike.%' + q + '%')
+    .order('asset_code').limit(8);
+  if (isBranch && branchId) query = query.eq('branch_id', branchId);
+  var res = await query;
+  var items = res.data || [];
+  if (!items.length) {
+    resEl.innerHTML = '<div style="padding:12px 16px;color:#94a3b8;font-family:Kanit;font-size:13px;">ไม่พบรายการ</div>';
+    return;
+  }
+  var html = '';
+  items.forEach(function(a) {
+    var bObj = (App.branches||[]).find(function(x){ return x.id === a.branch_id; });
+    var bLabel = bObj ? (bObj.code ? bObj.code + ' – ' : '') + bObj.name : '';
+    html += '<div onclick="selectScanSearchResult(\'' + a.id + '\')" style="padding:10px 16px;cursor:pointer;border-bottom:1px solid #f8fafc;font-family:Kanit;transition:background .12s;" onmouseover="this.style.background=\'#f0f9ff\'" onmouseout="this.style.background=\'\'">';
+    html += '<div style="font-size:13px;font-weight:700;color:#0f172a;">' + (a.name||'—') + '</div>';
+    html += '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">' + (a.asset_code||'') + (bLabel ? '  •  ' + bLabel : '') + '</div>';
+    html += '</div>';
+  });
+  resEl.innerHTML = html;
+}
+
+function selectScanSearchResult(assetId) {
+  var resEl = document.getElementById('scanSearchResults');
+  var srchEl = document.getElementById('scanSearch');
+  if (resEl) resEl.style.display = 'none';
+  if (srchEl) srchEl.value = '';
+  document.getElementById('scanAssetId').value = assetId;
+  var scanPage = document.getElementById('page-scan');
+  if (scanPage) scanPage.scrollTop = 0;
+  _loadScanAsset(assetId);
+}
+
+async function _loadScanProgress() {
+  var card = document.getElementById('scanProgressCard');
+  if (!card) return;
+  try {
+    var isBranch = App.profile && App.profile.role === 'branch';
+    var branchId = App.profile ? App.profile.branch_id : null;
+    // Active inspection?
+    var inspRes = await sb.from('inspections').select('id,name').eq('status','active').order('created_at',{ascending:false}).limit(1);
+    if (!inspRes.data || !inspRes.data.length) { card.style.display = 'none'; return; }
+    var insp = inspRes.data[0];
+    _scanInspId = insp.id;
+    // All branch assets
+    var assetQ = sb.from('assets').select('id');
+    if (isBranch && branchId) assetQ = assetQ.eq('branch_id', branchId);
+    var assetRes = await assetQ;
+    _scanBranchAssetIds = (assetRes.data||[]).map(function(x){ return x.id; });
+    var total = _scanBranchAssetIds.length;
+    if (!total) { card.style.display = 'none'; return; }
+    // Count done (chunk to avoid URL length limit)
+    var done = 0;
+    var chunkSize = 150;
+    for (var i = 0; i < _scanBranchAssetIds.length; i += chunkSize) {
+      var chunk = _scanBranchAssetIds.slice(i, i + chunkSize);
+      var dRes = await sb.from('inspection_items').select('id',{count:'exact',head:true}).eq('inspection_id', insp.id).in('asset_id', chunk);
+      done += (dRes.count || 0);
+    }
+    var remaining = total - done;
+    var pct = Math.round(done / total * 100);
+    var barColor = pct >= 100 ? '#059669' : pct >= 50 ? '#2563eb' : '#f59e0b';
+    card.style.display = '';
+    card.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-family:Kanit;">'
+      + '<div style="font-size:13px;font-weight:700;color:#0f172a;"><i class="bi bi-clipboard2-pulse me-1" style="color:#2563eb;"></i>' + (insp.name||'รอบสำรวจ') + '</div>'
+      + '<div style="font-size:12px;color:#64748b;">' + done + ' / ' + total + ' ชิ้น</div>'
+      + '</div>'
+      + '<div style="background:#e2e8f0;border-radius:99px;height:8px;overflow:hidden;">'
+      + '<div style="background:' + barColor + ';height:100%;width:' + pct + '%;border-radius:99px;transition:width .5s;"></div>'
+      + '</div>'
+      + '<div style="display:flex;justify-content:space-between;margin-top:6px;font-family:Kanit;font-size:11px;color:#94a3b8;">'
+      + '<span>' + pct + '% เสร็จแล้ว</span>'
+      + (remaining > 0
+          ? '<span style="color:#f59e0b;font-weight:700;">เหลืออีก ' + remaining + ' ชิ้น</span>'
+          : '<span style="color:#059669;font-weight:700;"><i class="bi bi-check-circle-fill me-1"></i>ครบทุกรายการ</span>')
+      + '</div>'
+      + (remaining > 0
+          ? '<button onclick="_showUnsurveyedList()" style="margin-top:10px;width:100%;padding:9px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;color:#2563eb;font-family:Kanit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><i class="bi bi-list-check"></i>ดูรายการที่ยังไม่สำรวจ (' + remaining + ' ชิ้น)</button>'
+          : '');
+  } catch(e) { card.style.display = 'none'; }
+}
+
+async function _showUnsurveyedList() {
+  var drawer = document.getElementById('unsvDrawer');
+  var bodyEl  = document.getElementById('unsvDrawerBody');
+  var cntEl   = document.getElementById('unsvDrawerCount');
+  if (!drawer || !bodyEl) return;
+  drawer.style.display = 'block';
+  bodyEl.innerHTML = '<div style="text-align:center;padding:30px;font-family:Kanit;color:#94a3b8;"><div class="spinner-border text-primary"></div><div style="margin-top:10px;">กำลังโหลด...</div></div>';
+  if (cntEl) cntEl.textContent = '';
+  if (!_scanInspId || !_scanBranchAssetIds.length) {
+    bodyEl.innerHTML = '<div style="text-align:center;padding:30px;font-family:Kanit;color:#94a3b8;">ไม่มีข้อมูลรอบสำรวจ</div>';
+    return;
+  }
+  // Get surveyed IDs
+  var surveyedIds = new Set();
+  var chunkSize = 150;
+  for (var i = 0; i < _scanBranchAssetIds.length; i += chunkSize) {
+    var chunk = _scanBranchAssetIds.slice(i, i + chunkSize);
+    var res = await sb.from('inspection_items').select('asset_id').eq('inspection_id', _scanInspId).in('asset_id', chunk);
+    (res.data||[]).forEach(function(x){ surveyedIds.add(x.asset_id); });
+  }
+  var unsvIds = _scanBranchAssetIds.filter(function(id){ return !surveyedIds.has(id); });
+  if (cntEl) cntEl.textContent = 'ยังไม่สำรวจ ' + unsvIds.length + ' รายการ';
+  if (!unsvIds.length) {
+    bodyEl.innerHTML = '<div style="text-align:center;padding:30px;font-family:Kanit;color:#059669;font-size:14px;"><i class="bi bi-check-circle-fill" style="font-size:36px;display:block;margin-bottom:10px;"></i>สำรวจครบทุกรายการแล้ว!</div>';
+    return;
+  }
+  // Fetch asset details in chunks
+  var allItems = [];
+  for (var j = 0; j < unsvIds.length; j += chunkSize) {
+    var idChunk = unsvIds.slice(j, j + chunkSize);
+    var dRes = await sb.from('assets').select('id,asset_code,name,location,status').in('id', idChunk).order('asset_code');
+    allItems = allItems.concat(dRes.data || []);
+  }
+  if (!allItems.length) { bodyEl.innerHTML = '<div style="text-align:center;padding:30px;font-family:Kanit;color:#059669;">ครบแล้ว!</div>'; return; }
+  var html = '<div style="font-size:12px;color:#64748b;font-family:Kanit;margin-bottom:10px;"><i class="bi bi-hand-index me-1"></i>กดที่รายการเพื่อสำรวจได้เลย</div>';
+  allItems.forEach(function(a) {
+    html += '<div onclick="_selectUnsvAsset(\'' + a.id + '\')" style="padding:11px 14px;border:1.5px solid #e2e8f0;border-radius:12px;margin-bottom:8px;cursor:pointer;font-family:Kanit;transition:all .15s;background:#fff;" onmouseover="this.style.background=\'#eff6ff\';this.style.borderColor=\'#93c5fd\'" onmouseout="this.style.background=\'#fff\';this.style.borderColor=\'#e2e8f0\'">';
+    html += '<div style="font-size:13px;font-weight:700;color:#0f172a;">' + (a.name||'—') + '</div>';
+    html += '<div style="font-size:11px;color:#94a3b8;margin-top:3px;">' + (a.asset_code||'—') + (a.location ? '  •  ' + a.location : '') + '</div>';
+    html += '</div>';
+  });
+  bodyEl.innerHTML = html;
+}
+
+function _selectUnsvAsset(assetId) {
+  closeUnsvDrawer();
+  document.getElementById('scanAssetId').value = assetId;
+  var scanPage = document.getElementById('page-scan');
+  if (scanPage) scanPage.scrollTop = 0;
+  _loadScanAsset(assetId);
+}
+
+function closeUnsvDrawer() {
+  var drawer = document.getElementById('unsvDrawer');
+  if (drawer) drawer.style.display = 'none';
 }
 
 // ============================================================
