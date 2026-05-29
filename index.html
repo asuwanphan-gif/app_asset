@@ -3908,9 +3908,10 @@ function renderAssetTable() {
         ? '<span style="' + _Cs + '">' + a.branches.name + '</span>'
         : '<span style="font-family:Kanit;font-size:12px;color:#f59e0b;font-weight:600;">ยังไม่ระบุ</span>';
 
-      // ใช้ประจำที่
-      var locHtml = a.location
-        ? '<span style="' + _Cs + '" title="' + a.location + '">' + a.location + '</span>'
+      // ใช้ประจำที่ + ผู้รับผิดชอบ (ใต้กัน)
+      var locHtml = (a.location || a.custodian)
+        ? (a.location ? '<div style="' + _Cs + 'line-height:1.3;" title="' + a.location + '">' + a.location + '</div>' : '')
+          + (a.custodian ? '<div style="font-family:Kanit;font-size:11px;color:#2563eb;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="ผู้รับผิดชอบ: ' + a.custodian + '"><i class="bi bi-person-fill" style="margin-right:3px;"></i>' + a.custodian + '</div>' : '')
         : '<span style="' + _Gs + '">—</span>';
 
       // ราคา
