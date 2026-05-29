@@ -994,9 +994,10 @@
                 <col style="width:14%"><!-- รหัส/ปีงบ -->
                 <col style="width:28%"><!-- ชื่อ + ยี่ห้อ/รุ่น -->
                 <col style="width:13%"><!-- สาขา -->
-                <col style="width:22%"><!-- ใช้ประจำที่ -->
+                <col style="width:19%"><!-- ใช้ประจำที่ -->
                 <col style="width:7%"> <!-- อายุ -->
                 <col style="width:8%"> <!-- สถานะ -->
+                <col style="width:9%"> <!-- ตรวจล่าสุด -->
                 <col class="no-print" style="width:6%"><!-- จัดการ -->
               </colgroup>
               <thead>
@@ -1010,6 +1011,7 @@
                   <th style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;">ใช้ประจำที่</th>
                   <th style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;text-align:center;">อายุ (ปี)</th>
                   <th style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;">สถานะ</th>
+                  <th style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;">ตรวจล่าสุด</th>
                   <th class="no-print" style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;text-align:center;">จัดการ</th>
                 </tr>
               </thead>
@@ -3865,7 +3867,7 @@ function renderAssetTable() {
   var tdBase = 'padding:7px 10px;font-family:Kanit;font-size:13px;font-weight:300;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0;border-bottom:1px solid #f1f5f9;';
 
   if (!slice.length) {
-    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:48px 20px;color:#94a3b8;font-family:Kanit;font-size:13px;">ไม่พบรายการ</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:48px 20px;color:#94a3b8;font-family:Kanit;font-size:13px;">ไม่พบรายการ</td></tr>';
   } else {
     tbody.innerHTML = slice.map(function(a, idx) {
       var rowBg  = idx % 2 === 0 ? '#ffffff' : '#f9fafb';
@@ -3937,6 +3939,7 @@ function renderAssetTable() {
         + '<td style="' + tdBase + 'vertical-align:middle;">' + locHtml + '</td>'
         + '<td style="padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;overflow:hidden;max-width:0;">' + ageHtml(a.acquired_date, a.name) + '</td>'
         + '<td style="padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;overflow:hidden;max-width:0;">' + badgeHtml(a.status, true) + '</td>'
+        + '<td id="insp_' + a.id + '" style="padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;overflow:hidden;max-width:0;"><span style="font-family:Kanit;font-size:11px;color:#cbd5e1;">...</span></td>'
         + '<td class="no-print" style="padding:5px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle;text-align:center;white-space:nowrap;" onclick="event.stopPropagation();">'
           + '<button style="background:none;border:1px solid #93c5fd;border-radius:6px;padding:4px 10px;cursor:pointer;color:#2563eb;font-size:13px;margin-right:4px;" onclick="showAssetForm(\'' + a.id + '\')" title="แก้ไข"><i class="bi bi-pencil"></i></button>'
           + '<button style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:4px 10px;cursor:pointer;color:#64748b;font-size:13px;" onclick="printAssetCard(\'' + a.id + '\')" title="พิมพ์ พ.ด.2"><i class="bi bi-printer"></i></button>'
@@ -3945,6 +3948,9 @@ function renderAssetTable() {
         + '</tr>';
     }).join('');
   }
+
+  // โหลดวันที่ตรวจล่าสุดจาก inspection_items (async, ไม่ block ตาราง)
+  if (slice.length) _loadLastInspDates(slice.map(function(a){ return a.id; }));
 
   if (paging) {
     var info = 'แสดง ' + (total ? (page-1)*ps+1 : 0) + '–' + Math.min(page*ps, total) + ' จาก ' + total + ' รายการ';
@@ -3961,6 +3967,42 @@ function renderAssetTable() {
 }
 
 function assetGoPage(p) { App.assetPage = p; renderAssetTable(); }
+
+async function _loadLastInspDates(assetIds) {
+  if (!assetIds || !assetIds.length) return;
+  try {
+    // ดึง inspection_items ล่าสุดของแต่ละ asset (limit สูงพอ, order created_at DESC)
+    var res = await sb.from('inspection_items')
+      .select('asset_id,created_at')
+      .in('asset_id', assetIds)
+      .order('created_at', { ascending: false });
+    // สร้าง map: assetId → latest created_at (first hit per asset)
+    var map = {};
+    (res.data || []).forEach(function(item) {
+      if (!map[item.asset_id]) map[item.asset_id] = item.created_at;
+    });
+    // อัปเดต DOM cells
+    assetIds.forEach(function(id) {
+      var cell = document.getElementById('insp_' + id);
+      if (!cell) return;
+      if (map[id]) {
+        var d = new Date(map[id]);
+        var day   = d.getDate();
+        var month = d.getMonth() + 1;
+        var year  = d.getFullYear() + 543;
+        cell.innerHTML = '<span style="font-family:Kanit;font-size:11px;color:#059669;white-space:nowrap;">'
+          + day + '/' + month + '/' + year + '</span>';
+      } else {
+        cell.innerHTML = '<span style="font-family:Kanit;font-size:11px;color:#d1d5db;">—</span>';
+      }
+    });
+  } catch(e) {
+    assetIds.forEach(function(id) {
+      var cell = document.getElementById('insp_' + id);
+      if (cell) cell.innerHTML = '<span style="font-family:Kanit;font-size:11px;color:#d1d5db;">—</span>';
+    });
+  }
+}
 
 // ===== BULK SELECT =====
 function toggleAssetCheck(id, checked) {
