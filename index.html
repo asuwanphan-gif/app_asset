@@ -9994,7 +9994,10 @@ function generateQRStickers() {
   if (_qrSelected.size === 0) { showToast('กรุณาเลือกครุภัณฑ์อย่างน้อย 1 รายการ', 'warning'); return; }
   // ใช้ _qrAllAssets (ไม่ใช้ App.allAssets เพราะอาจ truthy แต่ว่าง)
   var selected = _qrAllAssets.filter(function(a){ return _qrSelected.has(a.id); });
-  // ไม่ใช้ orgName รวม — แต่ละ sticker แสดงสาขาของครุภัณฑ์นั้น
+  // ชื่อคณะ: ตัด "มหาวิทยาลัย..." ออกจาก org name
+  var _rawOrg = ((document.querySelector('.sb-org')||{}).textContent||'').replace(/\n/g,' ').trim();
+  var _univIdx = _rawOrg.indexOf('มหาวิทยาลัย');
+  var _facultyName = _univIdx > 0 ? _rawOrg.substring(0, _univIdx).trim() : _rawOrg;
 
   var outputEl = document.getElementById('qrStickerOutput');
   outputEl.innerHTML = '';
@@ -10005,14 +10008,11 @@ function generateQRStickers() {
 
   selected.forEach(function(a) {
     var url = window.location.origin + window.location.pathname + '?scan=' + a.id;
-    // หาชื่อสาขาของครุภัณฑ์นี้ (ไม่รวมชื่อมหาวิทยาลัย)
-    var bObj = (App.branches||[]).find(function(x){ return x.id === a.branch_id; });
-    var branchLabel = bObj ? bObj.name : '';
     var item = document.createElement('div');
     item.className = 'qr-sticker-item';
     item.innerHTML =
       '<div class="qr-sticker-org">สาขา</div>' +
-      '<div class="qr-sticker-org" style="margin-top:-1mm;">' + branchLabel + '</div>' +
+      '<div class="qr-sticker-org" style="margin-top:-1mm;">' + _facultyName + '</div>' +
       '<div id="qrstk_' + a.id + '" style="width:90px;height:90px;"></div>' +
       '<div class="qr-sticker-name">' + (a.name||'—') + '</div>' +
       '<div class="qr-sticker-code">' + (a.asset_code||'—') + '</div>' +
