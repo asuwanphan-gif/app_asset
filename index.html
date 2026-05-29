@@ -651,7 +651,9 @@
   body.printing-sticker #bottomnav,
   body.printing-sticker #main > *:not(#content),
   body.printing-sticker .page-content:not(#page-qr-sticker){display:none!important;}
-  body.printing-sticker #content{padding:0!important;}
+  body.printing-sticker #main{display:block!important;margin:0!important;}
+  body.printing-sticker #content{display:block!important;padding:0!important;max-width:none!important;}
+  body.printing-sticker #page-qr-sticker{display:block!important;}
   @page{size:A4 landscape;margin:5mm;}
 }
 </style>
@@ -9503,6 +9505,7 @@ async function saveScanResult(assetId) {
 // ============================================================
 // QR CODE — Feature 3: QR Sticker page
 // ============================================================
+var _qrAllAssets = [];
 var _qrFilteredAssets = [];
 var _qrSelected = new Set();
 
@@ -9512,12 +9515,16 @@ async function loadQRStickerPage() {
   document.getElementById('btnPrintStickers').style.display = 'none';
   document.getElementById('qrStickerOutput').innerHTML = '';
 
-  // Use App.allAssets if loaded, else load from Supabase
-  var assets = App.allAssets || [];
-  if (!assets.length) {
+  // Load fresh from Supabase (ไม่ใช้ App.allAssets เพราะอาจเป็น [] แต่ truthy)
+  var cachedAssets = App.allAssets || [];
+  var assets;
+  if (cachedAssets.length > 0) {
+    assets = cachedAssets;
+  } else {
     var res = await sb.from('assets').select('id,asset_code,name,brand,status,location,branch_id,acquired_date').order('asset_code').limit(10000);
     assets = res.data || [];
   }
+  _qrAllAssets = assets;
   _qrFilteredAssets = assets;
 
   // Populate year filter
@@ -9609,8 +9616,8 @@ function _updateQRSelectedCount() {
 
 function generateQRStickers() {
   if (_qrSelected.size === 0) { showToast('กรุณาเลือกครุภัณฑ์อย่างน้อย 1 รายการ', 'warning'); return; }
-  var base = App.allAssets || _qrFilteredAssets;
-  var selected = base.filter(function(a){ return _qrSelected.has(a.id); });
+  // ใช้ _qrAllAssets (ไม่ใช้ App.allAssets เพราะอาจ truthy แต่ว่าง)
+  var selected = _qrAllAssets.filter(function(a){ return _qrSelected.has(a.id); });
   var orgName = (document.querySelector('.sb-org') || {}).textContent || 'ระบบทะเบียนครุภัณฑ์';
   orgName = orgName.replace(/\n/g,' ').trim();
 
