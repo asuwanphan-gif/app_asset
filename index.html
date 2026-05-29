@@ -722,7 +722,6 @@
     <div class="nav-link" onclick="showPage('dashboard')"><i class="bi bi-speedometer2"></i>ภาพรวมระบบ</div>
     <div class="nav-link" onclick="showPage('inspection')"><i class="bi bi-clipboard2-check"></i>ตรวจสอบครุภัณฑ์</div>
     <div class="nav-link" onclick="showPage('assets')"><i class="bi bi-box-seam"></i>รายการครุภัณฑ์</div>
-    <div class="nav-link" onclick="showPage('qr-sticker')"><i class="bi bi-qr-code"></i>QR สติกเกอร์</div>
     <div class="nav-link" onclick="showPage('repair')" id="menuRepair">
       <i class="bi bi-wrench-adjustable"></i>แจ้งซ่อมครุภัณฑ์<span id="repairBadge" style="display:none;background:#ef4444;color:#fff;border-radius:10px;padding:0 6px;font-size:10px;font-weight:700;margin-left:6px;"></span>
     </div>
@@ -893,6 +892,21 @@
               <div style="margin-top:12px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
                 <span onclick="printInspectionResultReport();event.stopPropagation();" style="background:#fef3c7;color:#92400e;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;cursor:pointer;"><i class="bi bi-printer me-1"></i>พิมพ์</span>
                 <span onclick="exportInspectionResultExcel();event.stopPropagation();" style="background:#fef3c7;color:#92400e;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;cursor:pointer;"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <div class="card h-100 shadow-sm" style="border-radius:14px;border:1.5px solid #e0e7ff;">
+            <div class="card-body text-center p-4">
+              <div style="width:52px;height:52px;background:linear-gradient(135deg,#d1fae5,#a7f3d0);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                <i class="bi bi-qr-code" style="color:#059669;font-size:22px;"></i>
+              </div>
+              <div style="font-weight:700;font-size:14px;margin-bottom:4px;">QR สติกเกอร์</div>
+              <div style="font-size:12px;color:#64748b;">พิมพ์ป้าย QR Code ติดครุภัณฑ์</div>
+              <div style="margin-top:12px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+                <span onclick="showPage('qr-sticker')" style="background:#d1fae5;color:#065f46;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;cursor:pointer;"><i class="bi bi-qr-code me-1"></i>เปิดหน้า QR</span>
               </div>
             </div>
           </div>
@@ -9607,12 +9621,22 @@ function generateQRStickers() {
       '<div class="qr-sticker-status">' + (STATUS[a.status] ? STATUS[a.status].label : (a.status||'')) + '</div>';
     grid.appendChild(item);
 
-    // Render QR after DOM append
+    // Render QR → convert canvas to img for reliable printing
     setTimeout(function(aid, aurl) {
       var container = document.getElementById('qrstk_' + aid);
-      if (container && typeof QRCode !== 'undefined') {
-        new QRCode(container, { text: aurl, width: 90, height: 90, colorDark:'#000', colorLight:'#fff', correctLevel: QRCode.CorrectLevel.M });
-      }
+      if (!container || typeof QRCode === 'undefined') return;
+      new QRCode(container, { text: aurl, width: 90, height: 90, colorDark:'#000', colorLight:'#fff', correctLevel: QRCode.CorrectLevel.M });
+      // canvas ไม่ print ได้ในบางเบราว์เซอร์ — แปลงเป็น <img>
+      setTimeout(function() {
+        var canvas = container.querySelector('canvas');
+        if (canvas) {
+          var img = document.createElement('img');
+          img.src = canvas.toDataURL('image/png');
+          img.style.cssText = 'width:90px;height:90px;display:block;';
+          container.innerHTML = '';
+          container.appendChild(img);
+        }
+      }, 80);
     }.bind(null, a.id, url), 0);
   });
 
