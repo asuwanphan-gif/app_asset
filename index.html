@@ -9580,22 +9580,39 @@ async function saveScanResult(assetId) {
     showToast('บันทึกไม่สำเร็จ: ' + upd.error.message, 'danger'); return;
   }
 
-  // Insert inspection_item (use cached _scanInspId if available)
+  // บันทึก inspection_item (select+insert/update — ไม่ขึ้นกับ DB unique constraint)
+  var _inspSaved = false;
   try {
-    if (!_scanInspId) {
-      var iR = await sb.from('inspections').select('id,name').eq('status','active').order('created_at',{ascending:false}).limit(1);
-      if (iR.data && iR.data.length) { _scanInspId = iR.data[0].id; _scanInspData = iR.data[0]; }
+    // Fetch active inspection (always fresh)
+    var iR = await sb.from('inspections').select('id,name').eq('status','active').order('created_at',{ascending:false}).limit(1);
+    if (iR.data && iR.data.length) {
+      _scanInspId   = iR.data[0].id;
+      _scanInspData = iR.data[0];
+      // Check if record already exists for this asset+inspection
+      var exRes = await sb.from('inspection_items').select('id').eq('inspection_id',_scanInspId).eq('asset_id',assetId).maybeSingle();
+      var iErr;
+      if (exRes.data) {
+        // UPDATE existing
+        var uI = await sb.from('inspection_items')
+          .update({ status: newStatus, notes: notes||null, checked_by: App.user?App.user.id:null, created_at: new Date().toISOString() })
+          .eq('id', exRes.data.id);
+        iErr = uI.error;
+      } else {
+        // INSERT new
+        var nI = await sb.from('inspection_items')
+          .insert({ inspection_id:_scanInspId, asset_id:assetId, status:newStatus, notes:notes||null, checked_by:App.user?App.user.id:null, created_at:new Date().toISOString() });
+        iErr = nI.error;
+      }
+      if (iErr) { showToast('บันทึกรอบสำรวจไม่สำเร็จ: ' + iErr.message, 'warning'); }
+      else { _inspSaved = true; }
     }
-    if (_scanInspId) {
-      await sb.from('inspection_items').upsert({
-        inspection_id: _scanInspId, asset_id: assetId, status: newStatus,
-        notes: notes || null, checked_by: App.user ? App.user.id : null,
-        created_at: new Date().toISOString()
-      }, { onConflict: 'inspection_id,asset_id' });
-    }
-  } catch(e) { /* no active inspection — ok */ }
+  } catch(e) { showToast('เกิดข้อผิดพลาด: ' + (e.message||e), 'warning'); }
 
-  // Show success UI with "scan next" option
+  // Scroll scan page to top ให้เห็น progress bar
+  var scanPage = document.getElementById('page-scan');
+  if (scanPage) scanPage.scrollTop = 0;
+
+  // Show success UI
   var sColors = { active:'#059669', not_found:'#7c2d12', damaged_fixable:'#78350f',
     damaged_unfixable:'#7f1d1d', overaged:'#c2410c', transferred:'#4c1d95',
     disposal_pending:'#713f12', disposed:'#334155' };
@@ -9608,6 +9625,7 @@ async function saveScanResult(assetId) {
       + '<i class="bi bi-check-circle-fill" style="color:#059669;font-size:44px;display:block;margin-bottom:10px;"></i>'
       + '<div style="font-size:17px;font-weight:800;color:#166534;">บันทึกสำเร็จ</div>'
       + '<div style="margin-top:10px;"><span style="background:' + sColor + ';color:#fff;font-size:13px;padding:5px 16px;border-radius:20px;font-family:Kanit;font-weight:600;">' + sLabel + '</span></div>'
+      + (_inspSaved ? '<div style="font-size:11px;color:#16a34a;margin-top:8px;"><i class="bi bi-clipboard2-check me-1"></i>บันทึกลงรอบสำรวจแล้ว</div>' : '')
       + '</div>'
       + '<button onclick="_scanNextAsset()" style="width:100%;padding:15px;background:#1a2332;border:none;border-radius:14px;color:#fff;font-family:Kanit;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(26,35,50,.35);">'
       + '<i class="bi bi-qr-code-scan" style="font-size:18px;"></i>สแกนชิ้นต่อไป</button>'
@@ -9679,14 +9697,12 @@ async function _loadScanProgress() {
   try {
     var isBranch = App.profile && App.profile.role === 'branch';
     var branchId = App.profile ? App.profile.branch_id : null;
-    // Active inspection (cache to avoid re-querying on every save)
-    if (!_scanInspId) {
-      var inspRes = await sb.from('inspections').select('id,name').eq('status','active').order('created_at',{ascending:false}).limit(1);
-      if (!inspRes.data || !inspRes.data.length) { card.style.display = 'none'; return; }
-      _scanInspData = inspRes.data[0];
-      _scanInspId   = _scanInspData.id;
-    }
-    var inspName = _scanInspData ? _scanInspData.name : 'รอบสำรวจ';
+    // Active inspection — always fetch fresh (ไม่ cache เพื่อให้ count ถูกต้องเสมอ)
+    var inspRes = await sb.from('inspections').select('id,name').eq('status','active').order('created_at',{ascending:false}).limit(1);
+    if (!inspRes.data || !inspRes.data.length) { card.style.display = 'none'; return; }
+    _scanInspData = inspRes.data[0];
+    _scanInspId   = _scanInspData.id;
+    var inspName  = _scanInspData.name || 'รอบสำรวจ';
 
     // Total count
     var total = 0;
@@ -9747,7 +9763,7 @@ async function _loadScanProgress() {
       + (remaining > 0
           ? '<button onclick="_showUnsurveyedList()" style="margin-top:10px;width:100%;padding:9px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;color:#2563eb;font-family:Kanit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><i class="bi bi-list-check"></i>ดูรายการที่ยังไม่สำรวจ (' + remaining + ' ชิ้น)</button>'
           : '');
-  } catch(e) { card.style.display = 'none'; }
+  } catch(e) { console.warn('_loadScanProgress error:', e); }
 }
 
 async function _showUnsurveyedList() {
