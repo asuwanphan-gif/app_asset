@@ -1038,8 +1038,11 @@
           <div class="card-body py-2 px-3">
             <div class="d-flex gap-2 align-items-center flex-wrap">
               <input id="qrFilterSearch" type="search" class="form-control form-control-sm" placeholder="ค้นหาชื่อ / รหัส..." style="min-width:160px;flex:2;" oninput="filterQRAssets()">
-              <select id="qrFilterLocation" class="form-select form-select-sm" onchange="filterQRAssets()" style="min-width:140px;flex:1;">
-                <option value="">-- ทุกสถานที่ --</option>
+              <select id="qrFilterYear" class="form-select form-select-sm" onchange="filterQRAssets()" style="min-width:130px;flex:1;">
+                <option value="">-- ทุกปีงบ --</option>
+              </select>
+              <select id="qrFilterBranch" class="form-select form-select-sm" onchange="filterQRAssets()" style="min-width:130px;flex:1;">
+                <option value="">-- ทุกสาขา --</option>
               </select>
               <select id="qrFilterStatus" class="form-select form-select-sm" onchange="filterQRAssets()" style="min-width:130px;flex:1;">
                 <option value="">-- ทุกสถานะ --</option>
@@ -9512,21 +9515,28 @@ async function loadQRStickerPage() {
   // Use App.allAssets if loaded, else load from Supabase
   var assets = App.allAssets || [];
   if (!assets.length) {
-    var res = await sb.from('assets').select('id,asset_code,name,brand,status,location,branch_id').order('asset_code').limit(10000);
+    var res = await sb.from('assets').select('id,asset_code,name,brand,status,location,branch_id,acquired_date').order('asset_code').limit(10000);
     assets = res.data || [];
   }
   _qrFilteredAssets = assets;
 
-  // Populate location filter
-  var locs = {};
-  assets.forEach(function(a) { if (a.location) locs[a.location] = true; });
-  var locSel = document.getElementById('qrFilterLocation');
-  if (locSel) {
-    locSel.innerHTML = '<option value="">-- ทุกสถานที่ --</option>';
-    Object.keys(locs).sort().forEach(function(l) {
-      var o = document.createElement('option');
-      o.value = l; o.textContent = l;
-      locSel.appendChild(o);
+  // Populate year filter
+  var years = {};
+  assets.forEach(function(a) { if (a.acquired_date) { var y = toThaiYear(a.acquired_date); if (y) years[y] = true; } });
+  var yearSel = document.getElementById('qrFilterYear');
+  if (yearSel) {
+    yearSel.innerHTML = '<option value="">-- ทุกปีงบ --</option>';
+    Object.keys(years).sort(function(a,b){return b-a;}).forEach(function(y) {
+      var o = document.createElement('option'); o.value = y; o.textContent = 'พ.ศ. ' + y; yearSel.appendChild(o);
+    });
+  }
+
+  // Populate branch filter
+  var branchSel = document.getElementById('qrFilterBranch');
+  if (branchSel) {
+    branchSel.innerHTML = '<option value="">-- ทุกสาขา --</option>';
+    (App.branches||[]).forEach(function(b) {
+      var o = document.createElement('option'); o.value = b.id; o.textContent = b.name; branchSel.appendChild(o);
     });
   }
 
@@ -9534,22 +9544,24 @@ async function loadQRStickerPage() {
 }
 
 function filterQRAssets() {
-  var search = ((document.getElementById('qrFilterSearch')||{}).value||'').toLowerCase();
-  var loc    = ((document.getElementById('qrFilterLocation')||{}).value||'');
-  var status = ((document.getElementById('qrFilterStatus')||{}).value||'');
-  var base   = App.allAssets || _qrFilteredAssets;
+  var search  = ((document.getElementById('qrFilterSearch')||{}).value||'').toLowerCase();
+  var year    = ((document.getElementById('qrFilterYear')||{}).value||'');
+  var branch  = ((document.getElementById('qrFilterBranch')||{}).value||'');
+  var status  = ((document.getElementById('qrFilterStatus')||{}).value||'');
+  var base    = App.allAssets || _qrFilteredAssets;
   var filtered = base.filter(function(a) {
-    var mS = !search || (a.asset_code||'').toLowerCase().includes(search) || (a.name||'').toLowerCase().includes(search);
-    var mL = !loc    || (a.location||'') === loc;
-    var mSt= !status || a.status === status;
-    return mS && mL && mSt;
+    var mS  = !search || (a.asset_code||'').toLowerCase().includes(search) || (a.name||'').toLowerCase().includes(search);
+    var mY  = !year   || (a.acquired_date && toThaiYear(a.acquired_date) == year);
+    var mB  = !branch || a.branch_id === branch;
+    var mSt = !status || a.status === status;
+    return mS && mY && mB && mSt;
   });
   _qrFilteredAssets = filtered;
   _renderQRTable(filtered);
 }
 
 function clearQRFilter() {
-  ['qrFilterSearch','qrFilterLocation','qrFilterStatus'].forEach(function(id){
+  ['qrFilterSearch','qrFilterYear','qrFilterBranch','qrFilterStatus'].forEach(function(id){
     var el = document.getElementById(id); if(el) el.value='';
   });
   filterQRAssets();
