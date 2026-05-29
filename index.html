@@ -9595,13 +9595,13 @@ async function saveScanResult(assetId) {
       if (exRes.data) {
         // UPDATE existing
         var uI = await sb.from('inspection_items')
-          .update({ status: newStatus, notes: notes||null, checked_by: App.user?App.user.id:null, created_at: new Date().toISOString() })
+          .update({ status: newStatus, notes: notes||null, created_at: new Date().toISOString() })
           .eq('id', exRes.data.id);
         iErr = uI.error;
       } else {
         // INSERT new
         var nI = await sb.from('inspection_items')
-          .insert({ inspection_id:_scanInspId, asset_id:assetId, status:newStatus, notes:notes||null, checked_by:App.user?App.user.id:null, created_at:new Date().toISOString() });
+          .insert({ inspection_id:_scanInspId, asset_id:assetId, status:newStatus, notes:notes||null, created_at:new Date().toISOString() });
         iErr = nI.error;
       }
       if (iErr) { showToast('บันทึกรอบสำรวจไม่สำเร็จ: ' + iErr.message, 'warning'); }
