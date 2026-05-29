@@ -641,7 +641,8 @@
   display:flex;flex-direction:column;align-items:center;gap:2mm;
   font-family:'Kanit',sans-serif;page-break-inside:avoid;
 }
-.qr-sticker-org{font-size:8pt;color:#374151;text-align:center;font-weight:600;line-height:1.3;}
+.qr-sticker-org{font-size:7.5pt;color:#374151;text-align:center;font-weight:600;line-height:1.3;}
+.qr-sticker-org:first-child{font-size:6.5pt;color:#6b7280;font-weight:400;letter-spacing:.5px;text-transform:uppercase;}
 .qr-sticker-name{font-size:8pt;color:#111827;text-align:center;font-weight:700;line-height:1.3;max-width:100%;word-break:break-word;}
 .qr-sticker-code{font-size:7pt;color:#6b7280;text-align:center;}
 .qr-sticker-status{font-size:7pt;font-weight:700;text-align:center;}
@@ -9993,8 +9994,7 @@ function generateQRStickers() {
   if (_qrSelected.size === 0) { showToast('กรุณาเลือกครุภัณฑ์อย่างน้อย 1 รายการ', 'warning'); return; }
   // ใช้ _qrAllAssets (ไม่ใช้ App.allAssets เพราะอาจ truthy แต่ว่าง)
   var selected = _qrAllAssets.filter(function(a){ return _qrSelected.has(a.id); });
-  var orgName = (document.querySelector('.sb-org') || {}).textContent || 'ระบบทะเบียนครุภัณฑ์';
-  orgName = orgName.replace(/\n/g,' ').trim();
+  // ไม่ใช้ orgName รวม — แต่ละ sticker แสดงสาขาของครุภัณฑ์นั้น
 
   var outputEl = document.getElementById('qrStickerOutput');
   outputEl.innerHTML = '';
@@ -10005,10 +10005,14 @@ function generateQRStickers() {
 
   selected.forEach(function(a) {
     var url = window.location.origin + window.location.pathname + '?scan=' + a.id;
+    // หาชื่อสาขาของครุภัณฑ์นี้ (ไม่รวมชื่อมหาวิทยาลัย)
+    var bObj = (App.branches||[]).find(function(x){ return x.id === a.branch_id; });
+    var branchLabel = bObj ? bObj.name : '';
     var item = document.createElement('div');
     item.className = 'qr-sticker-item';
     item.innerHTML =
-      '<div class="qr-sticker-org">' + orgName + '</div>' +
+      '<div class="qr-sticker-org">สาขา</div>' +
+      '<div class="qr-sticker-org" style="margin-top:-1mm;">' + branchLabel + '</div>' +
       '<div id="qrstk_' + a.id + '" style="width:90px;height:90px;"></div>' +
       '<div class="qr-sticker-name">' + (a.name||'—') + '</div>' +
       '<div class="qr-sticker-code">' + (a.asset_code||'—') + '</div>' +
