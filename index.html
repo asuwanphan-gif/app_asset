@@ -9546,7 +9546,7 @@ async function loadQRStickerPage() {
   if (branchSel) {
     branchSel.innerHTML = '<option value="">-- ทุกสาขา --</option>';
     (App.branches||[]).forEach(function(b) {
-      var o = document.createElement('option'); o.value = b.id; o.textContent = b.name; branchSel.appendChild(o);
+      var o = document.createElement('option'); o.value = b.id; o.textContent = (b.code != null ? b.code + ' – ' : '') + b.name; branchSel.appendChild(o);
     });
   }
 
@@ -9558,7 +9558,7 @@ function filterQRAssets() {
   var year    = ((document.getElementById('qrFilterYear')||{}).value||'');
   var branch  = ((document.getElementById('qrFilterBranch')||{}).value||'');
   var status  = ((document.getElementById('qrFilterStatus')||{}).value||'');
-  var base    = App.allAssets || _qrFilteredAssets;
+  var base    = _qrAllAssets;
   var filtered = base.filter(function(a) {
     var mS  = !search || (a.asset_code||'').toLowerCase().includes(search) || (a.name||'').toLowerCase().includes(search);
     var mY  = !year   || (a.acquired_date && toThaiYear(a.acquired_date) == year);
