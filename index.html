@@ -9382,9 +9382,11 @@ function showScanPage(assetId) {
   var scanPage = document.getElementById('page-scan');
   if (scanPage) scanPage.style.display = 'block';
   document.getElementById('scanAssetId').value = assetId || '';
-  // reset search & progress
+  // reset search
   var ss = document.getElementById('scanSearch'); if(ss) ss.value='';
   var sr = document.getElementById('scanSearchResults'); if(sr) sr.style.display='none';
+  // reset progress cache so it re-fetches fresh on each scan session
+  _scanInspId = null; _scanInspData = null; _scanBranchAssetIds = [];
   _loadScanProgress();
   _loadScanAsset(assetId);
 }
@@ -9419,7 +9421,29 @@ async function _loadScanAsset(assetId) {
   var branchName = '—';
   if (a.branch_id) {
     var bObj = (App.branches||[]).find(function(x){ return x.id === a.branch_id; });
-    if (bObj) branchName = bObj.name;
+    if (bObj) branchName = (bObj.code ? bObj.code + ' – ' : '') + bObj.name;
+  }
+
+  // Block cross-branch scan for branch users
+  var _isBr = App.profile && App.profile.role === 'branch';
+  var _myBrId = App.profile ? App.profile.branch_id : null;
+  if (_isBr && _myBrId && a.branch_id && a.branch_id !== _myBrId) {
+    var orgEl2 = document.getElementById('scanOrgName');
+    if (orgEl2) { var sbOrg2 = document.querySelector('.sb-org'); if (sbOrg2) orgEl2.textContent = (sbOrg2.textContent||'').replace(/\n/g,' ').trim(); }
+    contentEl.innerHTML =
+      '<div style="background:#fff;border-radius:16px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.10);">'
+      + '<div style="background:linear-gradient(135deg,#1a2332 0%,#2d4a6e 100%);padding:16px 18px 14px;">'
+      + '<div style="font-size:17px;font-weight:800;color:#fff;line-height:1.3;margin-bottom:4px;">' + (a.name||'—') + '</div>'
+      + '<div style="font-size:12px;color:rgba(255,255,255,.65);"><i class="bi bi-upc me-1"></i>' + (a.asset_code||'—') + '</div>'
+      + '</div>'
+      + '<div style="padding:14px 18px;"><div class="scan-info-row"><i class="bi bi-diagram-3-fill"></i><span>' + branchName + '</span></div></div>'
+      + '</div>'
+      + '<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:14px;padding:20px;text-align:center;font-family:Kanit;">'
+      + '<i class="bi bi-slash-circle" style="color:#dc2626;font-size:36px;display:block;margin-bottom:10px;"></i>'
+      + '<div style="font-size:15px;font-weight:700;color:#dc2626;">ไม่สามารถบันทึกได้</div>'
+      + '<div style="font-size:13px;color:#9f1239;margin-top:6px;">ครุภัณฑ์นี้เป็นของ <strong>' + branchName + '</strong><br>ไม่ใช่สาขาของคุณ</div>'
+      + '</div>';
+    return;
   }
 
   // Load last 5 inspection_items for this asset
@@ -9483,7 +9507,7 @@ async function _loadScanAsset(assetId) {
   html += '<label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px;"><i class="bi bi-chat-left-text me-1" style="color:#94a3b8;"></i>หมายเหตุ</label>';
   html += '<textarea id="scanNotes" class="form-control" rows="3" placeholder="บันทึกหมายเหตุ (ถ้ามี)..." style="font-family:Kanit;font-size:13px;resize:none;border-radius:10px;border-color:#e2e8f0;"></textarea>';
   html += '</div>';
-  html += '<button class="btn btn-primary w-100" style="font-size:15px;padding:13px;font-family:Kanit;font-weight:700;border-radius:12px;letter-spacing:.3px;" onclick="saveScanResult(\'' + assetId + '\')">'
+  html += '<button id="scanSaveBtn" class="btn btn-primary w-100" style="font-size:15px;padding:13px;font-family:Kanit;font-weight:700;border-radius:12px;letter-spacing:.3px;" onclick="saveScanResult(\'' + assetId + '\')">'
         + '<i class="bi bi-check2-circle me-2"></i>บันทึกผลการตรวจ</button>';
   html += '</div>';
 
@@ -9545,29 +9569,52 @@ async function saveScanResult(assetId) {
   var notes     = ((document.getElementById('scanNotes')||{}).value || '').trim();
   if (!newStatus) { showToast('กรุณาเลือกสถานะ', 'warning'); return; }
 
+  // Disable save button while saving
+  var saveBtn = document.getElementById('scanSaveBtn');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังบันทึก...'; }
+
   // Update asset status
   var upd = await sb.from('assets').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', assetId);
-  if (upd.error) { showToast('บันทึกไม่สำเร็จ: ' + upd.error.message, 'danger'); return; }
+  if (upd.error) {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="bi bi-check2-circle me-2"></i>บันทึกผลการตรวจ'; }
+    showToast('บันทึกไม่สำเร็จ: ' + upd.error.message, 'danger'); return;
+  }
 
-  // Insert inspection_item if there is an active inspection
+  // Insert inspection_item (use cached _scanInspId if available)
   try {
-    var inspRes = await sb.from('inspections').select('id').eq('status','active').order('created_at',{ascending:false}).limit(1);
-    if (inspRes.data && inspRes.data.length > 0) {
-      var inspId = inspRes.data[0].id;
+    if (!_scanInspId) {
+      var iR = await sb.from('inspections').select('id,name').eq('status','active').order('created_at',{ascending:false}).limit(1);
+      if (iR.data && iR.data.length) { _scanInspId = iR.data[0].id; _scanInspData = iR.data[0]; }
+    }
+    if (_scanInspId) {
       await sb.from('inspection_items').upsert({
-        inspection_id: inspId,
-        asset_id: assetId,
-        status: newStatus,
-        notes: notes || null,
-        checked_by: App.user ? App.user.id : null,
+        inspection_id: _scanInspId, asset_id: assetId, status: newStatus,
+        notes: notes || null, checked_by: App.user ? App.user.id : null,
         created_at: new Date().toISOString()
       }, { onConflict: 'inspection_id,asset_id' });
     }
   } catch(e) { /* no active inspection — ok */ }
 
-  showToast('บันทึกผลการตรวจเรียบร้อย', 'success');
-  _loadScanProgress(); // refresh progress bar
-  _loadScanAsset(assetId);
+  // Show success UI with "scan next" option
+  var sColors = { active:'#059669', not_found:'#7c2d12', damaged_fixable:'#78350f',
+    damaged_unfixable:'#7f1d1d', overaged:'#c2410c', transferred:'#4c1d95',
+    disposal_pending:'#713f12', disposed:'#334155' };
+  var sLabel = (STATUS[newStatus]||{}).label || newStatus;
+  var sColor = sColors[newStatus] || '#2563eb';
+  var contentEl = document.getElementById('scanContent');
+  if (contentEl) {
+    contentEl.innerHTML =
+      '<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:16px;padding:26px;text-align:center;margin-bottom:14px;font-family:Kanit;">'
+      + '<i class="bi bi-check-circle-fill" style="color:#059669;font-size:44px;display:block;margin-bottom:10px;"></i>'
+      + '<div style="font-size:17px;font-weight:800;color:#166534;">บันทึกสำเร็จ</div>'
+      + '<div style="margin-top:10px;"><span style="background:' + sColor + ';color:#fff;font-size:13px;padding:5px 16px;border-radius:20px;font-family:Kanit;font-weight:600;">' + sLabel + '</span></div>'
+      + '</div>'
+      + '<button onclick="_scanNextAsset()" style="width:100%;padding:15px;background:#1a2332;border:none;border-radius:14px;color:#fff;font-family:Kanit;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(26,35,50,.35);">'
+      + '<i class="bi bi-qr-code-scan" style="font-size:18px;"></i>สแกนชิ้นต่อไป</button>'
+      + '<button onclick="_loadScanAsset(\'' + assetId + '\')" style="width:100%;padding:11px;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;color:#64748b;font-family:Kanit;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">'
+      + '<i class="bi bi-arrow-counterclockwise"></i>ดูครุภัณฑ์นี้อีกครั้ง</button>';
+  }
+  _loadScanProgress();
 }
 
 // ============================================================
@@ -9575,6 +9622,7 @@ async function saveScanResult(assetId) {
 // ============================================================
 var _scanSearchTimer = null;
 var _scanInspId      = null;
+var _scanInspData    = null;
 var _scanBranchAssetIds = [];
 
 function onScanSearch(val) {
@@ -9631,33 +9679,60 @@ async function _loadScanProgress() {
   try {
     var isBranch = App.profile && App.profile.role === 'branch';
     var branchId = App.profile ? App.profile.branch_id : null;
-    // Active inspection?
-    var inspRes = await sb.from('inspections').select('id,name').eq('status','active').order('created_at',{ascending:false}).limit(1);
-    if (!inspRes.data || !inspRes.data.length) { card.style.display = 'none'; return; }
-    var insp = inspRes.data[0];
-    _scanInspId = insp.id;
-    // All branch assets
-    var assetQ = sb.from('assets').select('id');
-    if (isBranch && branchId) assetQ = assetQ.eq('branch_id', branchId);
-    var assetRes = await assetQ;
-    _scanBranchAssetIds = (assetRes.data||[]).map(function(x){ return x.id; });
-    var total = _scanBranchAssetIds.length;
-    if (!total) { card.style.display = 'none'; return; }
-    // Count done (chunk to avoid URL length limit)
-    var done = 0;
-    var chunkSize = 150;
-    for (var i = 0; i < _scanBranchAssetIds.length; i += chunkSize) {
-      var chunk = _scanBranchAssetIds.slice(i, i + chunkSize);
-      var dRes = await sb.from('inspection_items').select('id',{count:'exact',head:true}).eq('inspection_id', insp.id).in('asset_id', chunk);
-      done += (dRes.count || 0);
+    // Active inspection (cache to avoid re-querying on every save)
+    if (!_scanInspId) {
+      var inspRes = await sb.from('inspections').select('id,name').eq('status','active').order('created_at',{ascending:false}).limit(1);
+      if (!inspRes.data || !inspRes.data.length) { card.style.display = 'none'; return; }
+      _scanInspData = inspRes.data[0];
+      _scanInspId   = _scanInspData.id;
     }
+    var inspName = _scanInspData ? _scanInspData.name : 'รอบสำรวจ';
+
+    // Total count
+    var total = 0;
+    if (isBranch && branchId) {
+      // Branch: cache asset IDs (fetch once)
+      if (!_scanBranchAssetIds.length) {
+        var aRes = await sb.from('assets').select('id').eq('branch_id', branchId);
+        _scanBranchAssetIds = (aRes.data||[]).map(function(x){ return x.id; });
+      }
+      total = _scanBranchAssetIds.length;
+    } else {
+      // Admin: count total with single HEAD query
+      var cRes = await sb.from('assets').select('id',{count:'exact',head:true});
+      total = cRes.count || 0;
+      // Lazily populate _scanBranchAssetIds for unsurveyed list / scan next
+      if (!_scanBranchAssetIds.length) {
+        sb.from('assets').select('id').order('asset_code').then(function(r){
+          _scanBranchAssetIds = (r.data||[]).map(function(x){ return x.id; });
+        });
+      }
+    }
+    if (!total) { card.style.display = 'none'; return; }
+
+    // Count done
+    var done = 0;
+    if (isBranch && branchId && _scanBranchAssetIds.length) {
+      // Branch: filter by asset IDs in chunks
+      var chunkSize = 150;
+      for (var i = 0; i < _scanBranchAssetIds.length; i += chunkSize) {
+        var chunk = _scanBranchAssetIds.slice(i, i + chunkSize);
+        var dRes = await sb.from('inspection_items').select('id',{count:'exact',head:true}).eq('inspection_id',_scanInspId).in('asset_id',chunk);
+        done += (dRes.count || 0);
+      }
+    } else {
+      // Admin: single query — count all items for this inspection (no asset_id filter)
+      var dRes = await sb.from('inspection_items').select('id',{count:'exact',head:true}).eq('inspection_id',_scanInspId);
+      done = dRes.count || 0;
+    }
+
     var remaining = total - done;
     var pct = Math.round(done / total * 100);
     var barColor = pct >= 100 ? '#059669' : pct >= 50 ? '#2563eb' : '#f59e0b';
     card.style.display = '';
     card.innerHTML =
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-family:Kanit;">'
-      + '<div style="font-size:13px;font-weight:700;color:#0f172a;"><i class="bi bi-clipboard2-pulse me-1" style="color:#2563eb;"></i>' + (insp.name||'รอบสำรวจ') + '</div>'
+      + '<div style="font-size:13px;font-weight:700;color:#0f172a;"><i class="bi bi-clipboard2-pulse me-1" style="color:#2563eb;"></i>' + inspName + '</div>'
       + '<div style="font-size:12px;color:#64748b;">' + done + ' / ' + total + ' ชิ้น</div>'
       + '</div>'
       + '<div style="background:#e2e8f0;border-radius:99px;height:8px;overflow:hidden;">'
@@ -9730,6 +9805,60 @@ function _selectUnsvAsset(assetId) {
 function closeUnsvDrawer() {
   var drawer = document.getElementById('unsvDrawer');
   if (drawer) drawer.style.display = 'none';
+}
+
+async function _scanNextAsset() {
+  var contentEl = document.getElementById('scanContent');
+  if (contentEl) contentEl.innerHTML = '<div style="text-align:center;padding:50px 20px;font-family:Kanit;color:#94a3b8;"><div class="spinner-border text-primary"></div><div style="margin-top:12px;">กำลังค้นหารายการถัดไป...</div></div>';
+  var scanPage = document.getElementById('page-scan');
+  if (scanPage) scanPage.scrollTop = 0;
+
+  if (!_scanInspId) {
+    if (contentEl) contentEl.innerHTML = '<div style="text-align:center;padding:50px 20px;font-family:Kanit;color:#94a3b8;"><i class="bi bi-qr-code-scan" style="font-size:36px;display:block;margin-bottom:12px;"></i>ไม่มีรอบสำรวจที่เปิดอยู่<br><span style="font-size:12px;margin-top:6px;display:block;">ใช้ช่องค้นหาด้านบนเพื่อเลือกครุภัณฑ์</span></div>';
+    return;
+  }
+
+  // Ensure asset IDs are loaded
+  if (!_scanBranchAssetIds.length) {
+    var isBr = App.profile && App.profile.role === 'branch';
+    var brId = App.profile ? App.profile.branch_id : null;
+    var aQ = sb.from('assets').select('id').order('asset_code');
+    if (isBr && brId) aQ = aQ.eq('branch_id', brId);
+    var aR = await aQ;
+    _scanBranchAssetIds = (aR.data||[]).map(function(x){ return x.id; });
+  }
+
+  if (!_scanBranchAssetIds.length) {
+    if (contentEl) contentEl.innerHTML = '<div style="text-align:center;padding:50px;font-family:Kanit;color:#94a3b8;">ไม่พบรายการ</div>';
+    return;
+  }
+
+  // Get all surveyed IDs for this inspection (single query — no asset_id filter)
+  var surveyedIds = new Set();
+  var survRes = await sb.from('inspection_items').select('asset_id').eq('inspection_id', _scanInspId);
+  (survRes.data||[]).forEach(function(x){ surveyedIds.add(x.asset_id); });
+
+  // Find first unsurveyed (skip current)
+  var currentId = document.getElementById('scanAssetId').value;
+  var nextId = null;
+  for (var i = 0; i < _scanBranchAssetIds.length; i++) {
+    var id = _scanBranchAssetIds[i];
+    if (id !== currentId && !surveyedIds.has(id)) { nextId = id; break; }
+  }
+
+  if (!nextId) {
+    if (contentEl) contentEl.innerHTML =
+      '<div style="text-align:center;padding:50px 20px;font-family:Kanit;">'
+      + '<i class="bi bi-trophy-fill" style="color:#f59e0b;font-size:48px;display:block;margin-bottom:14px;"></i>'
+      + '<div style="font-size:17px;font-weight:800;color:#0f172a;">สำรวจครบทุกรายการแล้ว!</div>'
+      + '<div style="font-size:13px;color:#64748b;margin-top:8px;">ยินดีด้วย ไม่มีรายการเหลือในรอบนี้</div>'
+      + '</div>';
+    _loadScanProgress();
+    return;
+  }
+
+  document.getElementById('scanAssetId').value = nextId;
+  _loadScanAsset(nextId);
 }
 
 // ============================================================
