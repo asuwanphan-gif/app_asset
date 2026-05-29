@@ -9537,7 +9537,7 @@ async function loadQRStickerPage() {
   if (yearSel) {
     yearSel.innerHTML = '<option value="">-- ทุกปีงบ --</option>';
     Object.keys(years).sort(function(a,b){return b-a;}).forEach(function(y) {
-      var o = document.createElement('option'); o.value = y; o.textContent = 'พ.ศ. ' + y; yearSel.appendChild(o);
+      var o = document.createElement('option'); o.value = y; o.textContent = y; yearSel.appendChild(o);
     });
   }
 
