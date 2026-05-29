@@ -2968,17 +2968,23 @@ function _startApp() {
   if (_bWrap) _bWrap.style.display = (p.role === 'branch') ? 'none' : '';
 
   hideLoading();
+  // อ่าน scan param ทันที (synchronous) ก่อน async ใดๆ
+  var _scanIdOnStart = new URLSearchParams(window.location.search).get('scan');
+  // ซ่อน page-dashboard ก่อน (ป้องกันโชว์ก่อน showPage() ถูกเรียก)
+  var _pd = document.getElementById('page-dashboard');
+  if (_pd && !_scanIdOnStart) _pd.style.display = 'none';
+
   loadBranches().then(function() {
-    var _scanId = new URLSearchParams(window.location.search).get('scan');
-    if (_scanId) {
-      showScanPage(_scanId);
+    if (_scanIdOnStart) {
+      showScanPage(_scanIdOnStart);
     } else {
-      var _ret = sessionStorage.getItem('scanReturn');
-      if (_ret) {
-        sessionStorage.removeItem('scanReturn');
-        window.location.href = _ret;
-        return;
-      }
+      showPage('dashboard');
+    }
+  }).catch(function() {
+    // loadBranches fail → show default page anyway
+    if (_scanIdOnStart) {
+      showScanPage(_scanIdOnStart);
+    } else {
       showPage('dashboard');
     }
   });
@@ -3264,7 +3270,7 @@ function _populateYearSelects() {
     }
     for (var y = curFY; y >= 2546; y--) {
       var o = document.createElement('option');
-      o.value = y; o.textContent = 'พ.ศ. ' + y;
+      o.value = y; o.textContent = y;
       if (y === curFY && id === 'inspYear') o.selected = true;
       sel.appendChild(o);
     }
@@ -3739,7 +3745,7 @@ async function loadAssetsPage() {
     filterYear.innerHTML = '<option value="">-- ทุกปีงบ --</option>';
     Object.keys(years).sort(function(a,b){return b-a;}).forEach(function(y) {
       var o = document.createElement('option');
-      o.value = y; o.textContent = 'พ.ศ. ' + y;
+      o.value = y; o.textContent = y;
       filterYear.appendChild(o);
     });
   }
@@ -7435,11 +7441,8 @@ async function saveUser() {
   var passEl = document.getElementById('loginPass');
   if (passEl) passEl.addEventListener('keydown', function(e) { if (e.key==='Enter') doLogin(); });
 
-  // ── QR Scan: save return URL before login ──
-  (function(){
-    var _sp = new URLSearchParams(window.location.search).get('scan');
-    if (_sp) sessionStorage.setItem('scanReturn', window.location.href);
-  })();
+  // ── QR Scan: URL ?scan=<id> จะถูกอ่านใน _startApp() หลัง login ──
+  // (ไม่ต้อง sessionStorage เพราะ password login ไม่เปลี่ยน URL)
 
   // Helper: race getSession against 6-second timeout
   function _sessionWithTimeout() {
@@ -9340,11 +9343,11 @@ function showScanPage(assetId) {
   if (sidebar) sidebar.style.display = 'none';
   if (topbar)  topbar.style.display  = 'none';
   if (bNav)    bNav.style.display    = 'none';
-  // Show scan page (it's position:fixed so it covers everything)
+  if (main) main.style.display = 'block';
+  // Show scan page — ต้องใช้ 'block' ไม่ใช้ '' เพราะ CSS กำหนด display:none ไว้
   var scanPage = document.getElementById('page-scan');
-  if (scanPage) scanPage.style.display = '';
+  if (scanPage) scanPage.style.display = 'block';
   document.getElementById('scanAssetId').value = assetId || '';
-  if (main) main.style.display = '';
   _loadScanAsset(assetId);
 }
 
