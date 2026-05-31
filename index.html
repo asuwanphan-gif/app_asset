@@ -2090,7 +2090,7 @@
     <!-- ===== INSPECTION FILL ===== -->
     <div id="page-inspection-fill" class="page-content" style="display:none;">
       <div class="page-header d-flex justify-content-end align-items-center gap-2 no-print">
-        <button class="btn btn-outline-secondary btn-sm" onclick="showPage(App.profile&&App.profile.role==='branch'?'dashboard':'inspection')">
+        <button class="btn btn-outline-secondary btn-sm" onclick="showPage('inspection')">
           <i class="bi bi-arrow-left me-1"></i>กลับ
         </button>
       </div>
@@ -6489,17 +6489,12 @@ async function loadInspectionPage() {
   var insp = inspections[0];
   App.currentInspectionId = insp.id;
   App.currentInsp = insp;
-
-  // Branch user → ข้ามหน้า overview ไปหน้ากรอกผลทันที
-  if (App.profile && App.profile.role === 'branch') {
-    goFillInspection();
-    return;
-  }
+  var isBranch = App.profile && App.profile.role === 'branch';
 
   if (inspEmptyState) inspEmptyState.style.display = 'none';
   if (inspTabsWrap) inspTabsWrap.style.display = '';
 
-  // Banner — redesigned with status badge, days remaining, action buttons
+  // Banner (ทุก role เห็น)
   if (inspRoundBanner) {
     var daysLeftHtml = '';
     if (insp.end_date) {
@@ -6510,12 +6505,11 @@ async function loadInspectionPage() {
       else if (diff === 0) daysLeftHtml = '<span style="background:#fbbf24;color:#000;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;">วันสุดท้าย</span>';
       else daysLeftHtml = '<span style="background:#ef4444;color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;">เลยกำหนด ' + Math.abs(diff) + ' วัน</span>';
     }
-    var isAdmin = App.profile && App.profile.role === 'admin';
-    var btnsHtml = isAdmin
+    var btnsHtml = !isBranch
       ? '<button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);" onclick="notifyAllBranches()"><i class="bi bi-envelope me-1"></i>แจ้งสาขา</button>' +
         '<button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);" onclick="loadInspMonitor()"><i class="bi bi-speedometer2 me-1"></i>กำกับติดตาม</button>' +
         '<button class="btn btn-sm btn-danger" onclick="closeRound(\'' + insp.id + '\')"><i class="bi bi-lock me-1"></i>ปิดรอบ</button>'
-      : '<button class="btn btn-sm btn-success" onclick="goFillInspection()"><i class="bi bi-pencil me-1"></i>กรอกผล</button>';
+      : '<button class="btn btn-sm btn-success" onclick="goFillInspection()"><i class="bi bi-table me-1"></i>กรอกผลทั้งหมด</button>';
     inspRoundBanner.innerHTML =
       '<div style="background:linear-gradient(135deg,#1e3a5f,#1e40af);border-radius:14px;padding:14px 18px;margin-bottom:14px;color:#fff;">' +
         '<div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">' +
@@ -6535,10 +6529,94 @@ async function loadInspectionPage() {
       '</div>';
   }
 
-  // Admin round list
-  if (App.profile && App.profile.role === 'admin') _loadRoundList();
+  if (isBranch) {
+    App._onBranchDashboard = true;
+    await _loadBranchInspDashboard(insp);
+  } else {
+    App._onBranchDashboard = false;
+    _loadRoundList();
+    showInspTab('overview');
+  }
+}
 
-  showInspTab('overview');
+async function _loadBranchInspDashboard(insp) {
+  var container = document.getElementById('inspOverviewBody');
+  if (!container) return;
+  container.innerHTML = '<div class="text-center py-5"><div class="spinner-border spinner-border-sm text-primary"></div><div style="font-family:Kanit;color:#94a3b8;margin-top:10px;font-size:13px;">กำลังโหลด...</div></div>';
+  var branchId = App.profile ? App.profile.branch_id : null;
+  if (!branchId) { container.innerHTML = '<div class="text-muted text-center py-3">ไม่พบข้อมูลสาขา</div>'; return; }
+
+  // Load assets + inspection items
+  var assRes = await sb.from('assets')
+    .select('id,asset_code,name,brand,branch_id,price,location,status,branches(name)')
+    .eq('branch_id', branchId).not('status','in','("disposed","overaged")').order('asset_code');
+  var assets = assRes.data || [];
+  var itemsRes = await sb.from('inspection_items').select('*').eq('inspection_id', insp.id);
+  var itemsMap = {};
+  (itemsRes.data||[]).forEach(function(i){ itemsMap[i.asset_id] = i; });
+
+  // Build App.inspItems for auto-save compatibility
+  App.inspItems = assets.map(function(a) {
+    return { asset:a, item:itemsMap[a.id]||null,
+      _status: itemsMap[a.id] ? (itemsMap[a.id].result||itemsMap[a.id].status) : a.status,
+      _note:   itemsMap[a.id] ? (itemsMap[a.id].notes||'') : '' };
+  });
+  App.inspFiltered = App.inspItems;
+
+  // Stats
+  var total     = assets.length;
+  var done      = App.inspItems.filter(function(r){ return !!r.item; }).length;
+  var remaining = total - done;
+  var pct       = total ? Math.round(done/total*100) : 0;
+  var barColor  = pct===100?'#22c55e':pct>=50?'#f59e0b':'#3b82f6';
+
+  var statsHtml =
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">' +
+    _ovStatCard(total,    'รวมทั้งหมด',    '#2563eb',  'bi-archive-fill') +
+    _ovStatCard(done,     'ตรวจแล้ว',      '#22c55e',  'bi-check-circle-fill') +
+    _ovStatCard(remaining,'ยังไม่ตรวจ',    '#f59e0b',  'bi-hourglass-split') +
+    _ovStatCard(pct+'%',  'ความคืบหน้า',   barColor,   'bi-speedometer2') +
+    '</div>';
+
+  // 5 first unsurveyed
+  var preview = App.inspItems.filter(function(r){ return !r.item; }).slice(0,5);
+  var statusOpts = Object.entries(INSP_STATUS).map(function(e){
+    return '<option value="'+e[0]+'">'+e[1].label+'</option>';
+  }).join('');
+
+  var cardHtml = '<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08);">';
+  cardHtml += '<div style="padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">';
+  cardHtml += '<div style="font-size:14px;font-weight:700;color:#0f172a;font-family:Kanit;"><i class="bi bi-clipboard2-pulse me-2" style="color:#f59e0b;"></i>รายการที่ยังไม่สำรวจ'+(remaining?' <span style="font-size:12px;color:#94a3b8;font-weight:400;">('+remaining+' รายการ)</span>':'')+'</div>';
+  if (remaining>0) cardHtml += '<button onclick="goFillInspection()" style="background:#1a2332;border:none;border-radius:8px;padding:8px 16px;color:#fff;font-family:Kanit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;"><i class="bi bi-table me-1"></i>กรอกผลทั้งหมด ('+remaining+')</button>';
+  cardHtml += '</div>';
+
+  if (!preview.length) {
+    cardHtml += '<div style="text-align:center;padding:48px;font-family:Kanit;"><i class="bi bi-trophy-fill" style="font-size:44px;color:#f59e0b;display:block;margin-bottom:14px;"></i><div style="font-size:16px;font-weight:700;color:#166534;">สำรวจครบทุกรายการแล้ว!</div><div style="font-size:12px;color:#94a3b8;margin-top:6px;">ยินดีด้วย ไม่มีรายการเหลือในรอบนี้</div></div>';
+  } else {
+    cardHtml += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-family:Kanit;">';
+    cardHtml += '<thead><tr style="background:#f8fafc;">'
+      +'<th style="padding:9px 14px;font-size:11px;color:#64748b;font-weight:600;text-align:left;">ครุภัณฑ์</th>'
+      +'<th style="padding:9px 14px;font-size:11px;color:#64748b;font-weight:600;">ที่ใช้</th>'
+      +'<th style="padding:9px 14px;font-size:11px;color:#64748b;font-weight:600;min-width:140px;">ผลการตรวจ</th>'
+      +'<th style="padding:9px 14px;font-size:11px;color:#64748b;font-weight:600;">หมายเหตุ</th>'
+      +'<th style="padding:9px 14px;font-size:11px;color:#64748b;font-weight:600;text-align:center;">สถานะ</th>'
+      +'</tr></thead><tbody>';
+    preview.forEach(function(row) {
+      var a = row.asset;
+      var gi = App.inspItems.indexOf(row);
+      var selOpts = statusOpts.replace('value="'+row._status+'"','value="'+row._status+'" selected');
+      cardHtml += '<tr style="border-bottom:1px solid #f8fafc;border-left:3px solid #f59e0b;">'
+        +'<td style="padding:10px 14px;"><div style="font-size:13px;font-weight:700;color:#0f172a;">'+(a.name||'—')+'</div><div style="font-size:11px;color:#94a3b8;margin-top:2px;">'+(a.asset_code||'—')+'</div></td>'
+        +'<td style="padding:10px 14px;font-size:12px;color:#64748b;">'+(a.location||'—')+'</td>'
+        +'<td style="padding:10px 14px;"><select class="form-select form-select-sm" data-insp-idx="'+gi+'" onchange="setInspStatus(this)">'+selOpts+'</select></td>'
+        +'<td style="padding:10px 14px;"><input type="text" class="form-control form-control-sm" value="'+(row._note||'')+'" data-note-idx="'+gi+'" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>'
+        +'<td style="padding:10px 14px;text-align:center;" data-badge-idx="'+gi+'"><span class="badge" style="background:#fef9c3;color:#92400e;font-size:10px;border:1px solid #fde68a;"><i class="bi bi-hourglass-split me-1"></i>รอตรวจ</span></td>'
+        +'</tr>';
+    });
+    cardHtml += '</tbody></table></div>';
+  }
+  cardHtml += '</div>';
+  container.innerHTML = statsHtml + cardHtml;
 }
 
 async function _loadRoundList() {
@@ -7012,6 +7090,11 @@ async function _autoSaveInspRow(idx, triggerEl) {
     if (badgeCell) badgeCell.innerHTML = '<span class="badge" style="background:#fee2e2;color:#991b1b;font-size:10px;border:1px solid #fca5a5;">บันทึกไม่สำเร็จ</span>';
   }
   if (triggerEl) triggerEl.disabled = false;
+
+  // Refresh branch dashboard หลัง save สำเร็จ
+  if (!res.error && App._onBranchDashboard && App.currentInsp) {
+    setTimeout(function(){ _loadBranchInspDashboard(App.currentInsp); }, 700);
+  }
 }
 function inspGoPage(p) { App.inspPage = p; _renderInspTable(); }
 
