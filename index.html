@@ -933,6 +933,9 @@
           <button class="btn btn-primary btn-sm" onclick="showAssetForm()" id="btnAddAsset">
             <i class="bi bi-plus-lg me-1"></i>เพิ่มครุภัณฑ์
           </button>
+          <button id="btnShowAllAssets" class="btn btn-sm" onclick="toggleShowAllAssets()" style="background:#0f172a;color:#fff;border:none;border-radius:8px;font-family:Kanit;font-weight:600;padding:6px 16px;box-shadow:0 2px 8px rgba(0,0,0,.18);">
+            <i class="bi bi-list-ul me-1"></i>แสดงทั้งหมด
+          </button>
         </div>
       </div>
       <!-- Filter -->
@@ -991,14 +994,14 @@
             <table id="assetsMainTable" style="width:100%;table-layout:fixed;border-collapse:collapse;font-family:Kanit;">
               <colgroup>
                 <col class="no-print" style="width:2%"><!-- checkbox -->
-                <col style="width:14%"><!-- รหัส/ปีงบ -->
-                <col style="width:28%"><!-- ชื่อ + ยี่ห้อ/รุ่น -->
-                <col style="width:13%"><!-- สาขา -->
-                <col style="width:19%"><!-- ใช้ประจำที่ -->
-                <col style="width:7%"> <!-- อายุ -->
-                <col style="width:8%"> <!-- สถานะ -->
-                <col style="width:9%"> <!-- ตรวจล่าสุด -->
-                <col class="no-print" style="width:6%"><!-- จัดการ -->
+                <col style="width:13%"><!-- รหัส/ปีงบ -->
+                <col style="width:25%"><!-- ชื่อ + ยี่ห้อ/รุ่น -->
+                <col id="colBranch" style="width:12%"><!-- สาขา -->
+                <col style="width:18%"><!-- ใช้ประจำที่ -->
+                <col style="width:6%"> <!-- อายุ -->
+                <col style="width:7%"> <!-- สถานะ -->
+                <col style="width:8%"> <!-- ตรวจล่าสุด -->
+                <col class="no-print" style="width:9%"><!-- จัดการ -->
               </colgroup>
               <thead>
                 <tr style="background:#f1f5f9;border-bottom:2px solid #dde3ec;">
@@ -1007,7 +1010,7 @@
                   </th>
                   <th style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;">รหัส / ปีงบ</th>
                   <th style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;">ชื่อครุภัณฑ์</th>
-                  <th style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;">สาขา</th>
+                  <th id="thBranch" style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;">สาขา</th>
                   <th style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;">ใช้ประจำที่</th>
                   <th style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;text-align:center;">อายุ (ปี)</th>
                   <th style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;">สถานะ</th>
@@ -1140,9 +1143,17 @@
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body text-center py-4">
-            <div id="qrModalCanvas" style="display:inline-block;padding:12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:12px;"></div>
-            <div id="qrModalAssetName" style="font-size:14px;font-weight:700;color:#0f172a;font-family:Kanit;margin-bottom:4px;"></div>
-            <div id="qrModalAssetCode" style="font-size:12px;color:#64748b;font-family:Kanit;"></div>
+            <div id="qrModalCanvas" style="display:inline-block;padding:14px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.08);"></div>
+            <div id="qrModalAssetName" style="font-size:15px;font-weight:700;color:#0f172a;font-family:Kanit;margin-bottom:4px;"></div>
+            <div id="qrModalAssetCode" style="font-size:12px;color:#64748b;font-family:Kanit;margin-bottom:14px;"></div>
+            <div class="d-flex gap-2 justify-content-center">
+              <button id="qrModalDownloadBtn" class="btn btn-sm" style="background:#0c1a2e;color:#fff;border:none;border-radius:8px;padding:7px 18px;font-family:Kanit;font-size:13px;font-weight:600;">
+                <i class="bi bi-download me-1"></i>บันทึกรูป
+              </button>
+              <button onclick="window.print()" class="btn btn-sm" style="background:#fff;color:#0c1a2e;border:1px solid #cbd5e1;border-radius:8px;padding:7px 18px;font-family:Kanit;font-size:13px;font-weight:600;">
+                <i class="bi bi-printer me-1"></i>พิมพ์
+              </button>
+            </div>
             <div style="margin-top:12px;font-size:11px;color:#94a3b8;font-family:Kanit;">สแกน QR เพื่อดูข้อมูลบนมือถือ</div>
           </div>
         </div>
@@ -1546,12 +1557,15 @@
             </button>
           </li>
         </ul>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 align-items-center">
           <button class="btn btn-sm btn-outline-danger" onclick="printDisposalList()" style="font-family:Kanit;border-radius:8px;">
             <i class="bi bi-printer me-1"></i>พิมพ์บัญชีเสนอจำหน่าย
           </button>
           <button class="btn btn-sm" onclick="exportDisposalDocx()" style="font-family:Kanit;border-radius:8px;background:#1e40af;color:#fff;font-weight:600;padding:6px 14px;">
             <i class="bi bi-file-earmark-word me-1"></i>ส่งออกบัญชีเสนอจำหน่ายเป็น Word
+          </button>
+          <button id="btnShowAllDisp" class="btn btn-sm" onclick="toggleShowAllDisp()" style="background:#0f172a;color:#fff;border:none;border-radius:8px;font-family:Kanit;font-weight:600;padding:6px 16px;box-shadow:0 2px 8px rgba(0,0,0,.18);">
+            <i class="bi bi-list-ul me-1"></i>แสดงทั้งหมด
           </button>
         </div>
       </div>
@@ -2044,8 +2058,6 @@
     <!-- ===== INSPECTION ===== -->
     <div id="page-inspection" class="page-content" style="display:none;">
 
-      <!-- Banner รอบ active -->
-      <div id="inspRoundBanner" class="mb-3"></div>
 
       <!-- Admin: สร้างรอบตรวจ + ประวัติ -->
       <div id="inspAdminSection" style="display:none;" class="mb-3">
@@ -2115,14 +2127,14 @@
           <div class="table-responsive">
             <table class="table table-sm table-hover mb-0" style="font-size:12px;">
               <thead class="table-dark">
-                <tr>
-                  <th class="text-center" style="width:36px;">ที่</th>
-                  <th style="min-width:250px;">ครุภัณฑ์</th>
-                  <th style="min-width:130px;">สาขา / ที่ใช้</th>
-                  <th class="text-end" style="width:90px;">ราคา (บาท)</th>
-                  <th style="min-width:170px;">ผลการตรวจ</th>
-                  <th style="min-width:120px;">หมายเหตุ</th>
-                  <th class="text-center" style="width:80px;">จัดการ</th>
+                <tr style="font-size:13px;font-weight:400;">
+                  <th style="min-width:100px;font-weight:400;">รหัส</th>
+                  <th style="min-width:220px;font-weight:400;">ชื่อครุภัณฑ์</th>
+                  <th style="min-width:130px;font-weight:400;">ใช้ประจำที่</th>
+                  <th style="min-width:170px;font-weight:400;">ผลการตรวจ</th>
+                  <th style="width:110px;font-weight:400;">วันตรวจล่าสุด</th>
+                  <th style="min-width:120px;font-weight:400;">หมายเหตุ</th>
+                  <th class="text-center" style="width:60px;font-weight:400;">จัดการ</th>
                 </tr>
               </thead>
               <tbody id="inspTableBody"></tbody>
@@ -2698,7 +2710,7 @@ var App = {
   allAssets: [],
   filteredAssets: [],
   assetPage: 1,
-  assetPageSize: 50,
+  assetPageSize: 5,
   currentInspectionId: null,
   inspItems: [],
   inspFiltered: [],
@@ -3860,6 +3872,13 @@ function renderAssetTable() {
   var chkAll = document.getElementById('chkSelectAll');
   if (chkAll) chkAll.checked = false;
 
+  // ซ่อน/แสดง คอลัมน์สาขาตาม role
+  var _isBr = App.profile && App.profile.role === 'branch';
+  var colB = document.getElementById('colBranch');
+  var thB  = document.getElementById('thBranch');
+  if (colB) colB.style.display = _isBr ? 'none' : '';
+  if (thB)  thB.style.display  = _isBr ? 'none' : '';
+
   // shared cell style
   var tdBase = 'padding:7px 10px;font-family:Kanit;font-size:13px;font-weight:300;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0;border-bottom:1px solid #f1f5f9;';
 
@@ -3933,15 +3952,15 @@ function renderAssetTable() {
         + chkCell
         + '<td style="' + tdBase + 'padding-left:10px;vertical-align:middle;">' + codeHtml + '</td>'
         + '<td style="' + tdBase + 'vertical-align:middle;">' + nameCellHtml + '</td>'
-        + '<td style="' + tdBase + 'vertical-align:middle;">' + branchHtml + '</td>'
+        + (_isBr ? '' : '<td style="' + tdBase + 'vertical-align:middle;">' + branchHtml + '</td>')
         + '<td style="' + tdBase + 'vertical-align:middle;">' + locHtml + '</td>'
         + '<td style="padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;overflow:hidden;max-width:0;">' + ageHtml(a.acquired_date, a.name) + '</td>'
         + '<td style="padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;overflow:hidden;max-width:0;">' + badgeHtml(a.status, true) + '</td>'
         + '<td id="insp_' + a.id + '" style="padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;overflow:hidden;max-width:0;"><span style="font-family:Kanit;font-size:11px;color:#cbd5e1;">...</span></td>'
         + '<td class="no-print" style="padding:5px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle;text-align:center;white-space:nowrap;" onclick="event.stopPropagation();">'
-          + '<button style="background:none;border:1px solid #93c5fd;border-radius:6px;padding:4px 10px;cursor:pointer;color:#2563eb;font-size:13px;margin-right:4px;" onclick="showAssetForm(\'' + a.id + '\')" title="แก้ไข"><i class="bi bi-pencil"></i></button>'
-          + '<button style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:4px 10px;cursor:pointer;color:#64748b;font-size:13px;" onclick="printAssetCard(\'' + a.id + '\')" title="พิมพ์ พ.ด.2"><i class="bi bi-printer"></i></button>'
-          + '<button style="background:none;border:1px solid #a7f3d0;border-radius:6px;padding:4px 10px;cursor:pointer;color:#059669;font-size:13px;margin-left:4px;" onclick="showQRModal(\'' + a.id + '\')" title="QR Code"><i class="bi bi-qr-code"></i></button>'
+          + '<button style="background:none;border:1px solid #93c5fd;border-radius:6px;padding:4px 7px;cursor:pointer;color:#2563eb;font-size:12px;" onclick="showAssetForm(\'' + a.id + '\')" title="แก้ไข"><i class="bi bi-pencil"></i></button>'
+          + '<button style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:4px 7px;cursor:pointer;color:#64748b;font-size:12px;margin-left:3px;" onclick="printAssetCard(\'' + a.id + '\')" title="พิมพ์ พ.ด.2"><i class="bi bi-printer"></i></button>'
+          + '<button style="background:none;border:1px solid #a7f3d0;border-radius:6px;padding:4px 7px;cursor:pointer;color:#059669;font-size:12px;margin-left:3px;" onclick="showQRModal(\'' + a.id + '\')" title="QR Code"><i class="bi bi-qr-code"></i></button>'
         + '</td>'
         + '</tr>';
     }).join('');
@@ -3965,6 +3984,34 @@ function renderAssetTable() {
 }
 
 function assetGoPage(p) { App.assetPage = p; renderAssetTable(); }
+
+function toggleShowAllDisp() {
+  var btn = document.getElementById('btnShowAllDisp');
+  App._dispShowAll = !App._dispShowAll;
+  if (App._dispShowAll) {
+    if (btn) { btn.innerHTML = '<i class="bi bi-layout-text-sidebar me-1"></i>แสดง 5 รายการ'; btn.style.background = '#f59e0b'; btn.style.color = '#000'; }
+  } else {
+    if (btn) { btn.innerHTML = '<i class="bi bi-list-ul me-1"></i>แสดงทั้งหมด'; btn.style.background = '#0f172a'; btn.style.color = '#fff'; }
+  }
+  // re-render tab ปัจจุบัน
+  var pendingTab = document.getElementById('dispTabContent-pending');
+  if (pendingTab && pendingTab.style.display !== 'none') _loadDispPending();
+  else _loadDispDone();
+}
+
+function toggleShowAllAssets() {
+  var btn = document.getElementById('btnShowAllAssets');
+  var isAll = App.assetPageSize >= 9999;
+  if (isAll) {
+    App.assetPageSize = 5;
+    if (btn) { btn.innerHTML = '<i class="bi bi-list-ul me-1"></i>แสดงทั้งหมด'; btn.style.background = '#0f172a'; btn.style.color = '#fff'; btn.style.border = 'none'; }
+  } else {
+    App.assetPageSize = 9999;
+    if (btn) { btn.innerHTML = '<i class="bi bi-layout-text-sidebar me-1"></i>แสดง 5 รายการ'; btn.style.background = '#f59e0b'; btn.style.color = '#000'; btn.style.border = 'none'; }
+  }
+  App.assetPage = 1;
+  renderAssetTable();
+}
 
 async function _loadLastInspDates(assetIds) {
   if (!assetIds || !assetIds.length) return;
@@ -4523,7 +4570,12 @@ async function showAssetDetail(id) {
   try {
   var res = await sb.from('assets').select('*, branches(name), asset_photos(*), asset_repairs(*)').eq('id', id).single();
   var a = res.data;
-  if (!a) { showToast('ไม่พบข้อมูลครุภัณฑ์', 'danger'); return; }
+  if (!a || res.error) {
+    // fallback: query ไม่มี join เผื่อ branch user ไม่มีสิทธิ์
+    var res2 = await sb.from('assets').select('*, branches(name)').eq('id', id).single();
+    a = res2.data;
+    if (!a) { showToast('ไม่พบข้อมูลครุภัณฑ์', 'danger'); return; }
+  }
 
   // แยก query components เผื่อ FK ยังไม่ refresh
   var comps = [];
@@ -5563,8 +5615,12 @@ async function _loadDispPending() {
   var repRes = await sb.from('repair_requests').select('asset_id').in('asset_id', assetIds);
   (repRes.data||[]).forEach(function(r){ repCounts[r.asset_id] = (repCounts[r.asset_id]||0)+1; });
 
+  App._dispPendingAll = rows;
+  var showAll = App._dispShowAll || false;
+  var display = showAll ? rows : rows.slice(0, 5);
+
   var html = '';
-  rows.forEach(function(a) {
+  display.forEach(function(a) {
     var isPending  = a.status === 'disposal_pending';
     var isOveraged = a.status === 'overaged';
     var statusBadge = isPending
@@ -5626,6 +5682,9 @@ async function _loadDispPending() {
 
     html += '</td></tr>';
   });
+  if (!showAll && rows.length > 5) {
+    html += '<tr><td colspan="7" style="text-align:center;padding:10px;font-family:Kanit;font-size:12px;color:#94a3b8;">แสดง 5 จาก ' + rows.length + ' รายการ — กด <strong>แสดงทั้งหมด</strong> เพื่อดูครบ</td></tr>';
+  }
   tbody.innerHTML = html;
 }
 
@@ -5650,8 +5709,12 @@ async function _loadDispDone() {
     return;
   }
 
+  App._dispDoneAll = rows;
+  var showAll = App._dispShowAll || false;
+  var display = showAll ? rows : rows.slice(0, 5);
+
   var html = '';
-  rows.forEach(function(a) {
+  display.forEach(function(a) {
     var priceStr   = a.price ? Number(a.price).toLocaleString('th-TH',{minimumFractionDigits:2}) : '—';
     var disposedAt = a.updated_at ? new Date(a.updated_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'}) : '—';
     var _ls    = getAssetLifespan(a.name);
@@ -5667,6 +5730,9 @@ async function _loadDispDone() {
     html += '<td style="padding:10px 12px;font-size:12px;color:#64748b;">' + (a.notes||'—') + '</td>';
     html += '</tr>';
   });
+  if (!showAll && rows.length > 5) {
+    html += '<tr><td colspan="5" style="text-align:center;padding:10px;font-family:Kanit;font-size:12px;color:#94a3b8;">แสดง 5 จาก ' + rows.length + ' รายการ — กด <strong>แสดงทั้งหมด</strong> เพื่อดูครบ</td></tr>';
+  }
   tbody.innerHTML = html;
 }
 
@@ -6539,7 +6605,8 @@ async function loadInspectionPage() {
   }
 }
 
-async function _loadBranchInspDashboard(insp) {
+async function _loadBranchInspDashboard(insp, showAll) {
+  App._branchDashShowAll = !!showAll;
   var container = document.getElementById('inspOverviewBody');
   if (!container) return;
   container.innerHTML = '<div class="text-center py-5"><div class="spinner-border spinner-border-sm text-primary"></div><div style="font-family:Kanit;color:#94a3b8;margin-top:10px;font-size:13px;">กำลังโหลด...</div></div>';
@@ -6593,24 +6660,32 @@ async function _loadBranchInspDashboard(insp) {
   if (!preview.length) {
     cardHtml += '<div style="text-align:center;padding:48px;font-family:Kanit;"><i class="bi bi-trophy-fill" style="font-size:44px;color:#f59e0b;display:block;margin-bottom:14px;"></i><div style="font-size:16px;font-weight:700;color:#166534;">สำรวจครบทุกรายการแล้ว!</div><div style="font-size:12px;color:#94a3b8;margin-top:6px;">ยินดีด้วย ไม่มีรายการเหลือในรอบนี้</div></div>';
   } else {
-    cardHtml += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-family:Kanit;">';
+    var tdStyle = 'padding:10px 14px;font-size:13px;font-weight:400;color:#0f172a;';
+    cardHtml += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-family:Kanit;font-size:13px;font-weight:400;">';
     cardHtml += '<thead><tr style="background:#f8fafc;">'
-      +'<th style="padding:9px 14px;font-size:11px;color:#64748b;font-weight:600;text-align:left;">ครุภัณฑ์</th>'
-      +'<th style="padding:9px 14px;font-size:11px;color:#64748b;font-weight:600;">ที่ใช้</th>'
-      +'<th style="padding:9px 14px;font-size:11px;color:#64748b;font-weight:600;min-width:140px;">ผลการตรวจ</th>'
-      +'<th style="padding:9px 14px;font-size:11px;color:#64748b;font-weight:600;">หมายเหตุ</th>'
-      +'<th style="padding:9px 14px;font-size:11px;color:#64748b;font-weight:600;text-align:center;">สถานะ</th>'
+      +'<th style="padding:9px 14px;font-size:13px;color:#64748b;font-weight:400;text-align:left;">รหัส</th>'
+      +'<th style="padding:9px 14px;font-size:13px;color:#64748b;font-weight:400;">ชื่อครุภัณฑ์</th>'
+      +'<th style="padding:9px 14px;font-size:13px;color:#64748b;font-weight:400;">ใช้ประจำที่</th>'
+      +'<th style="padding:9px 14px;font-size:13px;color:#64748b;font-weight:400;min-width:140px;">ผลการตรวจ</th>'
+      +'<th style="padding:9px 14px;font-size:13px;color:#64748b;font-weight:400;white-space:nowrap;">วันตรวจล่าสุด</th>'
+      +'<th style="padding:9px 14px;font-size:13px;color:#64748b;font-weight:400;">หมายเหตุ</th>'
+      +'<th style="padding:9px 14px;font-size:13px;color:#64748b;font-weight:400;text-align:center;">จัดการ</th>'
       +'</tr></thead><tbody>';
     preview.forEach(function(row) {
       var a = row.asset;
       var gi = App.inspItems.indexOf(row);
       var selOpts = statusOpts.replace('value="'+row._status+'"','value="'+row._status+'" selected');
-      cardHtml += '<tr style="border-bottom:1px solid #f8fafc;border-left:3px solid #f59e0b;">'
-        +'<td style="padding:10px 14px;"><div style="font-size:13px;font-weight:700;color:#0f172a;">'+(a.name||'—')+'</div><div style="font-size:11px;color:#94a3b8;margin-top:2px;">'+(a.asset_code||'—')+'</div></td>'
-        +'<td style="padding:10px 14px;font-size:12px;color:#64748b;">'+(a.location||'—')+'</td>'
-        +'<td style="padding:10px 14px;"><select class="form-select form-select-sm" data-insp-idx="'+gi+'" onchange="setInspStatus(this)">'+selOpts+'</select></td>'
-        +'<td style="padding:10px 14px;"><input type="text" class="form-control form-control-sm" value="'+(row._note||'')+'" data-note-idx="'+gi+'" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>'
-        +'<td style="padding:10px 14px;text-align:center;" data-badge-idx="'+gi+'"><span class="badge" style="background:#fef9c3;color:#92400e;font-size:10px;border:1px solid #fde68a;"><i class="bi bi-hourglass-split me-1"></i>รอตรวจ</span></td>'
+      var inspDate = (row.item && (row.item.inspected_at || row.item.created_at))
+        ? fmtDate(row.item.inspected_at || row.item.created_at)
+        : '<span style="color:#cbd5e1;">—</span>';
+      cardHtml += '<tr style="border-bottom:1px solid #f1f5f9;border-left:3px solid #f59e0b;">'
+        +'<td style="'+tdStyle+'color:#475569;">'+(a.asset_code||'<span style="color:#f59e0b;">ไม่มีรหัส</span>')+'</td>'
+        +'<td style="'+tdStyle+'">'+(a.name||'—')+'</td>'
+        +'<td style="'+tdStyle+'color:#475569;">'+(a.branches&&a.branches.name?a.branches.name:'<span style="color:#f59e0b;">ไม่ระบุ</span>')+(a.location?' <span style="color:#94a3b8;font-size:12px;">· '+a.location+'</span>':'')+'</td>'
+        +'<td style="'+tdStyle+'"><select class="form-select form-select-sm" style="font-size:13px;font-family:Kanit;" data-insp-idx="'+gi+'" onchange="setInspStatus(this)">'+selOpts+'</select></td>'
+        +'<td style="'+tdStyle+'color:#475569;white-space:nowrap;">'+inspDate+'</td>'
+        +'<td style="'+tdStyle+'"><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Kanit;" value="'+(row._note||'')+'" data-note-idx="'+gi+'" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>'
+        +'<td style="'+tdStyle+'text-align:center;"><button onclick="showAssetForm(\''+a.id+'\')" class="btn btn-sm" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;color:#2563eb;" title="ดูรายละเอียด"><i class="bi bi-eye"></i></button></td>'
         +'</tr>';
     });
     cardHtml += '</tbody></table></div>';
@@ -6712,7 +6787,7 @@ async function _loadInspOverview() {
   // เก็บไว้ใช้ render รายการที่ยังไม่สำรวจในการ์ดแต่ละสาขา
   App._inspOverviewAssets = assets;
   App._inspOverviewDoneSet = doneSet;
-  App._inspShowAllBranches = false; // reset ทุกครั้งที่โหลดใหม่
+  App._inspShowAllBranches = true; // แสดงทุกสาขาเสมอ
   // badges removed (tabs removed)
 
   App._inspOverviewData = Object.keys(byBranch).map(function(bId) {
@@ -6759,12 +6834,8 @@ function _renderInspOverview(totalAssets, totalDone, totalPct) {
       'border:1px solid #e2e8f0;font-size:12px;font-weight:600;padding:5px 12px;">' + label + '</button>';
   };
   // แสดงสูงสุด 5 สาขา ถ้ายังไม่กด "แสดงทั้งหมด"
-  var showAll   = App._inspShowAllBranches || false;
-  var displayList = showAll ? branchList : branchList.slice(0, 5);
-  var hiddenCount = branchList.length - displayList.length;
-  var showAllBtn = hiddenCount > 0
-    ? '<button onclick="App._inspShowAllBranches=true;var t=App._inspOverviewTotals||{};_renderInspOverview(t.totalAssets||0,t.totalDone||0,t.totalPct||0);" class="btn btn-sm ms-auto" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;font-size:12px;font-weight:600;padding:5px 12px;white-space:nowrap;"><i class="bi bi-grid me-1"></i>แสดงทั้งหมด (' + branchList.length + ' สาขา)</button>'
-    : (branchList.length > 5 ? '<button onclick="App._inspShowAllBranches=false;var t=App._inspOverviewTotals||{};_renderInspOverview(t.totalAssets||0,t.totalDone||0,t.totalPct||0);" class="btn btn-sm ms-auto" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;font-size:12px;font-size:12px;">ย่อ ↑</button>' : '');
+  var displayList = branchList;
+  var showAllBtn = '';
 
   var sortBar =
     '<div class="d-flex align-items-center gap-2 mb-3 flex-wrap">' +
@@ -6782,28 +6853,9 @@ function _renderInspOverview(totalAssets, totalDone, totalPct) {
     var bg    = bp === 0   ? '#f8fafc' : bp >= 100 ? '#f0fdf4' : bp >= 50 ? '#eff6ff' : '#fffbeb';
     var remaining = item.total - item.done;
 
-    // 5 รายการแรกที่ยังไม่สำรวจ (คำนวณจากข้อมูลที่โหลดไว้แล้ว ไม่ต้อง query เพิ่ม)
-    var _allA  = App._inspOverviewAssets || [];
-    var _doneS = App._inspOverviewDoneSet || {};
-    var branchUnsurveyed = _allA.filter(function(a){ return (a.branch_id||'__none__') === item.bId && !_doneS[a.id]; });
-    var preview5 = branchUnsurveyed.slice(0, 5);
-    var previewHtml = '';
-    if (preview5.length > 0) {
-      previewHtml = '<div style="margin-top:10px;border-top:1px solid #e2e8f0;padding-top:8px;">'
-        + '<div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.4px;margin-bottom:5px;text-transform:uppercase;">รายการที่ยังไม่สำรวจ</div>';
-      preview5.forEach(function(a) {
-        previewHtml += '<div style="font-size:11px;color:#374151;padding:2px 0;display:flex;gap:6px;overflow:hidden;">'
-          + '<span style="color:#cbd5e1;flex-shrink:0;">' + (a.asset_code||'—') + '</span>'
-          + '<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (a.name||'—') + '</span>'
-          + '</div>';
-      });
-      if (branchUnsurveyed.length > 5) {
-        previewHtml += '<div style="font-size:10px;color:#94a3b8;margin-top:4px;">และอีก ' + (branchUnsurveyed.length-5) + ' รายการ...</div>';
-      }
-      previewHtml += '</div>';
-    } else if (item.total > 0 && remaining === 0) {
-      previewHtml = '<div style="margin-top:8px;font-size:11px;color:#059669;"><i class="bi bi-check-circle-fill me-1"></i>สำรวจครบทุกรายการแล้ว</div>';
-    }
+    var previewHtml = remaining === 0 && item.total > 0
+      ? '<div style="margin-top:8px;font-size:11px;color:#059669;"><i class="bi bi-check-circle-fill me-1"></i>สำรวจครบทุกรายการแล้ว</div>'
+      : '';
 
     // ปุ่มขวาบน
     var rightBtns = '';
@@ -6835,9 +6887,13 @@ function _renderInspOverview(totalAssets, totalDone, totalPct) {
 }
 
 function _ovStatCard(val, label, color, icon) {
-  return '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;text-align:center;">' +
-    '<div style="font-size:22px;font-weight:800;color:' + color + ';line-height:1;">' + val + '</div>' +
-    '<div style="font-size:11px;color:#64748b;margin-top:4px;"><i class="bi ' + icon + ' me-1" style="color:' + color + ';"></i>' + label + '</div>' +
+  var bg = color + '18';
+  return '<div class="stat-card" style="border-left-color:' + color + ';--sc:' + color + ';cursor:default;" onmouseover="" onmouseout="">' +
+    '<div class="sc-icon" style="background:' + bg + ';"><i class="bi ' + icon + '" style="color:' + color + ';font-size:20px;"></i></div>' +
+    '<div style="flex:1;">' +
+      '<div class="sc-label">' + label + '</div>' +
+      '<div class="sc-num" style="color:' + color + ';">' + val + '</div>' +
+    '</div>' +
   '</div>';
 }
 
@@ -6988,28 +7044,26 @@ function _renderInspTable() {
 
   tbody.innerHTML = slice.map(function(row, idx) {
     var a = row.asset;
-    var i = (page-1)*ps + idx + 1;
     var isDone = !!row.item;
     var rowStyle = isDone
       ? 'background:#f0fdf4;border-left:3px solid #22c55e;'
       : 'background:#fff;border-left:3px solid #f59e0b;';
-    var statusBadge = isDone
-      ? '<span class="badge" style="background:#dcfce7;color:#166534;font-size:10px;font-weight:600;border:1px solid #bbf7d0;"><i class="bi bi-check-circle-fill me-1"></i>ตรวจแล้ว</span>'
-      : '<span class="badge" style="background:#fef9c3;color:#92400e;font-size:10px;font-weight:600;border:1px solid #fde68a;"><i class="bi bi-hourglass-split me-1"></i>รอตรวจ</span>';
+    var inspDate = (row.item && (row.item.inspected_at || row.item.created_at))
+      ? fmtDate(row.item.inspected_at || row.item.created_at)
+      : '<span style="color:#cbd5e1;">—</span>';
+    var globalIdx = (page-1)*ps + idx;
+    var td = 'style="font-size:13px;font-weight:400;color:#0f172a;font-family:Kanit;"';
     return '<tr style="' + rowStyle + '">' +
-      '<td class="text-center" style="font-size:11px;color:#94a3b8;font-weight:600;">' + i + '</td>' +
-      '<td><div style="font-weight:700;font-size:13px;">' + a.name + '</div>' +
-        '<div style="font-size:11px;color:#64748b;margin-top:1px;">' + (a.asset_code||'-') + '</div>' +
-        (a.brand ? '<div style="font-size:11px;color:#94a3b8;">' + a.brand + (a.model?' · '+a.model:'') + '</div>' : '') +
-      '</td>' +
-      '<td style="font-size:13px;">' +
-        '<div style="font-weight:600;color:#0f172a;">' + ((a.branches&&a.branches.name)||'<span style="color:#f59e0b;font-size:12px;">ไม่ระบุ</span>') + '</div>' +
-        (a.location ? '<div style="font-size:11px;color:#94a3b8;margin-top:1px;"><i class="bi bi-geo-alt me-1"></i>' + a.location + '</div>' : '') +
-      '</td>' +
-      '<td class="text-end" style="font-size:13px;font-weight:600;color:#0f172a;">' + fmtNum(a.price) + '</td>' +
-      '<td><select class="form-select form-select-sm" data-insp-idx="' + ((page-1)*ps+idx) + '" onchange="setInspStatus(this)">' + statusOpts.replace('value="' + row._status + '"', 'value="' + row._status + '" selected') + '</select></td>' +
-      '<td><input type="text" class="form-control form-control-sm" value="' + (row._note||'') + '" data-note-idx="' + ((page-1)*ps+idx) + '" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>' +
-      '<td class="text-center" data-badge-idx="' + ((page-1)*ps+idx) + '">' + statusBadge + '</td></tr>';
+      '<td ' + td + ' style="font-size:13px;font-weight:400;color:#475569;font-family:Kanit;">' + (a.asset_code||'<span style="color:#f59e0b;">ไม่มีรหัส</span>') + '</td>' +
+      '<td ' + td + '>' + a.name + (a.brand ? ' <span style="color:#94a3b8;font-size:12px;">· ' + a.brand + '</span>' : '') + '</td>' +
+      '<td ' + td + ' style="font-size:13px;font-weight:400;color:#475569;font-family:Kanit;">' +
+        ((a.branches&&a.branches.name)||'<span style="color:#f59e0b;">ไม่ระบุ</span>') +
+        (a.location ? ' <span style="color:#94a3b8;font-size:12px;">· ' + a.location + '</span>' : '') + '</td>' +
+      '<td><select class="form-select form-select-sm" style="font-size:13px;font-family:Kanit;" data-insp-idx="' + globalIdx + '" onchange="setInspStatus(this)">' + statusOpts.replace('value="' + row._status + '"', 'value="' + row._status + '" selected') + '</select></td>' +
+      '<td style="font-size:13px;font-weight:400;color:#475569;white-space:nowrap;">' + inspDate + '</td>' +
+      '<td><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Kanit;" value="' + (row._note||'') + '" data-note-idx="' + globalIdx + '" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>' +
+      '<td class="text-center"><button onclick="showAssetForm(\'' + a.id + '\')" class="btn btn-sm" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;color:#2563eb;" title="ดูรายละเอียด"><i class="bi bi-eye"></i></button></td>' +
+    '</tr>';
   }).join('');
 
   if (paging) {
@@ -9582,22 +9636,43 @@ async function exportInspectionResultExcel() {
 // ============================================================
 // QR CODE — Feature 1: QR Modal per asset
 // ============================================================
-function showQRModal(assetId) {
+async function showQRModal(assetId) {
   var a = (App.allAssets||[]).find(function(x){ return x.id === assetId; });
-  if (!a) { showToast('ไม่พบข้อมูลครุภัณฑ์', 'danger'); return; }
+  if (!a) {
+    // fallback: ดึงจาก DB ถ้าไม่อยู่ใน cache
+    var res = await sb.from('assets').select('id,asset_code,name,branches(name)').eq('id', assetId).single();
+    a = res.data;
+    if (!a) { showToast('ไม่พบข้อมูลครุภัณฑ์', 'danger'); return; }
+  }
   var url = window.location.origin + window.location.pathname + '?scan=' + assetId;
   var container = document.getElementById('qrModalCanvas');
   container.innerHTML = '';
   new QRCode(container, {
     text: url,
-    width: 180,
-    height: 180,
+    width: 200,
+    height: 200,
     colorDark: '#0c1a2e',
     colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.H
   });
   document.getElementById('qrModalAssetName').textContent = a.name || '—';
   document.getElementById('qrModalAssetCode').textContent = 'รหัส: ' + (a.asset_code || '—');
+
+  // ปุ่มดาวน์โหลด — attach หลัง QR generate (~100ms)
+  setTimeout(function() {
+    var btnDl = document.getElementById('qrModalDownloadBtn');
+    if (!btnDl) return;
+    var img = container.querySelector('img') || container.querySelector('canvas');
+    if (!img) return;
+    var src = img.tagName === 'IMG' ? img.src : img.toDataURL();
+    btnDl.onclick = function() {
+      var link = document.createElement('a');
+      link.download = 'QR_' + (a.asset_code||assetId) + '.png';
+      link.href = src;
+      link.click();
+    };
+  }, 150);
+
   new bootstrap.Modal(document.getElementById('modalQRCode')).show();
 }
 
