@@ -6509,7 +6509,7 @@ async function loadInspectionPage() {
       ? '<button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);" onclick="notifyAllBranches()"><i class="bi bi-envelope me-1"></i>แจ้งสาขา</button>' +
         '<button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);" onclick="loadInspMonitor()"><i class="bi bi-speedometer2 me-1"></i>กำกับติดตาม</button>' +
         '<button class="btn btn-sm btn-danger" onclick="closeRound(\'' + insp.id + '\')"><i class="bi bi-lock me-1"></i>ปิดรอบ</button>'
-      : '<button class="btn btn-sm btn-success" onclick="goFillInspection()"><i class="bi bi-table me-1"></i>กรอกผลทั้งหมด</button>';
+      : '<button class="btn btn-sm btn-success" onclick="goFillInspection()"><i class="bi bi-table me-1"></i>แสดงทั้งหมด</button>';
     inspRoundBanner.innerHTML =
       '<div style="background:linear-gradient(135deg,#1e3a5f,#1e40af);border-radius:14px;padding:14px 18px;margin-bottom:14px;color:#fff;">' +
         '<div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">' +
@@ -6587,7 +6587,7 @@ async function _loadBranchInspDashboard(insp) {
   var cardHtml = '<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08);">';
   cardHtml += '<div style="padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">';
   cardHtml += '<div style="font-size:14px;font-weight:700;color:#0f172a;font-family:Kanit;"><i class="bi bi-clipboard2-pulse me-2" style="color:#f59e0b;"></i>รายการที่ยังไม่สำรวจ'+(remaining?' <span style="font-size:12px;color:#94a3b8;font-weight:400;">('+remaining+' รายการ)</span>':'')+'</div>';
-  if (remaining>0) cardHtml += '<button onclick="goFillInspection()" style="background:#1a2332;border:none;border-radius:8px;padding:8px 16px;color:#fff;font-family:Kanit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;"><i class="bi bi-table me-1"></i>กรอกผลทั้งหมด ('+remaining+')</button>';
+  if (remaining>0) cardHtml += '<button onclick="goFillInspection()" style="background:#1a2332;border:none;border-radius:8px;padding:8px 16px;color:#fff;font-family:Kanit;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;"><i class="bi bi-table me-1"></i>แสดงทั้งหมด ('+remaining+')</button>';
   cardHtml += '</div>';
 
   if (!preview.length) {
