@@ -6829,16 +6829,17 @@ async function goFillInspection() {
   App.inspFiltered = App.inspItems;
   App.inspPage = 1;
 
-  // Branch user: auto-filter สาขาตัวเอง + ยังไม่ตรวจ
+  // Branch user: ซ่อน filter สาขา (เห็นแค่สาขาตัวเอง) + auto-filter ยังไม่ตรวจ
   var isBranch = App.profile && App.profile.role === 'branch';
   var myBrId   = App.profile ? App.profile.branch_id : null;
+  var brEl     = document.getElementById('inspFilterBranch');
   if (isBranch && myBrId) {
-    var brEl   = document.getElementById('inspFilterBranch');
+    if (brEl) { brEl.value = myBrId; brEl.style.display = 'none'; }
     var doneEl = document.getElementById('inspFilterDone');
-    if (brEl)   brEl.value   = myBrId;
     if (doneEl) doneEl.value = 'pending';
     filterInspItems();
   } else {
+    if (brEl) brEl.style.display = '';
     _renderInspTable();
   }
 }
