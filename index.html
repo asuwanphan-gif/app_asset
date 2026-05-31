@@ -6822,7 +6822,19 @@ async function goFillInspection() {
   });
   App.inspFiltered = App.inspItems;
   App.inspPage = 1;
-  _renderInspTable();
+
+  // Branch user: auto-filter สาขาตัวเอง + ยังไม่ตรวจ
+  var isBranch = App.profile && App.profile.role === 'branch';
+  var myBrId   = App.profile ? App.profile.branch_id : null;
+  if (isBranch && myBrId) {
+    var brEl   = document.getElementById('inspFilterBranch');
+    var doneEl = document.getElementById('inspFilterDone');
+    if (brEl)   brEl.value   = myBrId;
+    if (doneEl) doneEl.value = 'pending';
+    filterInspItems();
+  } else {
+    _renderInspTable();
+  }
 }
 
 function filterInspItems() {
