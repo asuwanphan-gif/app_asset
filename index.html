@@ -7130,42 +7130,14 @@ function sendNotifyEmail() {
   showToast('เปิด Email Client เรียบร้อย', 'success');
 }
 
-function _showAllUnsurveyed(bId) {
-  var allA  = App._inspOverviewAssets || [];
-  var doneS = App._inspOverviewDoneSet || {};
-  var bData = (App._inspOverviewData||[]).find(function(x){ return x.bId === bId; });
-  var bName = bData ? bData.name : 'สาขา';
-  var unsurveyed = allA.filter(function(a){ return (a.branch_id||'__none__') === bId && !doneS[a.id]; });
-
-  var ov = document.getElementById('_inspUnsvOverlay');
-  if (!ov) {
-    ov = document.createElement('div');
-    ov.id = '_inspUnsvOverlay';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:16px;';
-    ov.onclick = function(e){ if(e.target===ov) ov.style.display='none'; };
-    document.body.appendChild(ov);
-  }
-  var html = '<div style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;font-family:Kanit;">';
-  html += '<div style="padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">';
-  html += '<div><div style="font-size:15px;font-weight:700;color:#0f172a;"><i class="bi bi-list-check me-2" style="color:#2563eb;"></i>รายการที่ยังไม่สำรวจ</div>'
-        + '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">' + bName + ' · ' + unsurveyed.length + ' รายการ</div></div>';
-  html += '<button onclick="document.getElementById(\'_inspUnsvOverlay\').style.display=\'none\'" style="background:#f1f5f9;border:none;border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:18px;color:#64748b;flex-shrink:0;">✕</button>';
-  html += '</div>';
-  html += '<div style="overflow-y:auto;padding:12px 18px 20px;flex:1;">';
-  if (!unsurveyed.length) {
-    html += '<div style="text-align:center;padding:30px;color:#059669;font-size:14px;"><i class="bi bi-check-circle-fill" style="font-size:36px;display:block;margin-bottom:10px;"></i>สำรวจครบทุกรายการแล้ว!</div>';
-  } else {
-    unsurveyed.forEach(function(a, i) {
-      html += '<div style="padding:8px 0;border-bottom:' + (i<unsurveyed.length-1?'1px solid #f8fafc':'none') + ';display:flex;align-items:center;gap:10px;">';
-      html += '<span style="font-size:11px;color:#cbd5e1;min-width:26px;text-align:right;">' + (i+1) + '</span>';
-      html += '<div style="min-width:0;flex:1;"><div style="font-size:13px;font-weight:600;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (a.name||'—') + '</div>';
-      html += '<div style="font-size:11px;color:#94a3b8;">' + (a.asset_code||'—') + '</div></div>';
-      html += '</div>';
-    });
-  }
-  html += '</div></div>';
-  ov.innerHTML = html;
-  ov.style.display = 'flex';
+async function _showAllUnsurveyed(bId) {
+  // ไปหน้ากรอกผล แล้ว pre-filter สาขา + ยังไม่ตรวจ
+  await goFillInspection();
+  var brEl   = document.getElementById('inspFilterBranch');
+  var doneEl = document.getElementById('inspFilterDone');
+  if (brEl)   brEl.value   = bId;
+  if (doneEl) doneEl.value = 'pending';
+  filterInspItems();
 }
 
 async function loadInspMonitor() {
