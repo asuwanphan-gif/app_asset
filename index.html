@@ -7091,9 +7091,9 @@ async function _autoSaveInspRow(idx, triggerEl) {
   }
   if (triggerEl) triggerEl.disabled = false;
 
-  // Refresh branch dashboard หลัง save สำเร็จ
+  // Refresh branch dashboard หลัง save สำเร็จ → ขึ้น item ถัดไปทันที
   if (!res.error && App._onBranchDashboard && App.currentInsp) {
-    setTimeout(function(){ _loadBranchInspDashboard(App.currentInsp); }, 700);
+    setTimeout(function(){ _loadBranchInspDashboard(App.currentInsp); }, 300);
   }
 }
 function inspGoPage(p) { App.inspPage = p; _renderInspTable(); }
