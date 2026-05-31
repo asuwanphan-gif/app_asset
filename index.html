@@ -2090,7 +2090,7 @@
     <!-- ===== INSPECTION FILL ===== -->
     <div id="page-inspection-fill" class="page-content" style="display:none;">
       <div class="page-header d-flex justify-content-end align-items-center gap-2 no-print">
-        <button class="btn btn-outline-secondary btn-sm" onclick="showPage('inspection')">
+        <button class="btn btn-outline-secondary btn-sm" onclick="showPage(App.profile&&App.profile.role==='branch'?'dashboard':'inspection')">
           <i class="bi bi-arrow-left me-1"></i>กลับ
         </button>
       </div>
@@ -6492,6 +6492,12 @@ async function loadInspectionPage() {
   var insp = inspections[0];
   App.currentInspectionId = insp.id;
   App.currentInsp = insp;
+
+  // Branch user → ข้ามหน้า overview ไปหน้ากรอกผลทันที
+  if (App.profile && App.profile.role === 'branch') {
+    goFillInspection();
+    return;
+  }
 
   if (inspEmptyState) inspEmptyState.style.display = 'none';
   if (inspTabsWrap) inspTabsWrap.style.display = '';
