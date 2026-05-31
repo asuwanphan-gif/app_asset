@@ -2106,9 +2106,6 @@
             </select>
             <button class="btn btn-primary btn-sm px-3" onclick="filterInspItems()"><i class="bi bi-search me-1"></i>ค้นหา</button>
             <button class="btn btn-outline-secondary btn-sm px-3" onclick="document.getElementById('inspSearch').value='';document.getElementById('inspFilterBranch').value='';document.getElementById('inspFilterDone').value='';filterInspItems();"><i class="bi bi-x-circle me-1"></i>ล้าง</button>
-            <button class="btn btn-success btn-sm px-3" onclick="saveBatchInspection()">
-              <i class="bi bi-save me-1"></i>บันทึกทั้งหมด
-            </button>
           </div>
         </div>
       </div>
@@ -6923,8 +6920,8 @@ function _renderInspTable() {
       '</td>' +
       '<td class="text-end" style="font-size:13px;font-weight:600;color:#0f172a;">' + fmtNum(a.price) + '</td>' +
       '<td><select class="form-select form-select-sm" data-insp-idx="' + ((page-1)*ps+idx) + '" onchange="setInspStatus(this)">' + statusOpts.replace('value="' + row._status + '"', 'value="' + row._status + '" selected') + '</select></td>' +
-      '<td><input type="text" class="form-control form-control-sm" value="' + (row._note||'') + '" data-note-idx="' + ((page-1)*ps+idx) + '" onchange="setInspNote(this)" placeholder="หมายเหตุ..."></td>' +
-      '<td class="text-center">' + statusBadge + '</td></tr>';
+      '<td><input type="text" class="form-control form-control-sm" value="' + (row._note||'') + '" data-note-idx="' + ((page-1)*ps+idx) + '" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>' +
+      '<td class="text-center" data-badge-idx="' + ((page-1)*ps+idx) + '">' + statusBadge + '</td></tr>';
   }).join('');
 
   if (paging) {
@@ -6943,11 +6940,68 @@ function _renderInspTable() {
 
 function setInspStatus(sel) {
   var idx = parseInt(sel.getAttribute('data-insp-idx'));
-  if (App.inspFiltered[idx]) App.inspFiltered[idx]._status = sel.value;
+  if (!App.inspFiltered[idx]) return;
+  App.inspFiltered[idx]._status = sel.value;
+  _autoSaveInspRow(idx, sel);
 }
 function setInspNote(inp) {
   var idx = parseInt(inp.getAttribute('data-note-idx'));
   if (App.inspFiltered[idx]) App.inspFiltered[idx]._note = inp.value;
+}
+function autoSaveInspNote(inp) {
+  var idx = parseInt(inp.getAttribute('data-note-idx'));
+  if (!App.inspFiltered[idx]) return;
+  App.inspFiltered[idx]._note = inp.value;
+  _autoSaveInspRow(idx, null);
+}
+
+async function _autoSaveInspRow(idx, triggerEl) {
+  var row = App.inspFiltered[idx];
+  if (!row || !App.currentInspectionId) return;
+
+  // แสดง spinner บน badge
+  var badgeCell = document.querySelector('[data-badge-idx="' + idx + '"]');
+  if (badgeCell) badgeCell.innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
+  if (triggerEl) triggerEl.disabled = true;
+
+  var payload = {
+    inspection_id: App.currentInspectionId,
+    asset_id:      row.asset.id,
+    result:        row._status,
+    status:        row._status,
+    notes:         row._note || null,
+    inspected_by:  App.profile ? App.profile.id : null,
+    inspected_at:  new Date().toISOString()
+  };
+
+  var res;
+  if (row.item) {
+    res = await sb.from('inspection_items').update(payload).eq('id', row.item.id);
+  } else {
+    res = await sb.from('inspection_items').insert(payload).select().single();
+    if (!res.error && res.data) row.item = res.data;
+  }
+
+  if (!res.error) {
+    await sb.from('assets').update({ status: row._status }).eq('id', row.asset.id);
+    row.asset.status = row._status;
+    if (badgeCell) badgeCell.innerHTML = '<span class="badge" style="background:#dcfce7;color:#166534;font-size:10px;font-weight:600;border:1px solid #bbf7d0;"><i class="bi bi-check-circle-fill me-1"></i>ตรวจแล้ว</span>';
+    // อัปเดต summary bar
+    var done = App.inspItems.filter(function(r){ return !!r.item; }).length;
+    var total = App.inspItems.length;
+    var pct = total ? Math.round(done/total*100) : 0;
+    var barColor = pct===100?'#22c55e':pct>=50?'#f59e0b':'#3b82f6';
+    var sb2 = document.getElementById('inspSummaryBar');
+    if (sb2) {
+      sb2.querySelector('strong') && (sb2.querySelector('strong').textContent = done);
+      var bar = sb2.querySelector('.progress-bar, div[style*="width:"]');
+      if (bar) bar.style.width = pct + '%';
+    }
+  } else {
+    showToast('บันทึกไม่สำเร็จ: ' + res.error.message, 'danger');
+    if (badgeCell) badgeCell.innerHTML = '<span class="badge" style="background:#fee2e2;color:#991b1b;font-size:10px;border:1px solid #fca5a5;">บันทึกไม่สำเร็จ</span>';
+  }
+  if (triggerEl) triggerEl.disabled = false;
 }
 function inspGoPage(p) { App.inspPage = p; _renderInspTable(); }
 
