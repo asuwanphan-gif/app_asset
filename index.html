@@ -6634,6 +6634,7 @@ async function _loadInspOverview() {
   // เก็บไว้ใช้ render รายการที่ยังไม่สำรวจในการ์ดแต่ละสาขา
   App._inspOverviewAssets = assets;
   App._inspOverviewDoneSet = doneSet;
+  App._inspShowAllBranches = false; // reset ทุกครั้งที่โหลดใหม่
   // badges removed (tabs removed)
 
   App._inspOverviewData = Object.keys(byBranch).map(function(bId) {
@@ -6679,16 +6680,25 @@ function _renderInspOverview(totalAssets, totalDone, totalPct) {
       (active ? 'background:#1e40af;color:#fff;' : 'background:#f1f5f9;color:#475569;') +
       'border:1px solid #e2e8f0;font-size:12px;font-weight:600;padding:5px 12px;">' + label + '</button>';
   };
+  // แสดงสูงสุด 5 สาขา ถ้ายังไม่กด "แสดงทั้งหมด"
+  var showAll   = App._inspShowAllBranches || false;
+  var displayList = showAll ? branchList : branchList.slice(0, 5);
+  var hiddenCount = branchList.length - displayList.length;
+  var showAllBtn = hiddenCount > 0
+    ? '<button onclick="App._inspShowAllBranches=true;var t=App._inspOverviewTotals||{};_renderInspOverview(t.totalAssets||0,t.totalDone||0,t.totalPct||0);" class="btn btn-sm ms-auto" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;font-size:12px;font-weight:600;padding:5px 12px;white-space:nowrap;"><i class="bi bi-grid me-1"></i>แสดงทั้งหมด (' + branchList.length + ' สาขา)</button>'
+    : (branchList.length > 5 ? '<button onclick="App._inspShowAllBranches=false;var t=App._inspOverviewTotals||{};_renderInspOverview(t.totalAssets||0,t.totalDone||0,t.totalPct||0);" class="btn btn-sm ms-auto" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;font-size:12px;font-size:12px;">ย่อ ↑</button>' : '');
+
   var sortBar =
     '<div class="d-flex align-items-center gap-2 mb-3 flex-wrap">' +
       '<span style="font-size:12px;color:#64748b;font-weight:600;">เรียงตาม:</span>' +
       sortBtn('pct_asc',  '% น้อยสุด ↑') +
       sortBtn('pct_desc', '% มากสุด ↓') +
       sortBtn('name',     'ชื่อสาขา') +
+      showAllBtn +
     '</div>';
 
-  // Branch cards — 2-column grid
-  var cards = branchList.map(function(item) {
+  // Branch cards — 2-column grid (แสดงตาม displayList)
+  var cards = displayList.map(function(item) {
     var bp    = item.bp;
     var color = bp === 0   ? '#94a3b8' : bp >= 100 ? '#22c55e' : bp >= 50 ? '#2563eb' : '#f59e0b';
     var bg    = bp === 0   ? '#f8fafc' : bp >= 100 ? '#f0fdf4' : bp >= 50 ? '#eff6ff' : '#fffbeb';
