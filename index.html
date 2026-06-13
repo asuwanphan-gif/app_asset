@@ -593,6 +593,27 @@
   code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:12px;color:#dc2626}
   hr{border:none;border-top:1px solid var(--border);margin:16px 0}
 
+  /* ── MODAL OVERLAY (QRScanner + shared) ── */
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:16px}
+  .modal-overlay.show{display:flex}
+  .modal-box{background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.22);width:100%;max-width:480px;overflow:hidden}
+  .modal-hdr{background:linear-gradient(135deg,var(--sb),var(--sb2));color:#fff;padding:16px 22px;display:flex;align-items:center;justify-content:space-between}
+  .modal-hdr-title{font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px}
+  .modal-hdr-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;line-height:1;transition:color .15s}
+  .modal-hdr-close:hover{color:#fff}
+  .modal-bdy{padding:20px 22px}
+  .modal-ftr{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+
+  /* ── PAGER ─────────────────────── */
+  .pg-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--border);background:#fafbfd}
+  .pg-info{font-size:12.5px;color:var(--muted)}
+  .pg-ctrl{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+  .pg-size{font-size:12.5px;padding:4px 8px;border-radius:7px;border:1px solid var(--border);font-family:'Kanit',sans-serif;color:var(--muted);margin-right:6px;background:#fff}
+  .pg-btn{min-width:30px;height:30px;padding:0 8px;border-radius:7px;border:1px solid var(--border);background:#fff;font-family:'Kanit',sans-serif;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
+  .pg-btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+  .pg-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .pg-btn:disabled{opacity:.4;cursor:default}
+
   /* ── PRINT ─────────────────────── */
   @media print{
     #sidebar,#topbar,#bottomnav,.no-print{display:none!important}
@@ -675,9 +696,7 @@
   <div style="position:absolute;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(8,145,178,.18),transparent 70%);bottom:-80px;left:-60px;pointer-events:none;"></div>
   <div style="position:relative;z-index:1;width:100%;max-width:360px;">
     <div style="text-align:center;margin-bottom:24px;">
-      <div style="display:inline-flex;align-items:center;justify-content:center;width:62px;height:62px;border-radius:16px;background:linear-gradient(135deg,#2563eb,#0891b2);box-shadow:0 8px 28px rgba(37,99,235,.4);margin-bottom:14px;">
-        <i class="bi bi-archive-fill" style="font-size:28px;color:#fff;"></i>
-      </div>
+      <img src="logo_lasc.png" alt="คณะศิลปศาสตร์และวิทยาศาสตร์" style="height:80px;width:auto;margin-bottom:14px;filter:drop-shadow(0 6px 18px rgba(0,0,0,.35));">
       <h3 style="color:#fff;font-weight:800;font-size:20px;letter-spacing:.3px;margin:0;">ระบบทะเบียนครุภัณฑ์</h3>
       <p style="color:rgba(255,255,255,.42);font-size:12px;margin:6px 0 0;line-height:1.6;">คณะศิลปศาสตร์และวิทยาศาสตร์<br>มหาวิทยาลัยราชภัฏศรีสะเกษ</p>
     </div>
@@ -709,11 +728,28 @@
 <!-- OVERLAY (mobile menu) -->
 <div id="overlay" onclick="closeSidebar()"></div>
 
+<!-- QR SCANNER MODAL -->
+<div class="modal-overlay" id="qrScanModal">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:420px">
+    <div class="modal-hdr">
+      <div class="modal-hdr-title"><i class="bi bi-camera"></i>สแกน QR Code ครุภัณฑ์</div>
+      <button class="modal-hdr-close" onclick="QRScanner.close()">&#x2715;</button>
+    </div>
+    <div class="modal-bdy" style="text-align:center">
+      <div id="qrReader" style="width:100%;border-radius:10px;overflow:hidden"></div>
+      <div id="qrScanMsg" style="font-size:13px;color:var(--muted);margin-top:10px">เล็งกล้องไปที่สติกเกอร์ QR Code ของครุภัณฑ์</div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-outline-secondary" onclick="QRScanner.close()">ปิด</button>
+    </div>
+  </div>
+</div>
+
 <!-- SIDEBAR -->
 <nav id="sidebar" style="display:none;">
   <div class="sb-brand">
     <div class="sb-logo">
-      <div class="sb-logo-icon"><i class="bi bi-archive-fill"></i></div>
+      <img src="logo_lasc.png" alt="LASC" style="height:36px;width:auto;flex-shrink:0;border-radius:6px;background:#fff;padding:2px;">
       <span>ระบบทะเบียนครุภัณฑ์</span>
     </div>
     <div class="sb-org">คณะศิลปศาสตร์และวิทยาศาสตร์<br>มหาวิทยาลัยราชภัฏศรีสะเกษ</div>
@@ -746,6 +782,9 @@
   <div class="sb-footer">
     <button onclick="showHelp()" class="btn-logout">
       <i class="bi bi-question-circle"></i>วิธีใช้งาน
+    </button>
+    <button onclick="openChangePassword()" class="btn-logout">
+      <i class="bi bi-key"></i>เปลี่ยนรหัสผ่าน
     </button>
     <button onclick="doLogout()" class="btn-logout btn-logout-red">
       <i class="bi bi-box-arrow-left"></i>ออกจากระบบ
@@ -831,6 +870,31 @@
           <span id="noBranchCount"></span>
         </span>
       </div>
+      <!-- Mini charts: status doughnut + category bar -->
+      <div class="row g-3 mb-3" id="dashMiniChartsRow" style="display:none;">
+        <div class="col-md-5">
+          <div class="card shadow-sm h-100">
+            <div class="card-header fw-semibold d-flex align-items-center gap-2" style="background:#f8fafc;border-bottom:1px solid #e2e8f0;font-size:13px;">
+              <i class="bi bi-pie-chart-fill" style="color:#2563eb;"></i>สัดส่วนสถานะ <small class="text-muted fw-normal">(คลิกกรอง)</small>
+            </div>
+            <div class="card-body" style="padding:12px 14px 10px;">
+              <div style="position:relative;width:100%;height:220px;"><canvas id="dashChartStatus"></canvas></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-7">
+          <div class="card shadow-sm h-100">
+            <div class="card-header fw-semibold d-flex align-items-center gap-2" style="background:#f8fafc;border-bottom:1px solid #e2e8f0;font-size:13px;">
+              <i class="bi bi-bar-chart-fill" style="color:#0891b2;"></i>จำนวนแยกตามประเภท <small class="text-muted fw-normal">(คลิกกรอง)</small>
+            </div>
+            <div class="card-body" style="padding:12px 14px 10px;">
+              <div style="position:relative;width:100%;height:220px;"><canvas id="dashChartCategory"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main chart: inspection progress by branch -->
       <div class="row g-3">
         <div class="col-12">
           <div class="card shadow-sm">
@@ -932,9 +996,6 @@
           </button>
           <button class="btn btn-primary btn-sm" onclick="showAssetForm()" id="btnAddAsset">
             <i class="bi bi-plus-lg me-1"></i>เพิ่มครุภัณฑ์
-          </button>
-          <button id="btnShowAllAssets" class="btn btn-sm" onclick="toggleShowAllAssets()" style="background:#0f172a;color:#fff;border:none;border-radius:8px;font-family:Kanit;font-weight:600;padding:6px 16px;box-shadow:0 2px 8px rgba(0,0,0,.18);">
-            <i class="bi bi-list-ul me-1"></i>แสดงทั้งหมด
           </button>
         </div>
       </div>
@@ -2102,6 +2163,9 @@
     <!-- ===== INSPECTION FILL ===== -->
     <div id="page-inspection-fill" class="page-content" style="display:none;">
       <div class="page-header d-flex justify-content-end align-items-center gap-2 no-print">
+        <button class="btn btn-sm" onclick="QRScanner.open()" style="background:#0f172a;color:#fff;border:none;border-radius:8px;font-family:Kanit;font-weight:600;padding:6px 14px;">
+          <i class="bi bi-qr-code-scan me-1"></i>สแกน QR
+        </button>
         <button class="btn btn-outline-secondary btn-sm" onclick="showPage('inspection')">
           <i class="bi bi-arrow-left me-1"></i>กลับ
         </button>
@@ -2676,6 +2740,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 // ============================================================
 // CONFIG & SUPABASE
@@ -2709,13 +2774,9 @@ var App = {
   branches: [],
   allAssets: [],
   filteredAssets: [],
-  assetPage: 1,
-  assetPageSize: 5,
   currentInspectionId: null,
   inspItems: [],
   inspFiltered: [],
-  inspPage: 1,
-  inspPageSize: 100,
   _dashChart: null
 };
 
@@ -2870,10 +2931,60 @@ function showConfirm(title, message, opts) {
   });
 }
 
+// ── Danger Modal (พิมพ์ keyword ยืนยัน — ใช้กับ action ทำลายข้อมูลถาวร) ──
+function showDangerConfirm(opts) {
+  opts = opts || {};
+  var title        = opts.title        || 'ยืนยันการลบ';
+  var msg          = opts.msg          || '';
+  var keyword      = opts.keyword      || 'ลบ';
+  var confirmLabel = opts.confirmLabel || 'ยืนยันลบ';
+  return new Promise(function(resolve) {
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:10000;display:flex;align-items:center;justify-content:center;animation:fadeIn .15s;';
+    overlay.innerHTML =
+      '<div style="background:#fff;border-radius:16px;padding:26px 26px 20px;min-width:320px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);font-family:Kanit;animation:slideUp .18s;">' +
+        '<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;">' +
+          '<div style="flex-shrink:0;width:42px;height:42px;border-radius:50%;background:#fef2f2;display:flex;align-items:center;justify-content:center;">' +
+            '<i class="bi bi-exclamation-triangle-fill" style="font-size:20px;color:#dc2626;"></i>' +
+          '</div>' +
+          '<div style="flex:1;">' +
+            '<div style="font-weight:700;font-size:15px;color:#0f172a;margin-bottom:5px;">' + title + '</div>' +
+            '<div style="font-size:13px;color:#475569;line-height:1.6;">' + msg + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="margin-bottom:14px;">' +
+          '<div style="font-size:12px;color:#64748b;margin-bottom:6px;">พิมพ์ <strong style="color:#dc2626;">' + keyword + '</strong> เพื่อยืนยัน</div>' +
+          '<input id="_dangerInput" type="text" autocomplete="off" style="width:100%;border:1.5px solid #e2e8f0;border-radius:9px;padding:8px 12px;font-family:Kanit;font-size:14px;outline:none;" placeholder="' + keyword + '">' +
+          '<div id="_dangerErr" style="font-size:11px;color:#dc2626;margin-top:4px;display:none;">พิมพ์ไม่ตรง กรุณาพิมพ์ "' + keyword + '"</div>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:flex-end;gap:8px;">' +
+          '<button id="_dangerCancel" style="background:#e2e8f0;color:#475569;border:none;border-radius:9px;padding:8px 20px;font-family:Kanit;font-size:13px;font-weight:700;cursor:pointer;">ยกเลิก</button>' +
+          '<button id="_dangerOk" disabled style="background:#dc2626;color:#fff;border:none;border-radius:9px;padding:8px 22px;font-family:Kanit;font-size:13px;font-weight:700;cursor:pointer;opacity:.45;">' + confirmLabel + '</button>' +
+        '</div>' +
+      '</div>';
+    function close(val) { document.body.removeChild(overlay); resolve(val); }
+    var input = overlay.querySelector('#_dangerInput');
+    var okBtn = overlay.querySelector('#_dangerOk');
+    var errEl = overlay.querySelector('#_dangerErr');
+    input.addEventListener('input', function() {
+      var match = input.value.trim() === keyword;
+      okBtn.disabled = !match;
+      okBtn.style.opacity = match ? '1' : '.45';
+      errEl.style.display = (input.value && !match) ? '' : 'none';
+    });
+    input.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !okBtn.disabled) close(true); });
+    okBtn.onclick = function() { if (input.value.trim() === keyword) close(true); };
+    overlay.querySelector('#_dangerCancel').onclick = function() { close(false); };
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) close(false); });
+    document.body.appendChild(overlay);
+    setTimeout(function() { input.focus(); }, 50);
+  });
+}
+
 function showToast(msg, type) {
   var el = document.getElementById('toast');
   var body = document.getElementById('toastMsg');
-  if (!el || !body) { alert(msg); return; }
+  if (!el || !body) { console.warn('[toast]', msg); return; }
   var icons = { success:'bi-check-circle-fill', danger:'bi-x-circle-fill', warning:'bi-exclamation-triangle-fill', primary:'bi-info-circle-fill' };
   var icon = icons[type] || 'bi-info-circle-fill';
   var delay = type === 'danger' ? 4500 : type === 'warning' ? 4000 : 3000;
@@ -2972,6 +3083,56 @@ async function _loadProfile(user) {
   App.profile = res.data;
 }
 
+// ── เปลี่ยนรหัสผ่านตัวเอง (pattern Account.openPwd จากแอปครุภัณฑ์ด่าน) ──
+function openChangePassword() {
+  var overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:10000;display:flex;align-items:center;justify-content:center;animation:fadeIn .15s;';
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:16px;padding:26px 26px 20px;min-width:320px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:Kanit;animation:slideUp .18s;">' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">' +
+        '<div style="width:42px;height:42px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+          '<i class="bi bi-key-fill" style="font-size:19px;color:#2563eb;"></i></div>' +
+        '<div style="font-weight:700;font-size:15px;color:#0f172a;">เปลี่ยนรหัสผ่าน</div>' +
+      '</div>' +
+      '<div style="margin-bottom:10px;">' +
+        '<div style="font-size:12px;color:#64748b;margin-bottom:5px;">รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)</div>' +
+        '<input id="_pwdNew" type="password" autocomplete="new-password" style="width:100%;border:1.5px solid #e2e8f0;border-radius:9px;padding:8px 12px;font-size:14px;outline:none;">' +
+      '</div>' +
+      '<div style="margin-bottom:6px;">' +
+        '<div style="font-size:12px;color:#64748b;margin-bottom:5px;">ยืนยันรหัสผ่านใหม่</div>' +
+        '<input id="_pwdNew2" type="password" autocomplete="new-password" style="width:100%;border:1.5px solid #e2e8f0;border-radius:9px;padding:8px 12px;font-size:14px;outline:none;">' +
+      '</div>' +
+      '<div id="_pwdErr" style="font-size:12px;color:#dc2626;min-height:18px;margin-bottom:8px;"></div>' +
+      '<div style="display:flex;justify-content:flex-end;gap:8px;">' +
+        '<button id="_pwdCancel" style="background:#e2e8f0;color:#475569;border:none;border-radius:9px;padding:8px 20px;font-family:Kanit;font-size:13px;font-weight:700;cursor:pointer;">ยกเลิก</button>' +
+        '<button id="_pwdSave" style="background:#2563eb;color:#fff;border:none;border-radius:9px;padding:8px 22px;font-family:Kanit;font-size:13px;font-weight:700;cursor:pointer;">บันทึก</button>' +
+      '</div>' +
+    '</div>';
+  function close() { if (overlay.parentNode) document.body.removeChild(overlay); }
+  overlay.querySelector('#_pwdCancel').onclick = close;
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
+  overlay.querySelector('#_pwdSave').onclick = async function() {
+    var p1 = overlay.querySelector('#_pwdNew').value;
+    var p2 = overlay.querySelector('#_pwdNew2').value;
+    var err = overlay.querySelector('#_pwdErr');
+    if (!p1 || p1.length < 6) { err.textContent = 'รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร'; return; }
+    if (p1 !== p2) { err.textContent = 'รหัสผ่านทั้งสองช่องไม่ตรงกัน'; return; }
+    var btn = this;
+    btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังบันทึก...';
+    var res = await sb.auth.updateUser({ password: p1 });
+    if (res.error) {
+      btn.disabled = false; btn.textContent = 'บันทึก';
+      err.textContent = 'ไม่สำเร็จ: ' + res.error.message;
+      return;
+    }
+    logTx('password_change', {});
+    close();
+    showToast('เปลี่ยนรหัสผ่านเรียบร้อย', 'success');
+  };
+  document.body.appendChild(overlay);
+  setTimeout(function() { var el = overlay.querySelector('#_pwdNew'); if (el) el.focus(); }, 50);
+}
+
 async function doLogout() {
   await sb.auth.signOut();
   App.user = null; App.profile = null; App.allAssets = [];
@@ -3020,6 +3181,7 @@ function _startApp() {
   var _pd = document.getElementById('page-dashboard');
   if (_pd && !_scanIdOnStart) _pd.style.display = 'none';
 
+  detectFeatures(); // probe transaction_logs + RPC (ไม่ block การโหลดหน้า)
   loadBranches().then(function() {
     if (_scanIdOnStart) {
       showScanPage(_scanIdOnStart);
@@ -3227,14 +3389,129 @@ function showHelp() {
 // DASHBOARD
 // ============================================================
 async function loadBranches() {
-  var res = await sb.from('branches').select('*').eq('active', true);
-  App.branches = (res.data || []).sort(function(a, b) {
+  // ดึงทุกสาขา (รวม inactive) — ใช้ map ชื่อสาขาย้อนหลังได้ / dropdown ใช้เฉพาะ active
+  var res = await sb.from('branches').select('*');
+  var all = res.data || [];
+  App.branchMap = {};
+  all.forEach(function(b) { App.branchMap[b.id] = { id: b.id, name: b.name, code: b.code }; });
+  App.branches = all.filter(function(b) { return b.active; }).sort(function(a, b) {
     var na = parseInt(a.code) || 0, nb = parseInt(b.code) || 0;
     if (na !== nb) return na - nb;
     return (a.code||'').localeCompare(b.code||'');
   });
   _populateBranchSelects();
   _populateYearSelects();
+}
+
+// เติม branches:{id,name,code} จาก cache แทน table embedding (กฎ RLS: ห้าม branches(name) ใน select)
+// รองรับทั้ง array และ object เดี่ยว — คืนค่าตัวเดิมเพื่อใช้ chain ได้
+function attachBranchInfo(rows) {
+  if (!rows) return rows;
+  var map = App.branchMap || {};
+  (Array.isArray(rows) ? rows : [rows]).forEach(function(r) {
+    if (r && r.branch_id && map[r.branch_id]) r.branches = map[r.branch_id];
+    else if (r && !r.branches) r.branches = null;
+  });
+  return rows;
+}
+
+// ============================================================
+// PAGER — pagination 10/20/50 ต่อหน้า (เริ่มต้น 20)
+// ============================================================
+const Pager = {
+  _state: {},
+  _render: {},
+  get(key){ return this._state[key] || (this._state[key] = { page:1, size:20 }); },
+  bind(key, fn){ this._render[key] = fn; },
+  reset(key){ this.get(key).page = 1; },
+  setPage(key, p){ this.get(key).page = p; if(this._render[key]) this._render[key](); },
+  setSize(key, s){ var st = this.get(key); st.size = parseInt(s)||20; st.page = 1; if(this._render[key]) this._render[key](); },
+  slice(key, rows){
+    var st = this.get(key);
+    var pages = Math.max(1, Math.ceil(rows.length / st.size));
+    if(st.page > pages) st.page = pages;
+    var start = (st.page-1) * st.size;
+    return rows.slice(start, start + st.size);
+  },
+  startIndex(key){ var st = this.get(key); return (st.page-1) * st.size; },
+  html(key, total){
+    var st = this.get(key);
+    var pages = Math.max(1, Math.ceil(total / st.size));
+    if(st.page > pages) st.page = pages;
+    if(total <= 10 && st.size >= total){
+      return total ? '<div class="pg-bar"><span class="pg-info">แสดงทั้งหมด ' + total.toLocaleString('th-TH') + ' รายการ</span></div>' : '';
+    }
+    var start = total ? (st.page-1)*st.size + 1 : 0;
+    var end   = Math.min(total, st.page*st.size);
+    var nums = [], seen = {};
+    [1, 2, st.page-1, st.page, st.page+1, pages-1, pages].forEach(function(p){
+      if(p>=1 && p<=pages && !seen[p]){ nums.push(p); seen[p]=true; }
+    });
+    nums.sort(function(a,b){ return a-b; });
+    var btns = '', prev = 0;
+    for(var i=0;i<nums.length;i++){
+      var p = nums[i];
+      if(p - prev > 1) btns += '<span style="color:#94a3b8;padding:0 3px">…</span>';
+      btns += '<button class="pg-btn' + (p===st.page?' active':'') + '" onclick="Pager.setPage(\'' + key + '\',' + p + ')">' + p + '</button>';
+      prev = p;
+    }
+    return '<div class="pg-bar">'
+      + '<span class="pg-info">แสดง ' + start.toLocaleString('th-TH') + '–' + end.toLocaleString('th-TH') + ' จาก ' + total.toLocaleString('th-TH') + ' รายการ</span>'
+      + '<div class="pg-ctrl">'
+      + '<select class="pg-size" onchange="Pager.setSize(\'' + key + '\',this.value)">'
+      + [10,20,50].map(function(s){ return '<option value="' + s + '"' + (s===st.size?' selected':'') + '>' + s + ' / หน้า</option>'; }).join('')
+      + '</select>'
+      + '<button class="pg-btn"' + (st.page<=1?' disabled':'') + ' onclick="Pager.setPage(\'' + key + '\',' + (st.page-1) + ')"><i class="bi bi-chevron-left"></i></button>'
+      + btns
+      + '<button class="pg-btn"' + (st.page>=pages?' disabled':'') + ' onclick="Pager.setPage(\'' + key + '\',' + (st.page+1) + ')"><i class="bi bi-chevron-right"></i></button>'
+      + '</div></div>';
+  },
+};
+
+// ============================================================
+// TRANSACTION LOG + FEATURE DETECTION (ต้องรัน fix_database.sql)
+// ============================================================
+App.feat = { txLog: true, rpcReceive: true };
+
+// probe ว่า DB มี transaction_logs + RPC receive_transfer หรือยัง
+async function detectFeatures() {
+  try {
+    var r1 = await sb.from('transaction_logs').select('id').limit(1);
+    App.feat.txLog = !r1.error;
+    // เรียกด้วย id ที่ไม่มีจริง — function มีอยู่จะได้ exception ธรรมดา / ไม่มีจะได้ PGRST202
+    var r2 = await sb.rpc('receive_transfer', { p_transfer_id: '00000000-0000-0000-0000-000000000000' });
+    App.feat.rpcReceive = !(r2.error && (r2.error.code === 'PGRST202' || /could not find/i.test(r2.error.message || '')));
+  } catch(_) { App.feat.txLog = false; App.feat.rpcReceive = false; }
+  _showSqlNotice();
+}
+
+// banner เตือน admin ถ้ายังไม่ได้รัน fix_database.sql
+function _showSqlNotice() {
+  var old = document.getElementById('sqlNotice');
+  var need = App.profile && App.profile.role === 'admin' && !(App.feat.txLog && App.feat.rpcReceive);
+  if (!need) { if (old) old.remove(); return; }
+  if (old) return;
+  var main = document.getElementById('main');
+  if (!main) return;
+  var div = document.createElement('div');
+  div.id = 'sqlNotice';
+  div.style.cssText = 'margin:12px 16px 0;padding:10px 16px;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;font-family:Kanit;font-size:13px;color:#92400e;display:flex;align-items:center;gap:10px;';
+  div.innerHTML = '<i class="bi bi-exclamation-triangle-fill" style="color:#f59e0b;font-size:16px;flex-shrink:0;"></i>'
+    + '<div>ยังไม่ได้รันไฟล์ <strong>fix_database.sql</strong> ใน Supabase SQL Editor — transaction log และการรับโอนแบบปลอดภัย (RPC) จะยังไม่ทำงาน</div>';
+  main.insertBefore(div, main.firstChild);
+}
+
+// บันทึก log การใช้งาน — fail เงียบ ไม่กระทบ flow หลัก
+async function logTx(action, detail, assetId) {
+  if (!App.feat.txLog) return;
+  try {
+    await sb.from('transaction_logs').insert({
+      action: action,
+      detail: detail || {},
+      asset_id: assetId || null,
+      username: App.profile ? (App.profile.username || App.profile.full_name || null) : null
+    });
+  } catch(_) {}
 }
 
 function _populateBranchSelects() {
@@ -3338,7 +3615,7 @@ async function loadDashboard() {
   if (bWrap) bWrap.style.display = isBranchUser ? 'none' : '';
 
   // ดึงฟิลด์ครบทั้ง admin และ branch เพราะตารางรายการต้องดำเนินการต้องการ asset_code, name, location
-  var selectFields = 'id, asset_code, name, status, branch_id, price, acquired_date, location, custodian, branches(name)';
+  var selectFields = 'id, asset_code, name, status, branch_id, price, acquired_date, location, custodian, category';
   var q = sb.from('assets').select(selectFields).limit(10000);
   if (isBranchUser) {
     if (myBranchId) {
@@ -3361,7 +3638,7 @@ async function loadDashboard() {
     q = q.eq('status', statusFilter);
   }
   var res = await q;
-  var assets = res.data || [];
+  var assets = attachBranchInfo(res.data || []);
 
   var counts = { total: 0, active: 0, not_found: 0, damaged_fixable: 0, damaged_unfixable: 0, overaged: 0, disposal_pending: 0, disposed: 0, transferred: 0 };
   assets.forEach(function(a) {
@@ -3473,9 +3750,14 @@ async function loadDashboard() {
   // branch user → ตารางรายการต้องดำเนินการเสมอ
   // admin ไม่มีกรอง → กราฟภาพรวม  |  admin มีกรอง → ตารางรายการต้องดำเนินการ
   var hasFilter = !!(branchFilter || yearFilter || statusFilter);
+  var miniRow = document.getElementById('dashMiniChartsRow');
   if (isBranchUser || hasFilter) {
+    if (miniRow) miniRow.style.display = 'none';
     await _renderBranchActionPanel(assets);
   } else {
+    if (miniRow) miniRow.style.display = '';
+    _renderStatusChart(assets);
+    _renderCategoryChart(assets);
     await _renderDashChart(assets, branchFilter);
   }
 }
@@ -3752,6 +4034,167 @@ async function _renderDashChart(assets, selectedBranch) {
   App._dashChart.update('none');
 }
 
+// ── Dashboard mini charts (status doughnut + category bar) ──────
+var _dashMiniCharts = {};
+
+function _renderStatusChart(assets) {
+  if (typeof Chart === 'undefined') return;
+  var cv = document.getElementById('dashChartStatus');
+  if (!cv) return;
+  if (_dashMiniCharts.status) { _dashMiniCharts.status.destroy(); delete _dashMiniCharts.status; }
+
+  var COLORS = {
+    active:'#22c55e', not_found:'#ea580c', damaged_fixable:'#d97706',
+    damaged_unfixable:'#dc2626', overaged:'#7c3aed',
+    transferred:'#2563eb', disposal_pending:'#b45309', disposed:'#6b7280'
+  };
+  var cnt = {};
+  assets.forEach(function(a){ if(a.status !== 'disposed') cnt[a.status] = (cnt[a.status]||0)+1; });
+  var keys = Object.keys(cnt).filter(function(k){ return cnt[k] > 0; });
+  if (!keys.length) return;
+
+  _dashMiniCharts.status = new Chart(cv, {
+    type: 'doughnut',
+    data: {
+      labels: keys.map(function(k){ return (STATUS[k] && STATUS[k].label) || k; }),
+      datasets: [{
+        data: keys.map(function(k){ return cnt[k]; }),
+        backgroundColor: keys.map(function(k){ return COLORS[k] || '#94a3b8'; }),
+        borderColor: '#fff', borderWidth: 2, hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            font: { family:'Kanit', size:11 }, boxWidth:11, padding:7,
+            generateLabels: function(chart) {
+              var d = chart.data;
+              var total = d.datasets[0].data.reduce(function(s,v){ return s+v; }, 0) || 1;
+              return d.labels.map(function(l, i) {
+                return {
+                  text: l + ' (' + d.datasets[0].data[i] + '·' + Math.round(d.datasets[0].data[i]/total*100) + '%)',
+                  fillStyle: d.datasets[0].backgroundColor[i], strokeStyle: '#fff', index: i
+                };
+              });
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              var total = ctx.dataset.data.reduce(function(s,v){ return s+v; }, 0) || 1;
+              return ' ' + ctx.label + ': ' + ctx.parsed.toLocaleString('th-TH') + ' (' + Math.round(ctx.parsed/total*100) + '%)';
+            }
+          }
+        },
+        datalabels: { display: false }
+      },
+      onClick: function(evt, els) {
+        if (!els.length) return;
+        var status = keys[els[0].index];
+        if (status) { App._pendingFilter = { status: status }; showPage('assets'); }
+      }
+    }
+  });
+}
+
+function _renderCategoryChart(assets) {
+  if (typeof Chart === 'undefined') return;
+  var cv = document.getElementById('dashChartCategory');
+  if (!cv) return;
+  if (_dashMiniCharts.category) { _dashMiniCharts.category.destroy(); delete _dashMiniCharts.category; }
+
+  var catCnt = {};
+  assets.forEach(function(a){
+    if (a.status === 'disposed') return;
+    var c = a.category || 'ไม่ระบุประเภท';
+    catCnt[c] = (catCnt[c]||0)+1;
+  });
+  var cats = Object.entries(catCnt).sort(function(a,b){ return b[1]-a[1]; }).slice(0,10);
+  if (!cats.length) return;
+  var PALETTE = ['#2563eb','#0891b2','#059669','#d97706','#7c3aed','#dc2626','#0d9488','#be185d','#65a30d','#6366f1'];
+
+  _dashMiniCharts.category = new Chart(cv, {
+    type: 'bar',
+    data: {
+      labels: cats.map(function(c){ var l=c[0]; return l.length>20 ? l.slice(0,19)+'…' : l; }),
+      datasets: [{
+        data: cats.map(function(c){ return c[1]; }),
+        backgroundColor: cats.map(function(_,i){ return PALETTE[i%PALETTE.length]+'cc'; }),
+        borderRadius: 5, barPercentage: 0.7
+      }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: function(ctx){ return ' ' + ctx.parsed.x.toLocaleString('th-TH') + ' รายการ'; } } },
+        datalabels: { display: false }
+      },
+      scales: {
+        x: { beginAtZero: true, ticks: { font:{family:'Kanit',size:10}, precision:0 } },
+        y: { ticks: { font:{family:'Kanit',size:11} } }
+      },
+      onClick: function(evt, els) {
+        if (!els.length) return;
+        var cat = cats[els[0].index] && cats[els[0].index][0];
+        if (cat) { App._pendingFilter = { category: cat }; showPage('assets'); }
+      }
+    }
+  });
+}
+
+// ── QR Scanner (html5-qrcode) ────────────────────────────────
+const QRScanner = {
+  _inst: null,
+  async open() {
+    if (typeof Html5Qrcode === 'undefined') {
+      showToast('โหลดตัวสแกนไม่สำเร็จ — ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่', 'danger'); return;
+    }
+    var modal = document.getElementById('qrScanModal');
+    if (modal) modal.classList.add('show');
+    var msg = document.getElementById('qrScanMsg');
+    if (msg) msg.textContent = 'กำลังเปิดกล้อง...';
+    try {
+      this._inst = new Html5Qrcode('qrReader');
+      await this._inst.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 230, height: 230 } },
+        (text) => this._onScan(text),
+        () => {}
+      );
+      if (msg) msg.textContent = 'เล็งกล้องไปที่สติกเกอร์ QR Code ของครุภัณฑ์';
+    } catch(e) {
+      if (msg) msg.innerHTML = '<span style="color:#dc2626">เปิดกล้องไม่ได้: ' + (String(e.message||e)).replace(/</g,'&lt;') + '<br>กรุณาอนุญาตการใช้กล้อง หรือใช้กล้องมือถือสแกนแทน</span>';
+    }
+  },
+  _onScan(text) {
+    var id = null;
+    try { id = new URL(text).searchParams.get('scan'); } catch(_) {}
+    if (!id && /^[0-9a-f-]{36}$/i.test(text.trim())) id = text.trim();
+    if (!id) {
+      var msg = document.getElementById('qrScanMsg');
+      if (msg) msg.innerHTML = '<span style="color:#d97706">QR นี้ไม่ใช่ของระบบครุภัณฑ์ — ลองใหม่</span>';
+      return;
+    }
+    this.close();
+    showToast('พบครุภัณฑ์ — กำลังเปิดรายละเอียด...', 'success');
+    showPage('assets');
+    var _id = id;
+    setTimeout(function(){ showAssetForm(_id); }, 400);
+  },
+  close() {
+    var modal = document.getElementById('qrScanModal');
+    if (modal) modal.classList.remove('show');
+    if (this._inst) { this._inst.stop().catch(function(){}); this._inst = null; }
+    var r = document.getElementById('qrReader');
+    if (r) r.innerHTML = '';
+  }
+};
+
 // ============================================================
 // ASSETS PAGE
 // ============================================================
@@ -3762,14 +4205,14 @@ async function loadAssetsPage() {
   updateBulkBar();
   if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังโหลด...</td></tr>';
 
-  var q = sb.from('assets').select('id, asset_code, name, brand, model, branch_id, price, status, acquired_date, location, custodian, branches(name)').order('acquired_date', { ascending: false }).order('asset_code', { ascending: true }).limit(10000);
+  var q = sb.from('assets').select('id, asset_code, name, brand, model, branch_id, price, status, acquired_date, location, custodian, category').order('acquired_date', { ascending: false }).order('asset_code', { ascending: true }).limit(10000);
   if (App.profile && App.profile.role === 'branch') {
     q = q.eq('branch_id', App.profile.branch_id);
   }
   var res = await q;
-  App.allAssets = res.data || [];
+  App.allAssets = attachBranchInfo(res.data || []);
   App.filteredAssets = App.allAssets;
-  App.assetPage = 1;
+  Pager.reset('assets');
 
   // ซ่อนตัวกรองสาขาสำหรับ branch user (เห็นแค่สาขาตัวเองอยู่แล้ว)
   var fbWrap = document.getElementById('filterBranch');
@@ -3807,7 +4250,6 @@ async function loadAssetsPage() {
     if (pf.status !== undefined) {
       var fsEl = document.getElementById('filterStatus');
       if (fsEl) fsEl.value = pf.status;
-      // highlight stat card
       document.querySelectorAll('.stat-card').forEach(function(c) { c.classList.remove('stat-card-sel'); });
       if (pf.status) {
         document.querySelectorAll('.stat-card').forEach(function(c) {
@@ -3815,8 +4257,20 @@ async function loadAssetsPage() {
         });
       }
     }
+    if (pf.category !== undefined) {
+      App._pendingCategoryFilter = pf.category;
+    }
   }
   filterAssetsNow();
+  // apply category filter (post-process — ไม่มี UI widget แยก)
+  if (App._pendingCategoryFilter) {
+    var _cat = App._pendingCategoryFilter;
+    App._pendingCategoryFilter = null;
+    App.filteredAssets = App.filteredAssets.filter(function(a){ return (a.category||'ไม่ระบุประเภท') === _cat; });
+    Pager.reset('assets');
+    renderAssetTable();
+    showToast('กรองตามประเภท: ' + _cat, 'info');
+  }
 }
 
 function filterAssetsNow() {
@@ -3834,7 +4288,7 @@ function filterAssetsNow() {
     var matchCode = !codeStatus || (codeStatus === 'no_code' ? !a.asset_code : !!a.asset_code);
     return matchSearch && matchYear && matchBranch && matchStatus && matchCode;
   });
-  App.assetPage = 1;
+  Pager.reset('assets');
   renderAssetTable();
 }
 
@@ -3851,13 +4305,10 @@ function renderAssetTable() {
   var paging = document.getElementById('assetPaging');
   if (!tbody) return;
 
+  Pager.bind('assets', renderAssetTable);
   var data = App.filteredAssets;
   var total = data.length;
-  var ps = App.assetPageSize;
-  var page = App.assetPage;
-  var pages = Math.max(1, Math.ceil(total / ps));
-  if (page > pages) page = App.assetPage = 1;
-  var slice = data.slice((page-1)*ps, page*ps);
+  var slice = Pager.slice('assets', data);
 
   // update topbar subtitle
   var sub = document.getElementById('topPageSub');
@@ -3969,21 +4420,9 @@ function renderAssetTable() {
   // โหลดวันที่ตรวจล่าสุดจาก inspection_items (async, ไม่ block ตาราง)
   if (slice.length) _loadLastInspDates(slice.map(function(a){ return a.id; }));
 
-  if (paging) {
-    var info = 'แสดง ' + (total ? (page-1)*ps+1 : 0) + '–' + Math.min(page*ps, total) + ' จาก ' + total + ' รายการ';
-    var btnStyle = 'style="min-width:36px;min-height:36px;font-size:15px;"';
-    var prev = page > 1
-      ? '<button class="btn btn-primary btn-sm" ' + btnStyle + ' onclick="assetGoPage(' + (page-1) + ')"><i class="bi bi-chevron-left"></i></button>'
-      : '<button class="btn btn-outline-secondary btn-sm" ' + btnStyle + ' disabled><i class="bi bi-chevron-left"></i></button>';
-    var next = page < pages
-      ? '<button class="btn btn-primary btn-sm" ' + btnStyle + ' onclick="assetGoPage(' + (page+1) + ')"><i class="bi bi-chevron-right"></i></button>'
-      : '<button class="btn btn-outline-secondary btn-sm" ' + btnStyle + ' disabled><i class="bi bi-chevron-right"></i></button>';
-    var pageInfo = '<span class="btn btn-light btn-sm disabled" style="min-height:36px;font-size:13px;font-family:Kanit;">' + page + ' / ' + pages + '</span>';
-    paging.innerHTML = '<span style="font-size:12px;color:#64748b;" class="me-2">' + info + '</span><div class="d-flex gap-1 align-items-center">' + prev + pageInfo + next + '</div>';
-  }
+  if (paging) paging.innerHTML = Pager.html('assets', total);
 }
 
-function assetGoPage(p) { App.assetPage = p; renderAssetTable(); }
 
 function toggleShowAllDisp() {
   var btn = document.getElementById('btnShowAllDisp');
@@ -3999,19 +4438,6 @@ function toggleShowAllDisp() {
   else _loadDispDone();
 }
 
-function toggleShowAllAssets() {
-  var btn = document.getElementById('btnShowAllAssets');
-  var isAll = App.assetPageSize >= 9999;
-  if (isAll) {
-    App.assetPageSize = 5;
-    if (btn) { btn.innerHTML = '<i class="bi bi-list-ul me-1"></i>แสดงทั้งหมด'; btn.style.background = '#0f172a'; btn.style.color = '#fff'; btn.style.border = 'none'; }
-  } else {
-    App.assetPageSize = 9999;
-    if (btn) { btn.innerHTML = '<i class="bi bi-layout-text-sidebar me-1"></i>แสดง 5 รายการ'; btn.style.background = '#f59e0b'; btn.style.color = '#000'; btn.style.border = 'none'; }
-  }
-  App.assetPage = 1;
-  renderAssetTable();
-}
 
 async function _loadLastInspDates(assetIds) {
   if (!assetIds || !assetIds.length) return;
@@ -4063,8 +4489,7 @@ function toggleAssetCheck(id, checked) {
 
 function toggleSelectAll(checked) {
   if (!App.selectedAssets) App.selectedAssets = new Set();
-  var ps = App.assetPageSize, page = App.assetPage;
-  var slice = App.filteredAssets.slice((page-1)*ps, page*ps);
+  var slice = Pager.slice('assets', App.filteredAssets);
   slice.forEach(function(a) {
     if (!a.branch_id) { // เลือกเฉพาะที่ไม่มีสาขา
       if (checked) App.selectedAssets.add(a.id);
@@ -4118,10 +4543,15 @@ async function bulkAssignBranch() {
   if (!ok) return;
 
   showToast('กำลังบันทึก...', 'primary');
-  var res = await sb.from('assets').update({ branch_id: branchId }).in('id', ids);
+  var res = await sb.from('assets').update({ branch_id: branchId }).in('id', ids).select('id');
   if (res.error) { showToast('เกิดข้อผิดพลาด: ' + res.error.message, 'danger'); return; }
-
-  showToast('กำหนดสาขาเรียบร้อย ' + ids.length + ' รายการ', 'success');
+  var updated = (res.data || []).length;
+  if (updated < ids.length) {
+    showToast('กำหนดสาขาได้ ' + updated + '/' + ids.length + ' รายการ — บางรายการถูกจำกัดสิทธิ์ (RLS)', 'warning');
+  } else {
+    showToast('กำหนดสาขาเรียบร้อย ' + ids.length + ' รายการ', 'success');
+  }
+  logTx('bulk_assign_branch', { branch_id: branchId, count: updated });
   clearBulkSelect();
   loadAssetsPage();
 }
@@ -4146,7 +4576,7 @@ async function showAssetForm(id) {
     // Load asset for editing
     var res = await sb.from('assets').select('*').eq('id', id).single();
     var a = res.data;
-    if (!a) { alert('ไม่พบรายการ'); return; }
+    if (!a) { showToast('ไม่พบรายการ', 'danger'); return; }
     document.getElementById('assetId').value = a.id;
     var lbl = document.getElementById('formTitleLabel');
     if (lbl) lbl.textContent = 'แก้ไข: ' + (a.name || id);
@@ -4321,11 +4751,14 @@ async function saveAsset(silent) {
       var insRes = await sb.from('assets').insert(payload).select().single();
       if (insRes.error) throw insRes.error;
       savedId = insRes.data.id;
+      logTx('asset_create', { code: payload.asset_code, name: payload.name }, savedId);
     } else {
       payload.updated_at = new Date().toISOString();
-      var updRes = await sb.from('assets').update(payload).eq('id', id);
+      var updRes = await sb.from('assets').update(payload).eq('id', id).select('id');
       if (updRes.error) throw updRes.error;
+      if (!(updRes.data || []).length) throw new Error('บันทึกไม่สำเร็จ — ไม่มีสิทธิ์แก้ไขรายการนี้ (RLS)');
       savedId = id;
+      logTx('asset_update', { code: payload.asset_code, name: payload.name }, id);
     }
 
     // Upload photos
@@ -4391,8 +4824,8 @@ async function showQuickActionModal(assetId, status) {
   }[status] || { color:'#64748b', bg:'#f8fafc', icon:'bi-info-circle', label:status, actions:[] };
 
   // โหลดข้อมูล
-  var res = await sb.from('assets').select('id,asset_code,name,location,price,acquired_date,branches(name)').eq('id', assetId).single();
-  var a = res.data;
+  var res = await sb.from('assets').select('id,asset_code,name,location,price,acquired_date,branch_id').eq('id', assetId).single();
+  var a = attachBranchInfo(res.data);
   if (!a) { showToast('ไม่พบข้อมูล', 'danger'); return; }
 
   var priceStr = a.price ? Number(a.price).toLocaleString('th-TH') + ' บาท' : '—';
@@ -4458,9 +4891,11 @@ async function _qaDoAction(assetId, newStatus, actionLabel) {
   );
   if (!ok) return;
 
-  var res = await sb.from('assets').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', assetId);
+  var res = await sb.from('assets').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', assetId).select('id');
   if (res.error) { showToast('เกิดข้อผิดพลาด: ' + res.error.message, 'danger'); return; }
+  if (!(res.data || []).length) { showToast('เปลี่ยนสถานะไม่สำเร็จ — ไม่มีสิทธิ์แก้ไขรายการนี้ (RLS)', 'danger'); return; }
 
+  logTx('status_change', { status: newStatus }, assetId);
   showToast('เปลี่ยนสถานะเรียบร้อย → ' + statusLabel, 'success');
   _qaClose();
   // รีโหลด dashboard panel
@@ -4568,14 +5003,15 @@ async function deleteComponent(compId) {
 // ===== ASSET DETAIL MODAL =====
 async function showAssetDetail(id) {
   try {
-  var res = await sb.from('assets').select('*, branches(name), asset_photos(*), asset_repairs(*)').eq('id', id).single();
+  var res = await sb.from('assets').select('*, asset_photos(*), asset_repairs(*)').eq('id', id).single();
   var a = res.data;
   if (!a || res.error) {
     // fallback: query ไม่มี join เผื่อ branch user ไม่มีสิทธิ์
-    var res2 = await sb.from('assets').select('*, branches(name)').eq('id', id).single();
+    var res2 = await sb.from('assets').select('*').eq('id', id).single();
     a = res2.data;
     if (!a) { showToast('ไม่พบข้อมูลครุภัณฑ์', 'danger'); return; }
   }
+  attachBranchInfo(a);
 
   // แยก query components เผื่อ FK ยังไม่ refresh
   var comps = [];
@@ -5311,6 +5747,7 @@ async function doImportModal() {
     }
     var msg = 'นำเข้าสำเร็จ ' + total + ' รายการ';
     if (skipped) msg += ' (ข้าม ' + skipped + ' แถวที่ไม่มีข้อมูล)';
+    logTx('asset_import', { count: total, skipped: skipped });
     showToast(msg, 'success');
     bootstrap.Modal.getInstance(document.getElementById('modalImport')).hide();
     loadAssetsPage();
@@ -5395,10 +5832,16 @@ async function _checkImportedDuplicates(branchId) {
 }
 
 async function _deleteSuspectAsset(id, btn) {
-  if (!confirm('ลบรายการนี้ออกจากฐานข้อมูล?')) return;
+  var ok = await showConfirm(
+    'ยืนยันการลบ',
+    'ลบรายการนี้ออกจากฐานข้อมูล?<br><span style="color:#dc2626;font-size:12px;">การกระทำนี้ไม่สามารถย้อนกลับได้</span>',
+    { okLabel: 'ลบรายการ', okColor: '#dc2626', icon: 'bi-trash-fill', iconColor: '#dc2626', iconBg: '#fef2f2' }
+  );
+  if (!ok) return;
   btn.disabled = true;
   var res = await sb.from('assets').delete().eq('id', id);
   if (res.error) { showToast('ลบไม่สำเร็จ: ' + res.error.message, 'danger'); btn.disabled = false; return; }
+  logTx('asset_delete', { id: id }, id);
   var row = btn.closest('tr');
   if (row) row.remove();
   showToast('ลบแล้ว', 'success');
@@ -5409,7 +5852,13 @@ async function _deleteAllSuspects() {
   var rows = document.querySelectorAll('#modalDupCheck tbody tr');
   var count = rows.length;
   if (!count) { showToast('ไม่มีรายการ', 'warning'); return; }
-  if (!confirm('ลบทั้งหมด ' + count + ' รายการออกจากฐานข้อมูล?\nการกระทำนี้ไม่สามารถย้อนกลับได้')) return;
+  var ok = await showDangerConfirm({
+    title: 'ลบทั้งหมด ' + count + ' รายการ',
+    msg: 'รายการทั้งหมดจะถูกลบออกจากฐานข้อมูลถาวร <strong>ไม่สามารถย้อนกลับได้</strong>',
+    keyword: 'ลบทั้งหมด',
+    confirmLabel: 'ยืนยันลบ ' + count + ' รายการ'
+  });
+  if (!ok) return;
 
   var btn = document.getElementById('btnDeleteAllDup');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังลบ...'; }
@@ -5434,6 +5883,7 @@ async function _deleteAllSuspects() {
       if (res.error) throw res.error;
       deleted += chunk.length;
     }
+    logTx('asset_bulk_delete', { count: deleted });
     showToast('ลบสำเร็จ ' + deleted + ' รายการ', 'success');
     bootstrap.Modal.getInstance(document.getElementById('modalDupCheck')).hide();
     loadAssetsPage();
@@ -5462,9 +5912,9 @@ async function printAssetCard(id) {
 async function printTKFromForm(type) {
   var id = document.getElementById('assetId') ? document.getElementById('assetId').value : '';
   if (!id) { showToast('กรุณาบันทึกครุภัณฑ์ก่อนพิมพ์', 'warning'); return; }
-  var r = await sb.from('assets').select('*, branches(name), asset_repairs(*)').eq('id', id).single();
+  var r = await sb.from('assets').select('*, asset_repairs(*)').eq('id', id).single();
   if (!r.data) { showToast('ไม่พบข้อมูลครุภัณฑ์', 'danger'); return; }
-  _doPrintCard(r.data, type);
+  _doPrintCard(attachBranchInfo(r.data), type);
 }
 
 function printPD2() {
@@ -5597,12 +6047,12 @@ async function _loadDispPending() {
   var myBranchId = App.profile ? App.profile.branch_id : null;
 
   var q = sb.from('assets')
-    .select('id,asset_code,name,branch_id,price,acquired_date,status,notes,location,custodian,branches(name)')
+    .select('id,asset_code,name,branch_id,price,acquired_date,status,notes,location,custodian')
     .in('status', ['damaged_unfixable','disposal_pending','overaged'])
     .order('status').order('asset_code');
   if (!isAdmin && myBranchId) q = q.eq('branch_id', myBranchId);
   var res = await q;
-  var rows = res.data || [];
+  var rows = attachBranchInfo(res.data || []);
 
   if (!rows.length) {
     tbody.innerHTML = '<tr><td colspan="7" class="text-center py-5 text-muted"><i class="bi bi-check-circle" style="font-size:28px;display:block;margin-bottom:6px;color:#22c55e;"></i>ไม่มีรายการรอพิจารณา</td></tr>';
@@ -5697,12 +6147,12 @@ async function _loadDispDone() {
   var myBranchId = App.profile ? App.profile.branch_id : null;
 
   var q = sb.from('assets')
-    .select('id,asset_code,name,price,acquired_date,updated_at,notes,branches(name)')
+    .select('id,asset_code,name,branch_id,price,acquired_date,updated_at,notes')
     .eq('status','disposed')
     .order('updated_at',{ascending:false}).limit(500);
   if (!isAdmin && myBranchId) q = q.eq('branch_id', myBranchId);
   var res = await q;
-  var rows = res.data || [];
+  var rows = attachBranchInfo(res.data || []);
 
   if (!rows.length) {
     tbody.innerHTML = '<tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-archive" style="font-size:28px;display:block;margin-bottom:6px;"></i>ยังไม่มีรายการจำหน่าย</td></tr>';
@@ -5791,13 +6241,18 @@ async function confirmDisposalAction() {
     upd.notes = 'จำหน่าย ณ วันที่ ' + new Date().toLocaleDateString('th-TH', {year:'numeric',month:'long',day:'numeric'});
   }
 
-  var res = await sb.from('assets').update(upd).eq('id', _dispAction.id);
+  var res = await sb.from('assets').update(upd).eq('id', _dispAction.id).select('id');
   if (btn) { btn.disabled = false; }
 
   if (res.error) {
     showToast('เกิดข้อผิดพลาด: ' + res.error.message, 'danger');
     return;
   }
+  if (!(res.data || []).length) {
+    showToast('บันทึกไม่สำเร็จ — ไม่มีสิทธิ์แก้ไขรายการนี้ (RLS)', 'danger');
+    return;
+  }
+  logTx('disposal', { status: _dispAction.newStatus, note: note || null }, _dispAction.id);
 
   var msgs = {
     'disposal_pending': 'เสนอจำหน่ายแล้ว — รออนุมัติ',
@@ -5834,12 +6289,12 @@ async function loadRepairPage() {
 
   // Load damaged-fixable + overaged assets for modal
   var q = sb.from('assets')
-    .select('id,asset_code,name,branch_id,status,life_years,acquired_date,branches(name)')
+    .select('id,asset_code,name,branch_id,status,life_years,acquired_date')
     .in('status',['damaged_fixable','overaged'])
     .order('branch_id',{ascending:true}).order('asset_code',{ascending:true}).limit(5000);
   if (isBranch && myBranchId) q = q.eq('branch_id', myBranchId);
   var res = await q;
-  _repAllAssets = res.data || [];
+  _repAllAssets = attachBranchInfo(res.data || []);
   _repSelectedAsset = null;
   filterRepairAssets();
 
@@ -5943,6 +6398,7 @@ async function submitRepairRequest() {
   if (btn) { btn.disabled=false; btn.innerHTML='<i class="bi bi-send me-1"></i>ส่งแจ้งซ่อม'; }
   if (res.error) { showToast('เกิดข้อผิดพลาด: '+res.error.message,'danger'); return; }
 
+  logTx('repair_request', { code: _repSelectedAsset.asset_code, desc: desc }, _repSelectedAsset.id);
   bootstrap.Modal.getInstance(document.getElementById('modalRepairRequest')).hide();
   showToast('แจ้งซ่อม '+_repSelectedAsset.name+' เรียบร้อยแล้ว — รอ admin ดำเนินการ','success');
   await loadRepairPage();
@@ -6028,6 +6484,7 @@ async function submitRepairResult() {
   if (btn) { btn.disabled=false; btn.innerHTML='<i class="bi bi-check2 me-1"></i>บันทึกผล'; }
   if (r1.error||r2.error) { showToast('เกิดข้อผิดพลาด: '+((r1.error||r2.error).message),'danger'); return; }
 
+  logTx('repair_resolve', { result: newRepairStatus, note: note || null }, assetId);
   bootstrap.Modal.getInstance(document.getElementById('modalRepairResult')).hide();
   var msg = newRepairStatus==='repaired'
     ? 'ซ่อมเสร็จ — สถานะครุภัณฑ์กลับเป็น "พบ" แล้ว'
@@ -6089,6 +6546,7 @@ async function deleteRepairRecord(id) {
   if (!ok) return;
   var res = await sb.from('repair_requests').delete().eq('id', id);
   if (res.error) { showToast('ลบไม่สำเร็จ: ' + res.error.message, 'danger'); return; }
+  logTx('repair_delete', { id: id });
   showToast('ลบประวัติเรียบร้อย', 'success');
   _loadRepairHistory();
 }
@@ -6128,12 +6586,12 @@ async function loadTransferPage() {
 
   // Load assets for modal
   var q = sb.from('assets')
-    .select('id,asset_code,name,branch_id,status,price,branches(name)')
+    .select('id,asset_code,name,branch_id,status,price')
     .not('status','in','("disposed","transferred")')
     .order('branch_id',{ascending:true}).order('asset_code',{ascending:true}).limit(10000);
   if (isBranch && myBranchId) q = q.eq('branch_id', myBranchId);
   var res = await q;
-  _trAll = res.data || [];
+  _trAll = attachBranchInfo(res.data || []);
   _trMSelected = new Set();
   _trMPage = 1;
   filterTransferModal();
@@ -6190,12 +6648,12 @@ async function openTransferModal() {
 
   // ดึงครุภัณฑ์ใหม่ทุกครั้งเพื่อให้ข้อมูลล่าสุด
   var q = sb.from('assets')
-    .select('id,asset_code,name,branch_id,status,price,branches(name)')
+    .select('id,asset_code,name,branch_id,status,price')
     .not('status', 'in', '("disposed","transferred")')
     .order('branch_id', {ascending: true}).order('asset_code', {ascending: true}).limit(10000);
   if (isBranch && myBranchId) q = q.eq('branch_id', myBranchId);
   var res = await q;
-  _trAll = res.data || [];
+  _trAll = attachBranchInfo(res.data || []);
 
   filterTransferModal();
   var m = new bootstrap.Modal(document.getElementById('modalTransferCreate'));
@@ -6306,6 +6764,7 @@ async function submitTransferRequest() {
   if (btn){ btn.disabled=false; btn.innerHTML='<i class="bi bi-send me-1"></i>ส่งคำขอโอน'; }
   if (res.error){ showToast('เกิดข้อผิดพลาด: '+res.error.message,'danger'); return; }
 
+  logTx('transfer_request', { to: toName, count: ids.length });
   bootstrap.Modal.getInstance(document.getElementById('modalTransferCreate')).hide();
   showToast('ส่งคำขอโอนย้าย '+ids.length+' รายการ → '+toName+' เรียบร้อย — รอสาขาปลายทางยืนยัน','success');
   _trMSelected=new Set();
@@ -6442,10 +6901,23 @@ async function confirmTransferRespond() {
   if (btn) { btn.disabled=true; btn.innerHTML='<div class="spinner-border spinner-border-sm me-1"></div>กำลังดำเนินการ...'; }
 
   if (newStatus === 'accepted') {
-    var tr = await sb.from('asset_transfers').select('*').eq('id',id).single();
-    if (tr.error || !tr.data) { showToast('ไม่พบข้อมูลคำขอ','danger'); if(btn){btn.disabled=false;} return; }
-    var upd = await sb.from('assets').update({ branch_id: tr.data.to_branch_id }).in('id', tr.data.asset_ids);
-    if (upd.error) { showToast('อัปเดตสาขาไม่สำเร็จ: '+upd.error.message,'danger'); if(btn){btn.disabled=false;} return; }
+    if (App.feat.rpcReceive) {
+      // RPC (SECURITY DEFINER) — ย้ายครุภัณฑ์ข้ามสาขาได้แม้ RLS บังแถวฝั่ง client
+      var rpc = await sb.rpc('receive_transfer', { p_transfer_id: id });
+      if (rpc.error) { showToast('รับโอนไม่สำเร็จ: '+rpc.error.message,'danger'); if(btn){btn.disabled=false;} return; }
+    } else {
+      // fallback: client update — เช็คจำนวนแถวเสมอ (UPDATE 0 แถว = RLS บังแถว)
+      var tr = await sb.from('asset_transfers').select('*').eq('id',id).single();
+      if (tr.error || !tr.data) { showToast('ไม่พบข้อมูลคำขอ','danger'); if(btn){btn.disabled=false;} return; }
+      var upd = await sb.from('assets').update({ branch_id: tr.data.to_branch_id }).in('id', tr.data.asset_ids).select('id');
+      if (upd.error) { showToast('อัปเดตสาขาไม่สำเร็จ: '+upd.error.message,'danger'); if(btn){btn.disabled=false;} return; }
+      var moved = (upd.data || []).length;
+      if (moved < tr.data.asset_ids.length) {
+        showToast('ย้ายได้ '+moved+'/'+tr.data.asset_ids.length+' รายการ — แถวที่เหลือถูกจำกัดสิทธิ์ (RLS) กรุณารัน fix_database.sql แล้วลองใหม่','warning');
+        if(btn){btn.disabled=false;} return;
+      }
+      logTx('transfer_receive', { transfer_id: id, moved: moved });
+    }
   }
 
   var res = await sb.from('asset_transfers').update({
@@ -6458,6 +6930,7 @@ async function confirmTransferRespond() {
   if (btn) { btn.disabled=false; }
   if (res.error) { showToast('เกิดข้อผิดพลาด: '+res.error.message,'danger'); return; }
 
+  if (newStatus !== 'accepted') logTx('transfer_' + newStatus, { transfer_id: id, note: note || null });
   bootstrap.Modal.getInstance(document.getElementById('modalTransferRespond')).hide();
   var msgMap = { accepted:'ยอมรับการโอนย้ายเรียบร้อย — ครุภัณฑ์ย้ายสาขาแล้ว', rejected:'ปฏิเสธคำขอเรียบร้อย', cancelled:'ยกเลิกคำขอเรียบร้อย' };
   var typeMap = { accepted:'success', rejected:'warning', cancelled:'secondary' };
@@ -6521,6 +6994,7 @@ async function deleteTransferRecord(id) {
   if (!ok) return;
   var res = await sb.from('asset_transfers').delete().eq('id', id);
   if (res.error) { showToast('ลบไม่สำเร็จ: ' + res.error.message, 'danger'); return; }
+  logTx('transfer_delete', { id: id });
   showToast('ลบประวัติเรียบร้อย', 'success');
   _loadTransferHistory();
 }
@@ -6615,9 +7089,9 @@ async function _loadBranchInspDashboard(insp, showAll) {
 
   // Load assets + inspection items
   var assRes = await sb.from('assets')
-    .select('id,asset_code,name,brand,branch_id,price,location,status,branches(name)')
+    .select('id,asset_code,name,brand,branch_id,price,location,status')
     .eq('branch_id', branchId).not('status','in','("disposed","overaged")').order('asset_code');
-  var assets = assRes.data || [];
+  var assets = attachBranchInfo(assRes.data || []);
   var itemsRes = await sb.from('inspection_items').select('*').eq('inspection_id', insp.id);
   var itemsMap = {};
   (itemsRes.data||[]).forEach(function(i){ itemsMap[i.asset_id] = i; });
@@ -6752,12 +7226,12 @@ async function _loadInspOverview() {
   // Load assets (exclude disposed + overaged), and inspection items
   // ครุภัณฑ์แทงจำหน่ายแล้ว (overaged) ไม่ต้องตรวจนับ
   var assetsQ = sb.from('assets')
-    .select('id, asset_code, name, branch_id, status, branches(id,name,code)')
+    .select('id, asset_code, name, branch_id, status')
     .not('status', 'in', '("disposed","overaged")')
     .limit(10000);
   if (App.profile && App.profile.role === 'branch') assetsQ = assetsQ.eq('branch_id', App.profile.branch_id);
   var assRes = await assetsQ;
-  var assets = assRes.data || [];
+  var assets = attachBranchInfo(assRes.data || []);
 
   var itemsRes = await sb.from('inspection_items').select('asset_id, inspected_by').eq('inspection_id', App.currentInspectionId);
   var items = itemsRes.data || [];
@@ -6906,11 +7380,11 @@ async function _loadInspPending() {
   var itemsRes = await sb.from('inspection_items').select('asset_id').eq('inspection_id', App.currentInspectionId);
   var doneIds = (itemsRes.data||[]).map(function(i) { return i.asset_id; });
 
-  var q = sb.from('assets').select('id, asset_code, name, brand, branch_id, status, branches(name)').eq('status', 'active').order('asset_code', { ascending: true });
+  var q = sb.from('assets').select('id, asset_code, name, brand, branch_id, status').eq('status', 'active').order('asset_code', { ascending: true });
   if (App.profile && App.profile.role === 'branch') q = q.eq('branch_id', App.profile.branch_id);
   if (doneIds.length) q = q.not('id', 'in', '(' + doneIds.join(',') + ')');
   var res = await q;
-  var pending = res.data || [];
+  var pending = attachBranchInfo(res.data || []);
 
   if (!pending.length) { tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">ครุภัณฑ์ทั้งหมดตรวจแล้ว</td></tr>'; return; }
   tbody.innerHTML = pending.map(function(a) {
@@ -6930,8 +7404,9 @@ async function _loadInspDone() {
   tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></td></tr>';
   if (!App.currentInspectionId) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">ไม่มีรอบตรวจ</td></tr>'; return; }
 
-  var res = await sb.from('inspection_items').select('*, assets(asset_code, name, branches(name)), profiles(full_name,username)').eq('inspection_id', App.currentInspectionId).order('inspected_at', { ascending: false });
+  var res = await sb.from('inspection_items').select('*, assets(asset_code, name, branch_id), profiles(full_name,username)').eq('inspection_id', App.currentInspectionId).order('inspected_at', { ascending: false });
   var done = res.data || [];
+  done.forEach(function(it) { if (it.assets) attachBranchInfo(it.assets); });
   if (!done.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">ยังไม่มีรายการที่ตรวจ</td></tr>'; return; }
   tbody.innerHTML = done.map(function(item) {
     var a = item.assets || {};
@@ -6955,10 +7430,10 @@ async function goFillInspection() {
 
   if (!App.currentInspectionId) { showToast('ไม่มีรอบตรวจที่ active', 'warning'); return; }
 
-  var q = sb.from('assets').select('id, asset_code, name, brand, branch_id, price, location, status, branches(name)').order('asset_code', { ascending: true });
+  var q = sb.from('assets').select('id, asset_code, name, brand, branch_id, price, location, status').order('asset_code', { ascending: true });
   if (App.profile && App.profile.role === 'branch') q = q.eq('branch_id', App.profile.branch_id);
   var assRes = await q;
-  var assets = assRes.data || [];
+  var assets = attachBranchInfo(assRes.data || []);
 
   var itemsRes = await sb.from('inspection_items').select('*').eq('inspection_id', App.currentInspectionId);
   var itemsMap = {};
@@ -6968,7 +7443,7 @@ async function goFillInspection() {
     return { asset: a, item: itemsMap[a.id] || null, _status: itemsMap[a.id] ? itemsMap[a.id].result || itemsMap[a.id].status : a.status, _note: itemsMap[a.id] ? itemsMap[a.id].notes || '' : '' };
   });
   App.inspFiltered = App.inspItems;
-  App.inspPage = 1;
+  Pager.reset('insp');
 
   // Branch user: ซ่อน filter สาขา (เห็นแค่สาขาตัวเอง) + auto-filter ยังไม่ตรวจ
   var isBranch = App.profile && App.profile.role === 'branch';
@@ -6996,7 +7471,7 @@ function filterInspItems() {
     var matchD = !doneFilter || (doneFilter === 'done' ? !!row.item : !row.item);
     return matchS && matchB && matchD;
   });
-  App.inspPage = 1;
+  Pager.reset('insp');
   _renderInspTable();
 }
 
@@ -7006,12 +7481,9 @@ function _renderInspTable() {
   var summaryBar = document.getElementById('inspSummaryBar');
   if (!tbody) return;
 
+  Pager.bind('insp', _renderInspTable);
   var data = App.inspFiltered;
-  var ps = App.inspPageSize;
-  var page = App.inspPage;
-  var pages = Math.max(1, Math.ceil(data.length / ps));
-  if (page > pages) page = App.inspPage = 1;
-  var slice = data.slice((page-1)*ps, page*ps);
+  var slice = Pager.slice('insp', data);
 
   var done = App.inspItems.filter(function(r) { return !!r.item; }).length;
   var total = App.inspItems.length;
@@ -7051,7 +7523,7 @@ function _renderInspTable() {
     var inspDate = (row.item && (row.item.inspected_at || row.item.created_at))
       ? fmtDate(row.item.inspected_at || row.item.created_at)
       : '<span style="color:#cbd5e1;">—</span>';
-    var globalIdx = (page-1)*ps + idx;
+    var globalIdx = Pager.startIndex('insp') + idx;
     var td = 'style="font-size:13px;font-weight:400;color:#0f172a;font-family:Kanit;"';
     return '<tr style="' + rowStyle + '">' +
       '<td ' + td + ' style="font-size:13px;font-weight:400;color:#475569;font-family:Kanit;">' + (a.asset_code||'<span style="color:#f59e0b;">ไม่มีรหัส</span>') + '</td>' +
@@ -7066,18 +7538,7 @@ function _renderInspTable() {
     '</tr>';
   }).join('');
 
-  if (paging) {
-    var ibtnStyle = 'style="min-width:36px;min-height:36px;font-size:15px;"';
-    var iPrev = page > 1
-      ? '<button class="btn btn-primary btn-sm" ' + ibtnStyle + ' onclick="inspGoPage(' + (page-1) + ')"><i class="bi bi-chevron-left"></i></button>'
-      : '<button class="btn btn-outline-secondary btn-sm" ' + ibtnStyle + ' disabled><i class="bi bi-chevron-left"></i></button>';
-    var iNext = page < pages
-      ? '<button class="btn btn-primary btn-sm" ' + ibtnStyle + ' onclick="inspGoPage(' + (page+1) + ')"><i class="bi bi-chevron-right"></i></button>'
-      : '<button class="btn btn-outline-secondary btn-sm" ' + ibtnStyle + ' disabled><i class="bi bi-chevron-right"></i></button>';
-    var iPageInfo = '<span class="btn btn-light btn-sm disabled" style="min-height:36px;font-size:13px;font-family:Kanit;">' + page + ' / ' + pages + '</span>';
-    paging.innerHTML = '<span style="font-size:12px;color:#64748b;" class="me-2">แสดง ' + data.length + ' รายการ</span>' +
-      '<div class="d-flex gap-1 align-items-center">' + iPrev + iPageInfo + iNext + '</div>';
-  }
+  if (paging) paging.innerHTML = Pager.html('insp', data.length);
 }
 
 function setInspStatus(sel) {
@@ -7150,7 +7611,6 @@ async function _autoSaveInspRow(idx, triggerEl) {
     setTimeout(function(){ _loadBranchInspDashboard(App.currentInsp); }, 300);
   }
 }
-function inspGoPage(p) { App.inspPage = p; _renderInspTable(); }
 
 function filterPendingTable() { /* re-render pending tab */ _loadInspPending(); }
 function filterDoneTable() { _loadInspDone(); }
@@ -7218,6 +7678,7 @@ async function saveInspection() {
     created_by:  App.profile.id
   });
   if (res.error) { showToast('เกิดข้อผิดพลาด: ' + res.error.message, 'danger'); return; }
+  logTx('inspection_create', { fiscal_year: year, name: name });
   showToast('สร้างรอบตรวจเรียบร้อย', 'success');
   bootstrap.Modal.getInstance(document.getElementById('modalInspection')).hide();
   loadInspectionPage();
@@ -7226,6 +7687,7 @@ async function saveInspection() {
 async function closeRound(id) {
   var res = await sb.from('inspections').update({ status: 'closed' }).eq('id', id);
   if (res.error) { showToast(res.error.message, 'danger'); return; }
+  logTx('inspection_close', { id: id });
   showToast('ปิดรอบตรวจเรียบร้อย', 'success');
   loadInspectionPage();
 }
@@ -7233,6 +7695,7 @@ async function closeRound(id) {
 async function reopenRound(id) {
   var res = await sb.from('inspections').update({ status: 'active' }).eq('id', id);
   if (res.error) { showToast(res.error.message, 'danger'); return; }
+  logTx('inspection_reopen', { id: id });
   showToast('เปิดรอบตรวจใหม่เรียบร้อย', 'success');
   loadInspectionPage();
 }
@@ -7254,6 +7717,7 @@ async function deleteRound(id, name) {
   if (res.error) { showToast('ลบไม่สำเร็จ: ' + res.error.message, 'danger'); return; }
 
   if (App.currentInspectionId === id) { App.currentInspectionId = null; App.currentInsp = null; }
+  logTx('inspection_delete', { id: id, name: name });
   showToast('ลบรอบตรวจเรียบร้อย', 'success');
   loadInspectionPage();
 }
@@ -7365,8 +7829,8 @@ async function loadInspMonitor() {
   m.show();
   document.getElementById('monitorBranchList').innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>';
   // Re-use overview logic
-  var assRes = await sb.from('assets').select('id, branch_id, branches(name)').not('status','in','("disposed","overaged")').limit(10000);
-  var assets = assRes.data || [];
+  var assRes = await sb.from('assets').select('id, branch_id').not('status','in','("disposed","overaged")').limit(10000);
+  var assets = attachBranchInfo(assRes.data || []);
   var itemsRes = await sb.from('inspection_items').select('asset_id').eq('inspection_id', App.currentInspectionId);
   var doneIds = {};
   (itemsRes.data||[]).forEach(function(i) { doneIds[i.asset_id] = true; });
@@ -7672,8 +8136,8 @@ async function saveBranch() {
 async function _loadUserTable() {
   var container = document.getElementById('userTableBody');
   if (!container) return;
-  var res = await sb.from('profiles').select('*, branches(name)').order('role').order('username');
-  var users = res.data || [];
+  var res = await sb.from('profiles').select('*').order('role').order('username');
+  var users = attachBranchInfo(res.data || []);
   if (!users.length) { container.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">ไม่มีข้อมูล</td></tr>'; return; }
 
   // sort: admin first, then numeric username
@@ -7895,7 +8359,7 @@ var _printCSS = [
 // ── Helpers ───────────────────────────────────────────────────
 function _openPrintWin(html) {
   var w = window.open('', '_blank', 'width=920,height=760,scrollbars=yes');
-  if (!w) { alert('กรุณาอนุญาต Popup สำหรับเว็บนี้แล้วลองใหม่'); return; }
+  if (!w) { showToast('กรุณาอนุญาต Popup สำหรับเว็บนี้แล้วลองใหม่', 'warning'); return; }
   w.document.open(); w.document.write(html); w.document.close();
 }
 function _thDatePrint(s) {
@@ -7923,7 +8387,7 @@ function _printHead(extraStyle) {
 // ── Asset selector modal ───────────────────────────────────────
 async function _openPrintAssetSelect(title, callback) {
   _printCallback = callback;
-  var q = sb.from('assets').select('id,asset_code,name,brand,model,acquired_date,location,status,branches(name)')
+  var q = sb.from('assets').select('id,asset_code,name,brand,model,acquired_date,location,status,branch_id')
     .not('status','eq','disposed').order('asset_code').limit(10000);
   var isBranch = App.profile && App.profile.role === 'branch';
   if (isBranch && App.profile.branch_id) q = q.eq('branch_id', App.profile.branch_id);
@@ -7933,7 +8397,7 @@ async function _openPrintAssetSelect(title, callback) {
   document.getElementById('printSelectSearch').style.display = '';
   new bootstrap.Modal(document.getElementById('modalPrintSelect')).show();
   var res = await q;
-  _printAssetList = res.data || [];
+  _printAssetList = attachBranchInfo(res.data || []);
   _renderPrintSelectList('');
 }
 
@@ -7999,8 +8463,8 @@ async function confirmPrintSelect(id) {
 // ══════════════════════════════════════════════════════════════
 async function printYellowCard1() {
   await _openPrintAssetSelect('เลือกครุภัณฑ์ — การ์ดเหลือง ท.ก. 1 (50-10-04)', async function(item) {
-    var r = await sb.from('assets').select('*, branches(name), asset_repairs(*)').eq('id', item.id).single();
-    if (r.data) _doPrintCard(r.data, 1);
+    var r = await sb.from('assets').select('*, asset_repairs(*)').eq('id', item.id).single();
+    if (r.data) _doPrintCard(attachBranchInfo(r.data), 1);
   });
 }
 
@@ -8009,8 +8473,8 @@ async function printYellowCard1() {
 // ══════════════════════════════════════════════════════════════
 async function printYellowCard2() {
   await _openPrintAssetSelect('เลือกครุภัณฑ์ — การ์ดเหลือง ท.ก. 2 (50-10-05)', async function(item) {
-    var r = await sb.from('assets').select('*, branches(name), asset_repairs(*)').eq('id', item.id).single();
-    if (r.data) _doPrintCard(r.data, 2);
+    var r = await sb.from('assets').select('*, asset_repairs(*)').eq('id', item.id).single();
+    if (r.data) _doPrintCard(attachBranchInfo(r.data), 2);
   });
 }
 
@@ -8129,10 +8593,11 @@ async function confirmPrintRegister(branchId) {
   var inst = bootstrap.Modal.getInstance(document.getElementById('modalPrintSelect'));
   if (inst) inst.hide();
   document.getElementById('printSelectSearch').style.display = '';
-  var q = sb.from('assets').select('id,asset_code,name,acquired_date,price,location,custodian,status,branches(name)')
+  var q = sb.from('assets').select('id,asset_code,name,acquired_date,price,location,custodian,status,branch_id')
     .not('status','eq','disposed').order('asset_code');
   if (branchId !== 'all') q = q.eq('branch_id', branchId);
   var res = await q;
+  attachBranchInfo(res.data || []);
   var brLabel = branchId === 'all' ? 'ทุกสาขา'
     : ((App.branches||[]).find(function(b){ return b.id === branchId; })||{}).name || '';
   _doPrintRegister(res.data||[], brLabel);
@@ -8250,11 +8715,11 @@ function _doPrintRepairRequest(r) {
 async function _fetchDisposalAssets() {
   var isBranch = App.profile && App.profile.role === 'branch';
   var q = sb.from('assets')
-    .select('id,asset_code,name,price,acquired_date,location,custodian,notes,status,category,branches(name)')
+    .select('id,asset_code,name,branch_id,price,acquired_date,location,custodian,notes,status,category')
     .in('status', ['disposal_pending','damaged_unfixable','overaged']).order('asset_code');
   if (isBranch && App.profile.branch_id) q = q.eq('branch_id', App.profile.branch_id);
   var res = await q;
-  return res.data || [];
+  return attachBranchInfo(res.data || []);
 }
 
 async function printDisposalList() {
@@ -8420,11 +8885,11 @@ async function printInspectionReport() {
 async function _doPrintInspReport(insp) {
   var isBranch = App.profile && App.profile.role === 'branch';
   var assQ = sb.from('assets')
-    .select('id,asset_code,name,branch_id,branches(name,code)')
+    .select('id,asset_code,name,branch_id')
     .neq('status','disposed').order('asset_code').limit(10000);
   if (isBranch && App.profile.branch_id) assQ = assQ.eq('branch_id', App.profile.branch_id);
   var assRes = await assQ;
-  var assets = assRes.data || [];
+  var assets = attachBranchInfo(assRes.data || []);
 
   var doneMap = {};
   if (insp.id && insp.id !== '__none__') {
@@ -8762,7 +9227,7 @@ async function exportAssetSubmissionExcel(fiscalYearParam) {
       +'<div style="font-size:11px;color:#64748b;margin-bottom:4px;font-family:Kanit;">ระบุปีงบประมาณเอง</div>'
       +'<div style="display:flex;gap:8px;align-items:center;">'
       +'<input id="exYearInput" type="number" min="2560" max="2590" value="'+defYear+'" style="border:1px solid #cbd5e1;border-radius:8px;padding:4px 10px;font-family:Kanit;font-size:13px;width:90px;">'
-      +'<button onclick="var y=parseInt(document.getElementById(\'exYearInput\').value);if(y>=2560&&y<=2590){exportAssetSubmissionExcel(y);bootstrap.Modal.getInstance(document.getElementById(\'modalPrintSelect\')).hide();}else{alert(\'ปีไม่ถูกต้อง\');}" '
+      +'<button onclick="var y=parseInt(document.getElementById(\'exYearInput\').value);if(y>=2560&&y<=2590){exportAssetSubmissionExcel(y);bootstrap.Modal.getInstance(document.getElementById(\'modalPrintSelect\')).hide();}else{showToast(\'ปีไม่ถูกต้อง (2560–2590)\',\'warning\');}" '
       +'style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-family:Kanit;font-size:12px;cursor:pointer;white-space:nowrap;">ส่งออก Excel</button>'
       +'</div></div><div style="height:8px;"></div>';
     document.getElementById('printSelectTitle').innerHTML = '<i class="bi bi-calendar2-check me-2"></i>ส่งออก Excel รายงานผลการตรวจนับ';
@@ -9640,8 +10105,8 @@ async function showQRModal(assetId) {
   var a = (App.allAssets||[]).find(function(x){ return x.id === assetId; });
   if (!a) {
     // fallback: ดึงจาก DB ถ้าไม่อยู่ใน cache
-    var res = await sb.from('assets').select('id,asset_code,name,branches(name)').eq('id', assetId).single();
-    a = res.data;
+    var res = await sb.from('assets').select('id,asset_code,name,branch_id').eq('id', assetId).single();
+    a = attachBranchInfo(res.data);
     if (!a) { showToast('ไม่พบข้อมูลครุภัณฑ์', 'danger'); return; }
   }
   var url = window.location.origin + window.location.pathname + '?scan=' + assetId;
@@ -9885,11 +10350,16 @@ async function saveScanResult(assetId) {
   if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>กำลังบันทึก...'; }
 
   // Update asset status
-  var upd = await sb.from('assets').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', assetId);
+  var upd = await sb.from('assets').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', assetId).select('id');
   if (upd.error) {
     if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="bi bi-check2-circle me-2"></i>บันทึกผลการตรวจ'; }
     showToast('บันทึกไม่สำเร็จ: ' + upd.error.message, 'danger'); return;
   }
+  if (!(upd.data || []).length) {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="bi bi-check2-circle me-2"></i>บันทึกผลการตรวจ'; }
+    showToast('บันทึกไม่สำเร็จ — ไม่มีสิทธิ์แก้ไขรายการนี้ (RLS)', 'danger'); return;
+  }
+  logTx('scan_status', { status: newStatus }, assetId);
 
   // บันทึก inspection_item (select+insert/update — ไม่ขึ้นกับ DB unique constraint)
   var _inspSaved = false;
