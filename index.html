@@ -196,22 +196,25 @@
   }
   #sidebar .nav-link.active i{color:#60a5fa}
 
-  .sb-footer{
-    padding:14px 12px;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;
+  .sb-user{cursor:pointer;user-select:none;transition:background .17s;}
+  .sb-user:hover{background:rgba(255,255,255,.09);}
+  .sb-popover{
+    position:absolute;top:calc(100% + 6px);left:0;right:0;
+    background:#1e293b;border:1px solid rgba(255,255,255,.12);
+    border-radius:10px;padding:5px;z-index:200;
+    box-shadow:0 8px 24px rgba(0,0,0,.45);
   }
-  .sb-footer .btn-logout{
-    width:100%;display:flex;align-items:center;gap:11px;
-    padding:10px 14px 10px 20px;margin:1px 0;
-    border-radius:9px;border:none;
-    background:none;color:rgba(255,255,255,.6);
-    font-size:14px;font-weight:500;cursor:pointer;transition:all .17s;text-align:left;
+  .sb-pop-btn{
+    display:flex;align-items:center;gap:10px;
+    width:100%;padding:9px 12px;border:none;background:none;
+    border-radius:8px;color:rgba(255,255,255,.75);
+    font-size:13px;font-family:'Kanit',sans-serif;cursor:pointer;text-align:left;
+    transition:background .15s;
   }
-  .sb-footer .btn-logout i{font-size:17px;width:22px;text-align:center;flex-shrink:0;}
-  .sb-footer .btn-logout:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)}
-  .sb-footer .btn-logout-red{
-    color:#fca5a5;font-weight:600;
-  }
-  .sb-footer .btn-logout-red:hover{background:rgba(239,68,68,.2)!important;color:#fecaca!important;}
+  .sb-pop-btn i{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
+  .sb-pop-btn:hover{background:rgba(255,255,255,.08);color:#fff;}
+  .sb-pop-danger{color:#fca5a5!important;font-weight:600;}
+  .sb-pop-danger:hover{background:rgba(239,68,68,.18)!important;color:#fecaca!important;}
 
   .sb-credit{
     margin:0 12px 14px;padding:10px 14px 11px;
@@ -770,6 +773,7 @@
   <div class="modal-box" onclick="event.stopPropagation()" style="max-width:480px">
     <div class="modal-hdr" style="background:linear-gradient(135deg,#6d28d9,#7c3aed);">
       <div class="modal-hdr-title"><i class="bi bi-chat-heart-fill" style="margin-right:8px;"></i>ประเมินความพึงพอใจ</div>
+      <button id="fbAdminReportBtn" onclick="Feedback.close();Feedback.openReport()" style="display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:7px;font-size:12px;padding:4px 10px;cursor:pointer;font-family:Kanit;white-space:nowrap;"><i class="bi bi-bar-chart-fill me-1"></i>ดูรายงาน</button>
       <button class="modal-hdr-close" onclick="Feedback.close()">&#x2715;</button>
     </div>
     <div class="modal-bdy">
@@ -834,9 +838,16 @@
       <span>ระบบทะเบียนครุภัณฑ์</span>
     </div>
     <div class="sb-org">คณะศิลปศาสตร์และวิทยาศาสตร์<br>มหาวิทยาลัยราชภัฏศรีสะเกษ</div>
-    <div class="sb-user">
+    <div class="sb-user" id="sbUserCard" onclick="_sbTogglePopover(event)" style="position:relative;">
       <div class="sb-user-avatar" id="sbAvatar"><i class="bi bi-person-fill"></i></div>
       <div class="sb-user-name" id="sbUserName">-</div>
+      <i class="bi bi-three-dots-vertical" style="color:rgba(255,255,255,.35);font-size:13px;margin-left:auto;flex-shrink:0;"></i>
+      <div class="sb-popover" id="sbPopover" style="display:none;" onclick="event.stopPropagation()">
+        <button class="sb-pop-btn" onclick="showHelp();_sbClosePopover()"><i class="bi bi-question-circle"></i>วิธีใช้งาน</button>
+        <button class="sb-pop-btn" onclick="openChangePassword();_sbClosePopover()"><i class="bi bi-key"></i>เปลี่ยนรหัสผ่าน</button>
+        <div style="border-top:1px solid rgba(255,255,255,.08);margin:4px 2px;"></div>
+        <button class="sb-pop-btn sb-pop-danger" onclick="doLogout()"><i class="bi bi-box-arrow-left"></i>ออกจากระบบ</button>
+      </div>
     </div>
   </div>
 
@@ -855,24 +866,15 @@
       <span id="disposalBadge" class="badge bg-danger ms-auto" style="font-size:10px;display:none;"></span>
     </div>
     <div class="nav-link" onclick="showPage('report')"><i class="bi bi-file-earmark-bar-graph"></i>รายงาน &amp; พิมพ์</div>
+    <div class="nav-link" id="menuFeedback" onclick="_feedbackAction()"><i class="bi bi-star-fill" style="color:#fbbf24;"></i>ความพึงพอใจ</div>
+    <div class="nav-link" onclick="showHelp()"><i class="bi bi-question-circle" style="color:#94a3b8;"></i>วิธีใช้งาน</div>
 
     <div class="sb-section" id="adminSection">จัดการระบบ</div>
     <div class="nav-link" id="menuAdminUsers" onclick="showPage('admin-users')"><i class="bi bi-people-fill"></i>จัดการผู้ใช้</div>
-    <div class="nav-link" id="menuFeedbackReport" onclick="Feedback.openReport()" style="display:none;"><i class="bi bi-bar-chart-fill" style="color:#a78bfa;"></i>ผลประเมินความพึงพอใจ</div>
   </div>
-
-  <div class="sb-footer">
-    <button onclick="showHelp()" class="btn-logout">
-      <i class="bi bi-question-circle"></i>วิธีใช้งาน
-    </button>
-    <button onclick="Feedback.open()" class="btn-logout">
-      <i class="bi bi-chat-heart-fill" style="color:#a78bfa;"></i>ส่งข้อเสนอแนะ
-    </button>
-    <button onclick="openChangePassword()" class="btn-logout">
-      <i class="bi bi-key"></i>เปลี่ยนรหัสผ่าน
-    </button>
-    <button onclick="doLogout()" class="btn-logout btn-logout-red">
-      <i class="bi bi-box-arrow-left"></i>ออกจากระบบ
+  <div style="padding:0 12px 10px;">
+    <button onclick="doLogout()" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:9px;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.08);color:#fca5a5;font-size:13px;font-weight:600;font-family:Kanit;cursor:pointer;transition:all .17s;" onmouseover="this.style.background='rgba(239,68,68,.2)'" onmouseout="this.style.background='rgba(239,68,68,.08)'">
+      <i class="bi bi-box-arrow-left" style="font-size:16px;"></i>ออกจากระบบ
     </button>
   </div>
   <div class="sb-credit">
@@ -2339,8 +2341,8 @@
         <div class="card shadow-sm">
           <div class="card-body p-0">
             <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead><tr><th>ผู้ใช้งาน</th><th>ระดับ</th><th>สาขา</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+              <table class="table table-hover mb-0" style="font-family:Kanit;font-size:13px;">
+                <thead><tr style="font-size:13px;"><th>ผู้ใช้งาน</th><th>ระดับ</th><th>สาขา</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
                 <tbody id="userTableBody"></tbody>
               </table>
             </div>
@@ -2549,7 +2551,8 @@
       <h6 class="fw-bold text-primary mb-2"><i class="bi bi-clipboard2-check me-2"></i>การตรวจนับครุภัณฑ์ประจำปี</h6>
       <ul class="mb-3">
         <li><strong>Admin:</strong> สร้างรอบตรวจ กำหนดปีงบประมาณและช่วงวันที่ · แจ้งสาขาทางอีเมล (ต้องกรอก email สาขาก่อน) · กำกับติดตามความคืบหน้ารายสาขา · ปิดรอบตรวจเมื่อเสร็จสิ้น</li>
-        <li><strong>สาขา:</strong> กด "กรอกผล" เพื่อบันทึกผลการตรวจรายการ · เลือกสถานะแต่ละรายการแล้วกด "บันทึกทั้งหมด"</li>
+        <li><strong>สาขา:</strong> กด "กรอกผล" เพื่อบันทึกผลการตรวจรายการ · เลือกสถานะแต่ละรายการ (พบ / ไม่พบ / ชำรุดซ่อมได้ / ชำรุดซ่อมไม่ได้) — <strong>ระบบบันทึกอัตโนมัติ</strong>ทันทีเมื่อเปลี่ยน dropdown · ใส่หมายเหตุแล้วกด Enter หรือคลิกออก</li>
+        <li>สแกน QR Code บนครุภัณฑ์เพื่อเปิดรายการนั้นโดยตรง · แถวสีเหลืองคือข้อมูลค้างในฐานข้อมูลแต่ยังไม่มีผลตรวจ กด <i class="bi bi-trash3"></i> เพื่อรีเซ็ต</li>
         <li>ดูประวัติรอบตรวจทั้งหมดได้ที่ปุ่ม "ประวัติรอบตรวจ"</li>
       </ul>
 
@@ -2567,9 +2570,9 @@
         <table class="table table-sm table-bordered mb-0">
           <thead class="table-light"><tr><th>รายงาน</th><th>รูปแบบ</th><th>รายละเอียด</th></tr></thead>
           <tbody>
-            <tr><td>ทะเบียนครุภัณฑ์</td><td><span class="badge bg-success">Excel</span> <span class="badge bg-secondary">พิมพ์</span></td><td>36 คอลัมน์ format พ.ด. แยก sheet ตามสาขา</td></tr>
-            <tr><td>รายงานผลการตรวจนับ</td><td><span class="badge bg-success">Excel</span> <span class="badge bg-secondary">พิมพ์</span></td><td>format ส่งพัสดุ 36 คอลัมน์ แยก sheet ตามสาขา</td></tr>
-            <tr><td>รายงานผลการตรวจสอบ</td><td><span class="badge bg-success">Excel</span></td><td>รายการที่ตรวจแล้ว/ยังไม่ตรวจ ผู้ตรวจ วันที่ตรวจ</td></tr>
+            <tr><td>ทะเบียนครุภัณฑ์</td><td><span class="badge bg-success">Excel</span> <span class="badge bg-secondary">พิมพ์</span></td><td>งบหน้าทะเบียนครุภัณฑ์ format พ.ด. แยก sheet ตามสาขา</td></tr>
+            <tr><td>รายงานผลการตรวจนับ</td><td><span class="badge bg-success">Excel</span> <span class="badge bg-secondary">พิมพ์</span></td><td>ส่งออก Excel ครุภัณฑ์ที่จัดซื้อตามปีงบประมาณ แยก sheet ตามสาขา</td></tr>
+            <tr><td>รายงานผลการตรวจสอบ</td><td><span class="badge bg-success">Excel</span> <span class="badge bg-secondary">พิมพ์</span></td><td>2 sheets — <strong>ส่งพัสดุ</strong>: 37 คอลัมน์ตามแบบฟอร์มปี 2569 (พบ / ไม่พบ / ชำรุดซ่อมได้ / ซ่อมไม่ได้ + สรุป 5 ข้อท้าย) · <strong>สรุปสาขา</strong>: แยกรายสาขาพร้อม %</td></tr>
             <tr><td>บัญชีเสนอจำหน่าย</td><td><span class="badge bg-primary">Word</span> <span class="badge bg-secondary">พิมพ์</span></td><td>รายการรออนุมัติจำหน่าย พร้อมช่องลงนาม</td></tr>
           </tbody>
         </table>
@@ -3169,6 +3172,25 @@ async function _loadProfile(user) {
 }
 
 // ── เปลี่ยนรหัสผ่านตัวเอง (pattern Account.openPwd จากแอปครุภัณฑ์ด่าน) ──
+function _sbTogglePopover(e) {
+  e.stopPropagation();
+  var p = document.getElementById('sbPopover');
+  if (!p) return;
+  var isOpen = p.style.display !== 'none';
+  p.style.display = isOpen ? 'none' : '';
+}
+function _sbClosePopover() {
+  var p = document.getElementById('sbPopover');
+  if (p) p.style.display = 'none';
+}
+function _feedbackAction() {
+  Feedback.open();
+}
+document.addEventListener('click', function(e) {
+  var card = document.getElementById('sbUserCard');
+  if (card && !card.contains(e.target)) _sbClosePopover();
+});
+
 function openChangePassword() {
   var overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:10000;display:flex;align-items:center;justify-content:center;animation:fadeIn .15s;';
@@ -3254,8 +3276,8 @@ function _startApp() {
   var _isAdminRole = (p.role === 'admin');
   if (adminSection) adminSection.style.display = _isAdminRole ? '' : 'none';
   if (adminMenu)    adminMenu.style.display    = _isAdminRole ? '' : 'none';
-  var menuFeedbackReport = document.getElementById('menuFeedbackReport');
-  if (menuFeedbackReport) menuFeedbackReport.style.display = _isAdminRole ? '' : 'none';
+  // menuFeedback แสดงทุก role — admin เห็น report, branch ส่งแบบประเมิน
+  // (ไม่ต้อง show/hide — ใช้ _feedbackAction() ตัดสิน)
 
   // ซ่อน branch filter สำหรับ branch user ทันที (synchronous ก่อน loadDashboard)
   var _bWrap = document.getElementById('dashBranchWrap');
@@ -3431,7 +3453,7 @@ function showHelp() {
       + '<li>ปิดรอบตรวจเมื่อเสร็จสิ้น · ดูประวัติรอบตรวจทั้งหมด</li>';
   } else if (isBranch) {
     html += '<li>กด <strong>"กรอกผล"</strong> เพื่อบันทึกผลตรวจรายการ</li>'
-      + '<li>เลือกสถานะแต่ละรายการ (พบ / ไม่พบ / ชำรุด ฯลฯ) แล้วกด "บันทึกทั้งหมด"</li>'
+      + '<li>เลือกสถานะแต่ละรายการ (พบ / ไม่พบ / ชำรุดซ่อมได้ / ชำรุดซ่อมไม่ได้) — <strong>บันทึกอัตโนมัติ</strong>ทันทีเมื่อเปลี่ยน dropdown</li>'
       + '<li><i class="bi bi-qr-code-scan me-1"></i><strong>สแกน QR Code:</strong> กดปุ่ม "สแกน QR" เล็งกล้องที่สติกเกอร์บนครุภัณฑ์ — ระบบเปิดรายการนั้นให้อัตโนมัติ (อนุญาตกล้องครั้งแรก)</li>'
       + '<li>ดูความคืบหน้าการตรวจของสาขาได้บนหน้าภาพรวม</li>';
   } else {
@@ -5496,8 +5518,8 @@ function _getImpAssetCode(r) {
   var _kind = String(r['ชนิด']             || '').trim();
   var _styl = String(r['ลักษณะ']            || '').trim();
   var _yr   = String(r['ปี']               || '').trim();
-  var _seq  = String(r['ครุภัณฑ์ลำดับที่']  || '').trim();
-  if (_cat && /^\d+$/.test(_cat) && _kind && _yr && _seq) {
+  var _seq  = String(r['ครุภัณฑ์ลำดับที่'] || r['ครุภัณฑ์สำดับที่'] || '').trim();
+  if (_cat && parseInt(_cat) > 0 && _kind && _yr && _seq) {
     var _p = function(v, n) { return String(parseInt(v) || 0).padStart(n, '0'); };
     return _p(_cat,4) + '-' + _p(_kind,3) + (_styl ? '-' + _p(_styl,4) : '') + '-' + _p(_yr,2) + '-' + _p(_seq,3);
   }
@@ -5510,7 +5532,7 @@ function _getImpAssetCode(r) {
   // ถ้า p1 มีค่าแต่ p2 ว่าง → ใช้ p1 เดี่ยว (บางสาขาเก็บรหัสไว้คอลัมน์เดียว)
   if (p1 && /^\d{4}/.test(p1)) return p1;
   // fallback ทั่วไป — ชื่อคอลัมน์หลากหลาย
-  var direct = String(r.asset_code || r['รหัสครุภัณฑ์'] || r['เลขที่'] || r['รหัส']
+  var direct = String(r.asset_code || r['รหัสครุภัณฑ์'] || r['รหัสสินค้า'] || r['เลขที่'] || r['รหัส']
                     || r['เลขทะเบียน'] || r['รหัสพัสดุ'] || r['รหัสทรัพย์สิน'] || '').trim();
   if (direct) return direct;
   // scan ทุกคอลัมน์: รูปแบบใหม่ (xxxx-xxx-...) หรือรูปแบบเก่า (xxxx.xxx หรือ xxxx-xxx)
@@ -7200,14 +7222,14 @@ async function _loadBranchInspDashboard(insp, showAll) {
   // Build App.inspItems for auto-save compatibility
   App.inspItems = assets.map(function(a) {
     return { asset:a, item:itemsMap[a.id]||null,
-      _status: itemsMap[a.id] ? (itemsMap[a.id].result||itemsMap[a.id].status) : a.status,
+      _status: itemsMap[a.id] ? (itemsMap[a.id].result||itemsMap[a.id].status||'') : '',
       _note:   itemsMap[a.id] ? (itemsMap[a.id].notes||'') : '' };
   });
   App.inspFiltered = App.inspItems;
 
   // Stats
   var total     = assets.length;
-  var done      = App.inspItems.filter(function(r){ return !!r.item; }).length;
+  var done      = App.inspItems.filter(function(r){ return !!r._status; }).length;
   var remaining = total - done;
   var pct       = total ? Math.round(done/total*100) : 0;
   var barColor  = pct===100?'#22c55e':pct>=50?'#f59e0b':'#3b82f6';
@@ -7221,7 +7243,7 @@ async function _loadBranchInspDashboard(insp, showAll) {
     '</div>';
 
   // 5 first unsurveyed
-  var preview = App.inspItems.filter(function(r){ return !r.item; }).slice(0,5);
+  var preview = App.inspItems.filter(function(r){ return !r._status; }).slice(0,5);
   var statusOpts = Object.entries(INSP_STATUS).map(function(e){
     return '<option value="'+e[0]+'">'+e[1].label+'</option>';
   }).join('');
@@ -7256,7 +7278,7 @@ async function _loadBranchInspDashboard(insp, showAll) {
       cardHtml += '<tr style="border-bottom:1px solid #f1f5f9;border-left:3px solid #f59e0b;">'
         +'<td style="'+tdStyle+'color:#475569;">'+(a.asset_code||'<span style="color:#f59e0b;">ไม่มีรหัส</span>')+'</td>'
         +'<td style="'+tdStyle+'">'+(a.name||'—')+'</td>'
-        +'<td style="'+tdStyle+'color:#475569;">'+(a.branches&&a.branches.name?a.branches.name:'<span style="color:#f59e0b;">ไม่ระบุ</span>')+(a.location?' <span style="color:#94a3b8;font-size:12px;">· '+a.location+'</span>':'')+'</td>'
+        +(function(){var _bn=(a.branches&&a.branches.name)||'';var _lc=a.location?_fmtLoc(_bn,a.location):'';return '<td style="'+tdStyle+'color:#475569;">'+(_lc?_lc:(_bn||'<span style="color:#f59e0b;">ไม่ระบุ</span>'))+'</td>';})()
         +'<td style="'+tdStyle+'"><select class="form-select form-select-sm" style="'+_inspSelStyle(row._status)+'" data-insp-idx="'+gi+'" onchange="setInspStatus(this)">'+selOpts+'</select></td>'
         +'<td style="'+tdStyle+'color:#475569;white-space:nowrap;">'+inspDate+'</td>'
         +'<td style="'+tdStyle+'"><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Kanit;" value="'+(row._note||'')+'" data-note-idx="'+gi+'" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>'
@@ -7334,8 +7356,8 @@ async function _loadInspOverview() {
   var assRes = await assetsQ;
   var assets = attachBranchInfo(assRes.data || []);
 
-  var itemsRes = await sb.from('inspection_items').select('asset_id, inspected_by').eq('inspection_id', App.currentInspectionId);
-  var items = itemsRes.data || [];
+  var itemsRes = await sb.from('inspection_items').select('asset_id, inspected_by, result, status').eq('inspection_id', App.currentInspectionId);
+  var items = (itemsRes.data || []).filter(function(i){ return !!(i.result || i.status); });
   var doneSet = {};
   var doneByBranch = {};
   items.forEach(function(i) {
@@ -7552,7 +7574,7 @@ async function goFillInspection() {
   (itemsRes.data||[]).forEach(function(i) { itemsMap[i.asset_id] = i; });
 
   App.inspItems = assets.map(function(a) {
-    return { asset: a, item: itemsMap[a.id] || null, _status: itemsMap[a.id] ? itemsMap[a.id].result || itemsMap[a.id].status : a.status, _note: itemsMap[a.id] ? itemsMap[a.id].notes || '' : '' };
+    return { asset: a, item: itemsMap[a.id] || null, _status: itemsMap[a.id] ? (itemsMap[a.id].result || itemsMap[a.id].status || '') : '', _note: itemsMap[a.id] ? itemsMap[a.id].notes || '' : '' };
   });
   App.inspFiltered = App.inspItems;
   Pager.reset('insp');
@@ -7580,7 +7602,7 @@ function filterInspItems() {
     var a = row.asset;
     var matchS = !search || (a.asset_code||'').toLowerCase().includes(search) || (a.name||'').toLowerCase().includes(search);
     var matchB = !branchFilter || a.branch_id === branchFilter;
-    var matchD = !doneFilter || (doneFilter === 'done' ? !!row.item : !row.item);
+    var matchD = !doneFilter || (doneFilter === 'done' ? !!row._status : !row._status);
     return matchS && matchB && matchD;
   });
   Pager.reset('insp');
@@ -7597,7 +7619,7 @@ function _renderInspTable() {
   var data = App.inspFiltered;
   var slice = Pager.slice('insp', data);
 
-  var done = App.inspItems.filter(function(r) { return !!r.item; }).length;
+  var done = App.inspItems.filter(function(r) { return !!r._status; }).length;
   var total = App.inspItems.length;
   if (summaryBar) {
     var pct = total ? Math.round(done / total * 100) : 0;
@@ -7622,17 +7644,21 @@ function _renderInspTable() {
       '</div>';
   }
 
-  var statusOpts = Object.entries(INSP_STATUS).map(function(e) {
-    return '<option value="' + e[0] + '">' + e[1].label + '</option>';
-  }).join('');
+  var statusOpts = '<option value="" style="color:#94a3b8;">— ยังไม่ตรวจ —</option>'
+    + Object.entries(INSP_STATUS).map(function(e) {
+        return '<option value="' + e[0] + '">' + e[1].label + '</option>';
+      }).join('');
 
   tbody.innerHTML = slice.map(function(row, idx) {
     var a = row.asset;
-    var isDone = !!row.item;
+    var isDone = !!row._status;
+    var hasOrphan = !!row.item && !row._status;
     var rowStyle = isDone
       ? 'background:#f0fdf4;border-left:3px solid #22c55e;'
-      : 'background:#fff;border-left:3px solid #f59e0b;';
-    var inspDate = (row.item && (row.item.inspected_at || row.item.created_at))
+      : hasOrphan
+        ? 'background:#fffbeb;border-left:3px solid #f59e0b;'
+        : 'background:#fff;border-left:3px solid #e2e8f0;';
+    var inspDate = (row._status && row.item && (row.item.inspected_at || row.item.created_at))
       ? fmtDate(row.item.inspected_at || row.item.created_at)
       : '<span style="color:#cbd5e1;">—</span>';
     var globalIdx = Pager.startIndex('insp') + idx;
@@ -7641,18 +7667,28 @@ function _renderInspTable() {
       '<td ' + td + ' style="font-size:13px;font-weight:400;color:#475569;font-family:Kanit;">' + (a.asset_code||'<span style="color:#f59e0b;">ไม่มีรหัส</span>') + '</td>' +
       '<td ' + td + '>' + a.name + (a.brand ? ' <span style="color:#94a3b8;font-size:12px;">· ' + a.brand + '</span>' : '') + '</td>' +
       '<td ' + td + ' style="font-size:13px;font-weight:400;color:#475569;font-family:Kanit;">' +
-        ((a.branches&&a.branches.name)||'<span style="color:#f59e0b;">ไม่ระบุ</span>') +
-        (a.location ? ' <span style="color:#94a3b8;font-size:12px;">· ' + a.location + '</span>' : '') + '</td>' +
+        (a.location
+          ? '<div style="line-height:1.3;" title="' + a.location + '">' + a.location + '</div>'
+            + (a.custodian ? '<div style="font-size:11px;color:#2563eb;margin-top:2px;"><i class="bi bi-person-fill me-1"></i>' + a.custodian + '</div>' : '')
+          : ('<span style="color:#94a3b8;">—</span>')) + '</td>' +
       '<td><select class="form-select form-select-sm" style="' + _inspSelStyle(row._status) + '" data-insp-idx="' + globalIdx + '" onchange="setInspStatus(this)">' + statusOpts.replace('value="' + row._status + '"', 'value="' + row._status + '" selected') + '</select></td>' +
       '<td style="font-size:13px;font-weight:400;color:#475569;white-space:nowrap;">' + inspDate + '</td>' +
       '<td><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Kanit;" value="' + (row._note||'') + '" data-note-idx="' + globalIdx + '" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>' +
-      '<td class="text-center"><button onclick="showAssetForm(\'' + a.id + '\')" class="btn btn-sm" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;color:#2563eb;" title="ดูรายละเอียด"><i class="bi bi-eye"></i></button></td>' +
+      '<td class="text-center" style="white-space:nowrap;">' +
+        '<button onclick="showAssetForm(\'' + a.id + '\')" class="btn btn-sm" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;color:#2563eb;" title="ดูรายละเอียด"><i class="bi bi-eye"></i></button>' +
+        (hasOrphan ? ' <button onclick="resetInspRecord(' + globalIdx + ',this)" class="btn btn-sm" style="background:none;border:1px solid #fca5a5;border-radius:6px;padding:3px 8px;color:#dc2626;" title="ลบ record นี้ออก (คืนเป็นยังไม่ตรวจ)"><i class="bi bi-trash3"></i></button>' : '') +
+      '</td>' +
     '</tr>';
   }).join('');
 
   if (paging) paging.innerHTML = Pager.html('insp', data.length);
 }
 
+function _fmtLoc(brName, loc) {
+  var s = (loc || '').replace(/^\d{1,2}[\s-]\s*/, '').trim();
+  if (brName && s.indexOf(brName) === 0) s = s.slice(brName.length).replace(/^[\s·-]+/, '').trim();
+  return s;
+}
 function _inspSelStyle(status) {
   var m = {
     active:            'background:#dcfce7;color:#15803d;border-color:#86efac;',
@@ -7681,6 +7717,26 @@ function autoSaveInspNote(inp) {
   _autoSaveInspRow(idx, null);
 }
 
+async function resetInspRecord(idx, btn) {
+  var row = App.inspFiltered[idx];
+  if (!row || !row.item) return;
+  if (btn) btn.disabled = true;
+  var res = await sb.from('inspection_items').delete().eq('id', row.item.id);
+  if (res.error) { showToast('ลบไม่สำเร็จ: ' + res.error.message, 'danger'); if (btn) btn.disabled = false; return; }
+  await sb.from('assets').update({ status: 'active' }).eq('id', row.asset.id);
+  row.item = null;
+  row._status = '';
+  row.asset.status = 'active';
+  // อัปเดต summary bar
+  var done = App.inspItems.filter(function(r){ return !!r._status; }).length;
+  var total = App.inspItems.length;
+  var pct = total ? Math.round(done/total*100) : 0;
+  var sb2 = document.getElementById('inspSummaryBar');
+  if (sb2) { var s = sb2.querySelector('strong'); if (s) s.textContent = done; }
+  showToast('รีเซ็ตสำเร็จ — คืนเป็นยังไม่ตรวจแล้ว', 'success');
+  filterInspItems();
+}
+
 async function _autoSaveInspRow(idx, triggerEl) {
   var row = App.inspFiltered[idx];
   if (!row || !App.currentInspectionId) return;
@@ -7701,19 +7757,37 @@ async function _autoSaveInspRow(idx, triggerEl) {
   };
 
   var res;
-  if (row.item) {
+  if (row.item && !row._status) {
+    // reset → ลบ record ออกจาก DB แล้วคืนสถานะ asset เป็น active
+    res = await sb.from('inspection_items').delete().eq('id', row.item.id);
+    if (!res.error) {
+      row.item = null;
+      await sb.from('assets').update({ status: 'active' }).eq('id', row.asset.id);
+      row.asset.status = 'active';
+    }
+  } else if (row.item) {
     res = await sb.from('inspection_items').update(payload).eq('id', row.item.id);
-  } else {
+  } else if (row._status) {
+    // สร้าง record ใหม่เฉพาะเมื่อเลือกสถานะแล้ว
     res = await sb.from('inspection_items').insert(payload).select().single();
     if (!res.error && res.data) row.item = res.data;
+  } else {
+    // ยังไม่เลือกสถานะ + ยังไม่มี record → ไม่สร้าง
+    if (badgeCell) badgeCell.innerHTML = '';
+    if (triggerEl) triggerEl.disabled = false;
+    return;
   }
 
   if (!res.error) {
-    await sb.from('assets').update({ status: row._status }).eq('id', row.asset.id);
-    row.asset.status = row._status;
-    if (badgeCell) badgeCell.innerHTML = '<span class="badge" style="background:#dcfce7;color:#166534;font-size:10px;font-weight:600;border:1px solid #bbf7d0;"><i class="bi bi-check-circle-fill me-1"></i>ตรวจแล้ว</span>';
+    if (row._status) {
+      await sb.from('assets').update({ status: row._status }).eq('id', row.asset.id);
+      row.asset.status = row._status;
+    }
+    if (badgeCell) badgeCell.innerHTML = row._status
+      ? '<span class="badge" style="background:#dcfce7;color:#166534;font-size:10px;font-weight:600;border:1px solid #bbf7d0;"><i class="bi bi-check-circle-fill me-1"></i>ตรวจแล้ว</span>'
+      : '';
     // อัปเดต summary bar
-    var done = App.inspItems.filter(function(r){ return !!r.item; }).length;
+    var done = App.inspItems.filter(function(r){ return !!r._status; }).length;
     var total = App.inspItems.length;
     var pct = total ? Math.round(done/total*100) : 0;
     var barColor = pct===100?'#22c55e':pct>=50?'#f59e0b':'#3b82f6';
@@ -8274,7 +8348,6 @@ async function _loadUserTable() {
 
   container.innerHTML = users.map(function(u) {
     var isAdmin = u.role === 'admin';
-    var initials = (u.full_name||u.username||'?').charAt(0).toUpperCase();
     var avatarBg = isAdmin ? 'linear-gradient(135deg,#3b82f6,#8b5cf6)' : 'linear-gradient(135deg,#059669,#0891b2)';
     var roleBadge = isAdmin
       ? '<span style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;">Admin</span>'
@@ -8287,18 +8360,18 @@ async function _loadUserTable() {
     return '<tr style="' + (!u.active ? 'opacity:.55;' : '') + '">' +
       '<td>' +
         '<div style="display:flex;align-items:center;gap:10px;">' +
-          '<div style="width:34px;height:34px;border-radius:50%;background:' + avatarBg + ';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;">' + initials + '</div>' +
+          '<div style="width:34px;height:34px;border-radius:50%;background:' + avatarBg + ';display:flex;align-items:center;justify-content:center;font-size:17px;color:#fff;flex-shrink:0;"><i class=\'bi bi-person-fill\'></i></div>' +
           '<div>' +
-            '<div style="font-weight:600;font-size:13px;">' + (u.full_name||'—') + '</div>' +
-            '<div style="font-family:monospace;font-size:11px;color:#64748b;">@' + (u.username||'-') + '</div>' +
+            '<div style="font-weight:600;font-size:14px;font-family:Kanit;">' + (u.full_name||'—') + '</div>' +
+            '<div style="font-family:monospace;font-size:12px;color:#64748b;">@' + (u.username||'-') + '</div>' +
           '</div>' +
         '</div>' +
       '</td>' +
       '<td>' + roleBadge + '</td>' +
-      '<td style="font-size:12px;">' + branchName + '</td>' +
+      '<td style="font-size:13px;font-family:Kanit;">' + branchName + '</td>' +
       '<td>' + activeBadge + '</td>' +
       '<td>' +
-        '<button class="btn btn-sm btn-light border" style="font-size:12px;padding:3px 10px;" onclick=\'showEditUser(' + JSON.stringify(u) + ')\'>' +
+        '<button class="btn btn-sm btn-light border" style="font-size:13px;padding:3px 12px;font-family:Kanit;" onclick=\'showEditUser(' + JSON.stringify(u) + ')\'>' +
           '<i class="bi bi-pencil me-1"></i>แก้ไข' +
         '</button>' +
       '</td>' +
@@ -8361,6 +8434,8 @@ var Feedback = {
     el = document.getElementById('fbAlert');       if (el) el.style.display = 'none';
     el = document.getElementById('fbRatingLabel'); if (el) el.textContent = '';
     this._renderStars(0);
+    el = document.getElementById('fbAdminReportBtn');
+    if (el) el.style.display = (App.profile && App.profile.role === 'admin') ? '' : 'none';
     el = document.getElementById('feedbackModal'); if (el) el.classList.add('show');
   },
 
@@ -10267,7 +10342,7 @@ async function exportInspectionResultExcel() {
   try {
     var isBranch = App.profile && App.profile.role === 'branch';
     var assQ = sb.from('assets')
-      .select('id,asset_code,name,status,branch_id')
+      .select('id,asset_code,name,brand,model,serial_number,price,acquired_date,location,custodian,category,status,branch_id')
       .neq('status','disposed').order('asset_code').limit(10000);
     if (isBranch && App.profile.branch_id) assQ = assQ.eq('branch_id', App.profile.branch_id);
     var assRes = await assQ;
@@ -10277,190 +10352,214 @@ async function exportInspectionResultExcel() {
     (App.branches||[]).forEach(function(b){ _branchMapE[b.id] = b.name; });
 
     var itemsRes = await sb.from('inspection_items')
-      .select('asset_id,status,inspected_at,inspected_by,profiles(full_name,username)')
+      .select('asset_id,result,status,notes,inspected_at,inspected_by,profiles(full_name,username)')
       .eq('inspection_id', App.currentInspectionId);
     var itemMap = {};
     (itemsRes.data||[]).forEach(function(i){ itemMap[i.asset_id] = i; });
 
     var fiscalYear = (App.currentInspection && App.currentInspection.fiscal_year) || (new Date().getFullYear()+543);
     var todayTH = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
-    var statusLabel = {active:'ใช้งาน',not_found:'ไม่พบ',damaged_fixable:'ชำรุดซ่อมได้',damaged_unfixable:'ชำรุดซ่อมไม่ได้',overaged:'เกินอายุ',transferred:'โอนย้าย',disposal_pending:'รออนุมัติจำหน่าย',disposed:'จำหน่ายแล้ว'};
 
-    // สรุป
-    var total = assets.length;
-    var inspectedCount = assets.filter(function(a){ return !!itemMap[a.id]; }).length;
-    var notInspectedCount = total - inspectedCount;
-    var pct = total > 0 ? Math.round(inspectedCount/total*100) : 0;
-
-    // สรุปตามสาขา
-    var branchStatsE = {};
-    var branchOrderE = [];
-    assets.forEach(function(a) {
-      var bName = _branchMapE[a.branch_id] || 'ไม่ระบุสาขา';
-      if (!branchStatsE[bName]) { branchStatsE[bName] = {total:0,done:0}; branchOrderE.push(bName); }
-      branchStatsE[bName].total++;
-      if (itemMap[a.id]) branchStatsE[bName].done++;
+    // นับตาม result จริง
+    var cFound=0, cNotFound=0, cFixable=0, cUnfixable=0;
+    assets.forEach(function(a){
+      var item=itemMap[a.id]; var r=item?(item.result||item.status||''):'';
+      if(r==='active') cFound++;
+      else if(r==='not_found') cNotFound++;
+      else if(r==='damaged_fixable') cFixable++;
+      else if(r==='damaged_unfixable') cUnfixable++;
     });
-    branchOrderE.sort();
+    var total = assets.length;
+    var inspectedCount = cFound+cNotFound+cFixable+cUnfixable;
+    var pct = total>0?Math.round(inspectedCount/total*100):0;
 
-    // ── Style definitions ─────────────────────────────────────
-    var TBe = { top:{style:'thin',color:{rgb:'000000'}}, bottom:{style:'thin',color:{rgb:'000000'}},
-                left:{style:'thin',color:{rgb:'000000'}}, right:{style:'thin',color:{rgb:'000000'}} };
-    var FNe = 'TH Sarabun New';
-    var sTitleE = { font:{name:FNe,sz:16,bold:true}, alignment:{horizontal:'center',vertical:'center'} };
-    var sSubE   = { font:{name:FNe,sz:15},            alignment:{horizontal:'center',vertical:'center'} };
-    var sHdrE   = { font:{name:FNe,sz:15,bold:true}, fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'}, border:TBe, alignment:{horizontal:'center',vertical:'center',wrapText:true} };
-    var sDataLE = { font:{name:FNe,sz:15}, border:TBe, alignment:{vertical:'center'} };
-    var sDataCE = { font:{name:FNe,sz:15}, border:TBe, alignment:{horizontal:'center',vertical:'center'} };
-    var sGtotE  = { font:{name:FNe,sz:15,bold:true}, fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'}, border:TBe, alignment:{horizontal:'center',vertical:'center'} };
-    var sChipB  = { font:{name:FNe,sz:15,bold:true}, fill:{fgColor:{rgb:'DBEAFE'},patternType:'solid'}, border:TBe, alignment:{horizontal:'center',vertical:'center'} };
-    var sChipG  = { font:{name:FNe,sz:15,bold:true}, fill:{fgColor:{rgb:'DCFCE7'},patternType:'solid'}, border:TBe, alignment:{horizontal:'center',vertical:'center'} };
-    var sChipR  = { font:{name:FNe,sz:15,bold:true}, fill:{fgColor:{rgb:'FEE2E2'},patternType:'solid'}, border:TBe, alignment:{horizontal:'center',vertical:'center'} };
+    // ── Styles ──
+    var TB={top:{style:'thin',color:{rgb:'000000'}},bottom:{style:'thin',color:{rgb:'000000'}},left:{style:'thin',color:{rgb:'000000'}},right:{style:'thin',color:{rgb:'000000'}}};
+    var FN='TH Sarabun New';
+    var sTitle={font:{name:FN,sz:16,bold:true},alignment:{horizontal:'center',vertical:'center'}};
+    var sSub  ={font:{name:FN,sz:15},alignment:{horizontal:'center',vertical:'center'}};
+    var sHdr  ={font:{name:FN,sz:13,bold:true},fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'},border:TB,alignment:{horizontal:'center',vertical:'center',wrapText:true}};
+    var sData ={font:{name:FN,sz:13},border:TB,alignment:{vertical:'center',wrapText:true}};
+    var sDataC={font:{name:FN,sz:13},border:TB,alignment:{horizontal:'center',vertical:'center'}};
+    var sSumTxt={font:{name:FN,sz:15},alignment:{vertical:'center'}};
+    var sGtot ={font:{name:FN,sz:15,bold:true},fill:{fgColor:{rgb:'BDD7EE'},patternType:'solid'},border:TB,alignment:{horizontal:'center',vertical:'center'}};
 
     var wb = XLSX.utils.book_new();
+    var NC = 37; // คอลัมน์ A–AK
 
-    // ── Sheet 1: สรุปสาขา ─────────────────────────────────────
-    var NC_S = 6;
-    var sumData = [], sumTypes = [];
-    var _pushS = function(row, type) { sumData.push(row); sumTypes.push(type||''); };
+    // ── Sheet 1: ส่งพัสดุ (รูปแบบไฟล์ 2569) ──────────────────
+    var rows=[]; var types=[]; var merges=[];
+    var push=function(row,type){rows.push(row);types.push(type||'');};
 
-    _pushS(['รายงานผลการตรวจสอบพัสดุ ปีงบประมาณ ' + fiscalYear], 'title');
-    _pushS(['คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์'], 'sub');
-    _pushS([], '');
-    _pushS(['ณ วันที่ ' + todayTH], 'sub');
-    _pushS(['ทั้งหมด: '+total+' รายการ', '', 'ตรวจแล้ว: '+inspectedCount+' รายการ ('+pct+'%)', '', 'ยังไม่ตรวจ: '+notInspectedCount+' รายการ ('+(100-pct)+'%)', ''], 'chip');
-    _pushS([], '');
-    _pushS(['ลำดับ','สาขา','ทั้งหมด','ตรวจแล้ว','ยังไม่ตรวจ','%ความคืบหน้า'], 'hdr');
+    push(['รายละเอียดการตรวจสอบพัสดุประจำปี ปีงบประมาณ '+fiscalYear],'title');
+    push(['คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์'],'sub');
+    push(['คงเหลือ ณ วันที่ '+todayTH],'sub');
+    push([],'');
+    merges.push({s:{r:0,c:0},e:{r:0,c:NC-1}});
+    merges.push({s:{r:1,c:0},e:{r:1,c:NC-1}});
+    merges.push({s:{r:2,c:0},e:{r:2,c:NC-1}});
+    merges.push({s:{r:3,c:0},e:{r:3,c:NC-1}});
 
-    var sumMerges = [
-      {s:{r:0,c:0},e:{r:0,c:NC_S-1}},
-      {s:{r:1,c:0},e:{r:1,c:NC_S-1}},
-      {s:{r:2,c:0},e:{r:2,c:NC_S-1}},
-      {s:{r:3,c:0},e:{r:3,c:NC_S-1}},
-      {s:{r:4,c:0},e:{r:4,c:1}},
-      {s:{r:4,c:2},e:{r:4,c:3}},
-      {s:{r:4,c:4},e:{r:4,c:NC_S-1}},
-      {s:{r:5,c:0},e:{r:5,c:NC_S-1}},
-    ];
+    // Header row (index 4)
+    push([
+      'ลำดับ','วดป.ที่ได้มา',
+      'รหัสเก่า','','',
+      'ชื่อหน่วยงาน','รหัสครุภัณฑ์',
+      'ชนิด','ลักษณะ','ปี','ครุภัณฑ์\nลำดับที่',
+      'ชื่อครุภัณฑ์','ยี่ห้อ','รุ่น','S/N:\nModel No:','อ้างอิง\nตัวที่',
+      'จำนวน','หน่วย','ราคา','งบ','วิธีการ\nได้มา',
+      'ร้านค้า/\nบริษัท/หจก.','เลขที่เล่มที่\nใบส่งของ/ใบเสร็จ',
+      'ใช้ประจำที่','กอง/คณะ','ใบเบิก','ผู้รับ\nเซ็นรับครุภัณฑ์',
+      'อายุการใช้งาน\nอย่างต่ำ','ประเภท\nครุภัณฑ์','หมวด',
+      'พบ','ไม่พบ','ชำรุด\nซ่อมได้','ชำรุด\nซ่อมไม่ได้','โอนย้าย','แทง\nจำหน่าย','หมายเหตุ'
+    ],'hdr');
+    merges.push({s:{r:4,c:2},e:{r:4,c:4}}); // รหัสเก่า header
 
-    branchOrderE.forEach(function(bn, idx) {
-      var s = branchStatsE[bn];
-      var bPct = s.total > 0 ? Math.round(s.done/s.total*100) : 0;
-      _pushS([idx+1, bn, s.total, s.done, s.total-s.done, bPct+'%'], 'data');
-    });
-
-    // Grand total row
-    _pushS(['รวมทั้งหมด', '', total, inspectedCount, notInspectedCount, pct+'%'], 'gtot');
-    sumMerges.push({s:{r:sumData.length-1,c:0},e:{r:sumData.length-1,c:1}});
-
-    var wsSum = XLSX.utils.aoa_to_sheet(sumData);
-    wsSum['!cols'] = [{wch:8},{wch:30},{wch:10},{wch:10},{wch:12},{wch:14}];
-    wsSum['!merges'] = sumMerges;
-
-    sumTypes.forEach(function(type, ri) {
-      if (!type) return;
-      for (var ci = 0; ci < NC_S; ci++) {
-        var addr = XLSX.utils.encode_cell({r:ri, c:ci});
-        if (!wsSum[addr]) wsSum[addr] = {v:'', t:'s'};
-        if      (type==='title') wsSum[addr].s = sTitleE;
-        else if (type==='sub')   wsSum[addr].s = sSubE;
-        else if (type==='hdr')   wsSum[addr].s = sHdrE;
-        else if (type==='data')  wsSum[addr].s = (ci===0||ci>=2) ? sDataCE : sDataLE;
-        else if (type==='gtot')  wsSum[addr].s = sGtotE;
-        else if (type==='chip') {
-          if (ci===0||ci===1) wsSum[addr].s = sChipB;
-          else if (ci===2||ci===3) wsSum[addr].s = sChipG;
-          else wsSum[addr].s = sChipR;
-        }
-      }
-    });
-
-    wsSum['!rows'] = sumTypes.map(function(t) {
-      if (t==='title') return {hpt:28};
-      if (t==='sub') return {hpt:20};
-      if (t==='hdr') return {hpt:28};
-      if (t==='gtot') return {hpt:20};
-      if (t==='data') return {hpt:18};
-      return {hpt:14};
-    });
-
-    XLSX.utils.book_append_sheet(wb, wsSum, 'สรุปสาขา');
-
-    // ── Sheet 2: รายละเอียด ───────────────────────────────────
-    var NC_D = 9;
-    var detData = [], detTypes = [];
-    var _pushD = function(row, type) { detData.push(row); detTypes.push(type||''); };
-
-    _pushD(['รายงานผลการตรวจสอบพัสดุ ปีงบประมาณ ' + fiscalYear], 'title');
-    _pushD(['คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์'], 'sub');
-    _pushD([], '');
-    _pushD(['ณ วันที่ ' + todayTH], 'sub');
-    _pushD(['ลำดับ','รหัสครุภัณฑ์','ชื่อครุภัณฑ์','สาขา','สถานะปัจจุบัน','ผลการตรวจ','ผลที่ตรวจพบ','วันที่ตรวจ','ผู้ตรวจ'], 'hdr');
-
-    var detMerges = [
-      {s:{r:0,c:0},e:{r:0,c:NC_D-1}},
-      {s:{r:1,c:0},e:{r:1,c:NC_D-1}},
-      {s:{r:2,c:0},e:{r:2,c:NC_D-1}},
-      {s:{r:3,c:0},e:{r:3,c:NC_D-1}},
-    ];
-
-    var seq = 0;
-    assets.forEach(function(a) {
+    // Data rows
+    var seq=0;
+    assets.forEach(function(a){
       seq++;
-      var item = itemMap[a.id];
-      var done = !!item;
-      var inspDate = item && item.inspected_at ? fmtDate(item.inspected_at) : '';
-      var inspector = item && item.profiles ? (item.profiles.full_name || item.profiles.username || '') : '';
-      var inspResult = done ? (statusLabel[item.status] || item.status || '') : '';
-      _pushD([
-        seq,
-        a.asset_code||'',
-        a.name||'',
-        _branchMapE[a.branch_id] || '',
-        statusLabel[a.status] || a.status || '',
-        done ? 'ตรวจแล้ว' : 'ยังไม่ตรวจ',
-        inspResult,
-        inspDate,
-        inspector
-      ], 'data');
+      var item=itemMap[a.id];
+      var r=item?(item.result||item.status||''):'';
+      var notes=item?(item.notes||''):'';
+      var acqDate='';
+      if(a.acquired_date){var d=new Date(a.acquired_date);if(!isNaN(d.getTime())) acqDate=d.toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'});}
+      push([
+        seq,acqDate,                           // A B
+        '','','',                              // C D E รหัสเก่า
+        _branchMapE[a.branch_id]||'',          // F ชื่อหน่วยงาน
+        a.asset_code||'',                      // G รหัสครุภัณฑ์
+        '','','','',                           // H I J K
+        a.name||'',                            // L ชื่อครุภัณฑ์
+        a.brand||'',                           // M ยี่ห้อ
+        a.model||'',                           // N รุ่น
+        a.serial_number||'',                   // O S/N
+        '',                                    // P อ้างอิง
+        1,'เครื่อง',                           // Q จำนวน  R หน่วย
+        a.price||'',                           // S ราคา
+        '','','','',                           // T U V W
+        a.location||'',                        // X ใช้ประจำที่
+        '','',                                 // Y Z
+        a.custodian||'',                       // AA ผู้รับเซ็น
+        '',                                    // AB อายุการใช้งาน
+        a.category||'',                        // AC ประเภทครุภัณฑ์
+        '',                                    // AD หมวด
+        r==='active'?'/':'',                   // AE พบ
+        r==='not_found'?'/':'',                // AF ไม่พบ
+        r==='damaged_fixable'?'/':'',          // AG ชำรุดซ่อมได้
+        r==='damaged_unfixable'?'/':'',        // AH ชำรุดซ่อมไม่ได้
+        '','',                                 // AI AJ
+        notes                                  // AK หมายเหตุ
+      ],'data');
     });
 
-    // Grand total row
-    _pushD(['รวมทั้งหมด', '', '', '', '', total+' รายการ', inspectedCount+' ตรวจแล้ว', notInspectedCount+' ยังไม่ตรวจ', pct+'%'], 'gtot');
-    detMerges.push({s:{r:detData.length-1,c:0},e:{r:detData.length-1,c:4}});
+    // Summary rows
+    push([],'');
+    var sumStart=rows.length;
+    push(['1. รายการครุภัณฑ์ที่ทำการตรวจสอบมีทั้งหมด '+total+' รายการ'],'sumtxt');
+    push(['2. รายการครุภัณฑ์ที่อยู่ในสภาพ ใช้งานได้ '+cFound+' รายการ'],'sumtxt');
+    push(['3. ชำรุดสามารถซ่อมได้ '+cFixable+' รายการ'],'sumtxt');
+    push(['4. ชำรุดไม่สามารถซ่อมได้ '+cUnfixable+' รายการ'],'sumtxt');
+    push(['5. ไม่พบตามบัญชี '+cNotFound+' รายการ'],'sumtxt');
+    for(var sr=sumStart;sr<rows.length;sr++) merges.push({s:{r:sr,c:0},e:{r:sr,c:NC-1}});
 
-    var wsDet = XLSX.utils.aoa_to_sheet(detData);
-    wsDet['!cols'] = [{wch:7},{wch:16},{wch:40},{wch:18},{wch:14},{wch:12},{wch:14},{wch:12},{wch:14}];
-    wsDet['!merges'] = detMerges;
-
-    detTypes.forEach(function(type, ri) {
-      if (!type) return;
-      for (var ci = 0; ci < NC_D; ci++) {
-        var addr = XLSX.utils.encode_cell({r:ri, c:ci});
-        if (!wsDet[addr]) wsDet[addr] = {v:'', t:'s'};
-        if      (type==='title') wsDet[addr].s = sTitleE;
-        else if (type==='sub')   wsDet[addr].s = sSubE;
-        else if (type==='hdr')   wsDet[addr].s = sHdrE;
-        else if (type==='data')  wsDet[addr].s = (ci===0||ci>=4) ? sDataCE : sDataLE;
-        else if (type==='gtot')  wsDet[addr].s = sGtotE;
+    var ws1=XLSX.utils.aoa_to_sheet(rows);
+    ws1['!cols']=[
+      {wch:6},{wch:12},
+      {wch:10},{wch:10},{wch:6},
+      {wch:22},{wch:22},
+      {wch:8},{wch:8},{wch:6},{wch:8},
+      {wch:35},{wch:12},{wch:12},{wch:14},{wch:8},
+      {wch:6},{wch:8},{wch:12},{wch:8},{wch:8},
+      {wch:18},{wch:16},
+      {wch:25},{wch:12},{wch:8},{wch:16},
+      {wch:10},{wch:12},{wch:8},
+      {wch:5},{wch:5},{wch:8},{wch:9},{wch:8},{wch:8},{wch:20}
+    ];
+    ws1['!merges']=merges;
+    ws1['!rows']=types.map(function(t){
+      if(t==='title')  return{hpt:28};
+      if(t==='sub')    return{hpt:22};
+      if(t==='hdr')    return{hpt:40};
+      if(t==='data')   return{hpt:18};
+      if(t==='sumtxt') return{hpt:22};
+      return{hpt:14};
+    });
+    types.forEach(function(type,ri){
+      if(!type) return;
+      for(var ci=0;ci<NC;ci++){
+        var addr=XLSX.utils.encode_cell({r:ri,c:ci});
+        if(!ws1[addr]) ws1[addr]={v:'',t:'s'};
+        if(type==='title') ws1[addr].s=sTitle;
+        else if(type==='sub') ws1[addr].s=sSub;
+        else if(type==='hdr') ws1[addr].s=sHdr;
+        else if(type==='data') ws1[addr].s=(ci===0||ci===16||ci===17||ci===18||ci>=30)?sDataC:sData;
+        else if(type==='sumtxt') ws1[addr].s=sSumTxt;
       }
     });
+    XLSX.utils.book_append_sheet(wb, ws1, 'ส่งพัสดุ');
 
-    wsDet['!rows'] = detTypes.map(function(t) {
-      if (t==='title') return {hpt:28};
-      if (t==='sub') return {hpt:20};
-      if (t==='hdr') return {hpt:28};
-      if (t==='gtot') return {hpt:20};
-      if (t==='data') return {hpt:16};
-      return {hpt:14};
+    // ── Sheet 2: สรุปสาขา ─────────────────────────────────────
+    var branchStats={}, branchOrder=[];
+    assets.forEach(function(a){
+      var bn=_branchMapE[a.branch_id]||'ไม่ระบุสาขา';
+      if(!branchStats[bn]){branchStats[bn]={total:0,found:0,notFound:0,fixable:0,unfixable:0};branchOrder.push(bn);}
+      branchStats[bn].total++;
+      var item=itemMap[a.id]; var r2=item?(item.result||item.status||''):'';
+      if(r2==='active') branchStats[bn].found++;
+      else if(r2==='not_found') branchStats[bn].notFound++;
+      else if(r2==='damaged_fixable') branchStats[bn].fixable++;
+      else if(r2==='damaged_unfixable') branchStats[bn].unfixable++;
     });
+    branchOrder.sort();
 
-    XLSX.utils.book_append_sheet(wb, wsDet, 'รายละเอียด');
+    var NC2=8;
+    var rows2=[]; var types2=[]; var merges2=[];
+    var push2=function(row,type){rows2.push(row);types2.push(type||'');};
+    push2(['รายงานสรุปผลการตรวจสอบพัสดุ ปีงบประมาณ '+fiscalYear],'title');
+    push2(['คณะ/หน่วยงาน : คณะศิลปศาสตร์และวิทยาศาสตร์'],'sub');
+    push2(['ณ วันที่ '+todayTH],'sub');
+    push2([],'');
+    merges2.push({s:{r:0,c:0},e:{r:0,c:NC2-1}});
+    merges2.push({s:{r:1,c:0},e:{r:1,c:NC2-1}});
+    merges2.push({s:{r:2,c:0},e:{r:2,c:NC2-1}});
+    merges2.push({s:{r:3,c:0},e:{r:3,c:NC2-1}});
+    push2(['ลำดับ','สาขา','ทั้งหมด','พบ','ไม่พบ','ชำรุดซ่อมได้','ชำรุดซ่อมไม่ได้','%'],'hdr');
+    branchOrder.forEach(function(bn,idx){
+      var s=branchStats[bn];
+      var done2=s.found+s.notFound+s.fixable+s.unfixable;
+      var bPct=s.total>0?Math.round(done2/s.total*100):0;
+      push2([idx+1,bn,s.total,s.found,s.notFound,s.fixable,s.unfixable,bPct+'%'],'data');
+    });
+    push2(['รวมทั้งหมด','',total,cFound,cNotFound,cFixable,cUnfixable,pct+'%'],'gtot');
+    merges2.push({s:{r:rows2.length-1,c:0},e:{r:rows2.length-1,c:1}});
 
-    _xlsxDownload(wb, 'รายงานผลตรวจสอบพัสดุ_' + fiscalYear + '.xlsx');
+    var ws2=XLSX.utils.aoa_to_sheet(rows2);
+    ws2['!cols']=[{wch:8},{wch:30},{wch:10},{wch:8},{wch:8},{wch:12},{wch:14},{wch:8}];
+    ws2['!merges']=merges2;
+    ws2['!rows']=types2.map(function(t){
+      if(t==='title') return{hpt:28}; if(t==='sub') return{hpt:20};
+      if(t==='hdr') return{hpt:28};  if(t==='data') return{hpt:18};
+      if(t==='gtot') return{hpt:20}; return{hpt:14};
+    });
+    types2.forEach(function(type,ri){
+      if(!type) return;
+      for(var ci=0;ci<NC2;ci++){
+        var addr=XLSX.utils.encode_cell({r:ri,c:ci});
+        if(!ws2[addr]) ws2[addr]={v:'',t:'s'};
+        if(type==='title') ws2[addr].s=sTitle;
+        else if(type==='sub') ws2[addr].s=sSub;
+        else if(type==='hdr') ws2[addr].s=sHdr;
+        else if(type==='data') ws2[addr].s=(ci===0||ci>=2)?sDataC:sData;
+        else if(type==='gtot') ws2[addr].s=sGtot;
+      }
+    });
+    XLSX.utils.book_append_sheet(wb, ws2, 'สรุปสาขา');
+
+    _xlsxDownload(wb, 'รายงานผลตรวจสอบพัสดุ_'+fiscalYear+'.xlsx');
     showToast('ดาวน์โหลด Excel สำเร็จ', 'success');
   } catch(e) {
-    showToast('เกิดข้อผิดพลาด: ' + e.message, 'danger');
+    showToast('เกิดข้อผิดพลาด: '+e.message, 'danger');
   }
 }
 
