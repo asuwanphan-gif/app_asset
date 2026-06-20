@@ -5380,7 +5380,7 @@ function _sheetToRows(ws, headerRowIndex) {
   var headers = aoa[headerRowIndex] || [];
   // empty header → ตั้งชื่อแบบ Python "Unnamed: N" เพื่อให้ _getImpAssetCode ทำงานได้
   var colNames = headers.map(function(h, i) {
-    var s = String(h == null ? '' : h).trim();
+    var s = String(h == null ? '' : h).trim().replace(/\n/g, ' ');
     return s || ('Unnamed: ' + i);
   });
   return aoa.slice(headerRowIndex + 1).map(function(row) {
@@ -5429,7 +5429,7 @@ function _getImpAssetCode(r) {
 function previewImportSheet() {
   if (!_impWorkbook) return;
   var sheetName = document.getElementById('impSheet').value;
-  var isAutoSheet = (['ส่งพัสดุ 68','รวม 46-68'].indexOf(sheetName) >= 0);
+  var isAutoSheet = (['ส่งพัสดุ 68','รวม 46-68','รวม 46-69'].indexOf(sheetName) >= 0);
   // auto-detect header row by sheet name
   var autoH = isAutoSheet ? 4 : 0;
   document.getElementById('impHeaderRow').value = autoH;
@@ -5543,7 +5543,7 @@ function updateImpBtnState() {
   var filterTextEl = document.getElementById('impFilterHintText');
   if (filterHintEl) {
     var sheetEl = document.getElementById('impSheet');
-    var isAutoSheet = sheetEl && (['ส่งพัสดุ 68','รวม 46-68'].indexOf(sheetEl.value) >= 0);
+    var isAutoSheet = sheetEl && (['ส่งพัสดุ 68','รวม 46-68','รวม 46-69'].indexOf(sheetEl.value) >= 0);
     if (isAutoSheet && branchVal && branchVal !== '__auto__') {
       var brName = '';
       (App.branches || []).forEach(function(b){ if (b.id === branchVal) brName = b.name; });
@@ -5604,7 +5604,7 @@ async function doImportModal() {
 
   // filterByBranch: เลือก branch เฉพาะ + sheet รวม → auto-detect ใช้ประจำที่ แต่กรองเฉพาะสาขาที่เลือก
   var _impSheetName = document.getElementById('impSheet').value;
-  var _isAutoSheet = (['ส่งพัสดุ 68','รวม 46-68'].indexOf(_impSheetName) >= 0);
+  var _isAutoSheet = (['ส่งพัสดุ 68','รวม 46-68','รวม 46-69'].indexOf(_impSheetName) >= 0);
   var filterByBranch = (!isAuto && _isAutoSheet);
 
   // Build code→id map สำหรับ auto mode และ filter mode
@@ -5696,11 +5696,11 @@ async function doImportModal() {
         // serial: column has TWO spaces → "S/N:  หรือ Model No:"
         var serial = String(r['S/N:  หรือ Model No:'] || r['S/N: หรือ Model No:'] || r['S/N'] || r.serial_number || '').trim();
         // location: keep as-is (informative)
-        var loc = String(r['ใช้ประจำที่'] || r['สถานที่'] || r.location || '').trim();
+        var loc = String(r['ใช้ประจำที่'] || r['สถานที่ใช้งาน/หน่วยรับผิดชอบ'] || r['สถานที่'] || r.location || '').trim();
         // custodian
         var cust = String(r['ผู้รับเซ็นรับครุภัณฑ์'] || r['ผู้รับผิดชอบ'] || r.custodian || '').trim();
         // category: prefer ประเภทครุภัณฑ์ > หมวด > ชนิด
-        var cat = String(r['ประเภทครุภัณฑ์'] || r['หมวด'] || r['ประเภท'] || r.category || '').trim();
+        var cat = String(r['ประเภทครุภัณฑ์'] || r['ประเภท ครุภัณฑ์'] || r['หมวด'] || r['ประเภท'] || r.category || '').trim();
         var priceRaw = String(r['ราคา'] || r['ราคาต่อหน่วย'] || r.price || '0').replace(/,/g,'');
 
         // Resolve branch_id
@@ -9637,7 +9637,7 @@ async function exportRegisterExcel(branchId) {
           acqDate,                             // วดป.ที่ได้มา
           '',                                  // รหัสเก่า
           bName,                               // ชื่อหน่วยงาน
-          a.category||'',                      // กลุ่มประเภท
+          a.asset_code||'',                    // กลุ่มประเภท
           '',                                  // ชนิด
           '',                                  // ลักษณะ
           acqYearShort,                        // ปี
