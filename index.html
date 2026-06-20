@@ -7159,7 +7159,7 @@ async function _loadBranchInspDashboard(insp, showAll) {
         +'<td style="'+tdStyle+'color:#475569;">'+(a.asset_code||'<span style="color:#f59e0b;">ไม่มีรหัส</span>')+'</td>'
         +'<td style="'+tdStyle+'">'+(a.name||'—')+'</td>'
         +'<td style="'+tdStyle+'color:#475569;">'+(a.branches&&a.branches.name?a.branches.name:'<span style="color:#f59e0b;">ไม่ระบุ</span>')+(a.location?' <span style="color:#94a3b8;font-size:12px;">· '+a.location+'</span>':'')+'</td>'
-        +'<td style="'+tdStyle+'"><select class="form-select form-select-sm" style="font-size:13px;font-family:Kanit;" data-insp-idx="'+gi+'" onchange="setInspStatus(this)">'+selOpts+'</select></td>'
+        +'<td style="'+tdStyle+'"><select class="form-select form-select-sm" style="'+_inspSelStyle(row._status)+'" data-insp-idx="'+gi+'" onchange="setInspStatus(this)">'+selOpts+'</select></td>'
         +'<td style="'+tdStyle+'color:#475569;white-space:nowrap;">'+inspDate+'</td>'
         +'<td style="'+tdStyle+'"><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Kanit;" value="'+(row._note||'')+'" data-note-idx="'+gi+'" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>'
         +'<td style="'+tdStyle+'text-align:center;"><button onclick="showAssetForm(\''+a.id+'\')" class="btn btn-sm" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;color:#2563eb;" title="ดูรายละเอียด"><i class="bi bi-eye"></i></button></td>'
@@ -7545,7 +7545,7 @@ function _renderInspTable() {
       '<td ' + td + ' style="font-size:13px;font-weight:400;color:#475569;font-family:Kanit;">' +
         ((a.branches&&a.branches.name)||'<span style="color:#f59e0b;">ไม่ระบุ</span>') +
         (a.location ? ' <span style="color:#94a3b8;font-size:12px;">· ' + a.location + '</span>' : '') + '</td>' +
-      '<td><select class="form-select form-select-sm" style="font-size:13px;font-family:Kanit;" data-insp-idx="' + globalIdx + '" onchange="setInspStatus(this)">' + statusOpts.replace('value="' + row._status + '"', 'value="' + row._status + '" selected') + '</select></td>' +
+      '<td><select class="form-select form-select-sm" style="' + _inspSelStyle(row._status) + '" data-insp-idx="' + globalIdx + '" onchange="setInspStatus(this)">' + statusOpts.replace('value="' + row._status + '"', 'value="' + row._status + '" selected') + '</select></td>' +
       '<td style="font-size:13px;font-weight:400;color:#475569;white-space:nowrap;">' + inspDate + '</td>' +
       '<td><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Kanit;" value="' + (row._note||'') + '" data-note-idx="' + globalIdx + '" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>' +
       '<td class="text-center"><button onclick="showAssetForm(\'' + a.id + '\')" class="btn btn-sm" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;color:#2563eb;" title="ดูรายละเอียด"><i class="bi bi-eye"></i></button></td>' +
@@ -7555,10 +7555,21 @@ function _renderInspTable() {
   if (paging) paging.innerHTML = Pager.html('insp', data.length);
 }
 
+function _inspSelStyle(status) {
+  var m = {
+    active:            'background:#dcfce7;color:#15803d;border-color:#86efac;',
+    not_found:         'background:#fee2e2;color:#b91c1c;border-color:#fca5a5;',
+    damaged_fixable:   'background:#fef3c7;color:#92400e;border-color:#fde68a;',
+    damaged_unfixable: 'background:#fce7f3;color:#9d174d;border-color:#f9a8d4;',
+    disposal_pending:  'background:#f3e8ff;color:#6b21a8;border-color:#d8b4fe;'
+  };
+  return (m[status] || 'background:#f8fafc;color:#64748b;border-color:#e2e8f0;') + 'font-size:13px;font-family:Kanit;font-weight:600;';
+}
 function setInspStatus(sel) {
   var idx = parseInt(sel.getAttribute('data-insp-idx'));
   if (!App.inspFiltered[idx]) return;
   App.inspFiltered[idx]._status = sel.value;
+  sel.style.cssText = _inspSelStyle(sel.value);
   _autoSaveInspRow(idx, sel);
 }
 function setInspNote(inp) {
