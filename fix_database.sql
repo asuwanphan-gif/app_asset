@@ -201,3 +201,83 @@ GRANT EXECUTE ON FUNCTION public_asset_scan(uuid) TO authenticated;
 -- ============================================================
 -- เสร็จแล้ว — refresh แอป banner เตือนจะหายไปเอง
 -- ============================================================
+
+
+-- ============================================================
+-- [OPTIONAL] ลบ record รหัสเก่า เพื่อนำเข้าใหม่ด้วยรหัสใหม่
+--
+-- รหัสเก่า: ขึ้นต้นด้วยตัวอักษร (เช่น มรภ.ศก.13.13.1315/59-179)
+-- รหัสใหม่: ขึ้นต้นด้วย 4 ตัวเลข-3 ตัวเลข (เช่น 3431-002-0002-66-003)
+--
+-- วิธีใช้:
+--   1. รัน STEP 1 ดูรายการก่อน (SELECT อย่างเดียว ไม่ลบ)
+--   2. ถ้าถูกต้อง → uncomment STEP 3 แล้วรัน
+-- ============================================================
+
+-- STEP 1: ดูรายการที่ "จะลบ" — ตรวจสอบก่อนเสมอ
+SELECT
+  a.asset_code,
+  a.name,
+  b.name AS branch_name,
+  a.status,
+  a.created_at::date AS imported_date
+FROM assets a
+LEFT JOIN branches b ON b.id = a.branch_id
+WHERE a.asset_code !~ '^\d{4}-\d{3}'   -- รหัสที่ไม่ใช่รูปแบบใหม่
+  AND (a.is_deleted IS NULL OR a.is_deleted = false)
+ORDER BY a.asset_code;
+
+-- STEP 2: นับ
+SELECT
+  COUNT(*) AS total_to_delete,
+  COUNT(DISTINCT a.branch_id) AS branch_count
+FROM assets a
+WHERE a.asset_code !~ '^\d{4}-\d{3}'
+  AND (a.is_deleted IS NULL OR a.is_deleted = false);
+
+-- STEP 3: ลบ (uncomment ทั้งบล็อกเมื่อแน่ใจแล้ว)
+-- ⚠️  ไม่สามารถย้อนกลับได้ — ตรวจสอบ STEP 1 ก่อนเสมอ
+/*
+BEGIN;
+
+  -- 3a) ลบ inspection_items ที่ผูกกับ asset เหล่านี้
+  DELETE FROM inspection_items
+  WHERE asset_id IN (
+    SELECT id FROM assets
+    WHERE asset_code !~ '^\d{4}-\d{3}'
+      AND (is_deleted IS NULL OR is_deleted = false)
+  );
+
+  -- 3b) ลบ transaction_logs ที่ผูกกับ asset เหล่านี้
+  DELETE FROM transaction_logs
+  WHERE asset_id IN (
+    SELECT id FROM assets
+    WHERE asset_code !~ '^\d{4}-\d{3}'
+      AND (is_deleted IS NULL OR is_deleted = false)
+  );
+
+  -- 3c) ลบ repairs/transfers ที่ผูกกับ asset เหล่านี้ (ถ้ามี)
+  DELETE FROM repairs
+  WHERE asset_id IN (
+    SELECT id FROM assets
+    WHERE asset_code !~ '^\d{4}-\d{3}'
+      AND (is_deleted IS NULL OR is_deleted = false)
+  );
+
+  DELETE FROM transfers
+  WHERE asset_id IN (
+    SELECT id FROM assets
+    WHERE asset_code !~ '^\d{4}-\d{3}'
+      AND (is_deleted IS NULL OR is_deleted = false)
+  );
+
+  -- 3d) ลบ assets ตัวจริง
+  DELETE FROM assets
+  WHERE asset_code !~ '^\d{4}-\d{3}'
+    AND (is_deleted IS NULL OR is_deleted = false);
+
+COMMIT;
+*/
+
+-- หลังลบเสร็จ → กลับไปนำเข้า Excel ใหม่ในแอป
+-- รหัสใหม่จะถูกสร้างโดยอัตโนมัติจาก 5 คอลัมน์ใน Excel
