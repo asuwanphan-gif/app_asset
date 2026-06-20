@@ -1845,12 +1845,20 @@
               <col style="width:6%">
             </colgroup>
 
+            <!-- PRE-HEADER: form number / พ.ด. 2 -->
+            <tr>
+              <td colspan="6" style="border:1.5px solid #000;border-bottom:none;padding:1px 8px;font-size:10px;background:#fffde7;">
+                ชื่อหน่วยงานราชการ... &nbsp; มหาวิทยาลัยราชภัฏศรีสะเกษ &nbsp; อำเภอเมืองศรีสะเกษ &nbsp; จังหวัดศรีสะเกษ
+              </td>
+              <td colspan="5" style="border:1.5px solid #000;border-bottom:none;padding:1px 8px;font-size:10px;text-align:right;background:#fffde7;font-weight:bold;">
+                เลขหมู่ 50-10-05 &nbsp;&nbsp; พ.ด. 2
+              </td>
+            </tr>
             <!-- HEADER ROW -->
             <tr>
               <td colspan="6" rowspan="2" style="border:1.5px solid #000;text-align:center;padding:6px 8px;font-weight:bold;font-size:14.5px;background:#fffde7;vertical-align:middle;line-height:1.5;">
                 ทะเบียนพัสดุครุภัณฑ์ ปศุสัตว์และสัตว์พาหนะ<br>
-                <span style="font-size:11px;font-weight:normal;color:#555;">มหาวิทยาลัยราชภัฏศรีสะเกษ</span><br>
-                <span style="font-size:10px;font-weight:normal;color:#555;">อำเภอเมืองศรีสะเกษ &nbsp;จังหวัดศรีสะเกษ</span>
+                <span style="font-size:11px;font-weight:normal;color:#555;">มหาวิทยาลัยราชภัฏศรีสะเกษ &nbsp; อำเภอเมืองศรีสะเกษ &nbsp; จังหวัดศรีสะเกษ</span>
               </td>
               <td colspan="5" style="border:1.5px solid #000;text-align:center;padding:4px 6px;font-weight:bold;font-size:12px;background:#fffde7;">
                 บันทึกการซ่อม/ปรับปรุงแก้ไขพัสดุ
@@ -1862,6 +1870,16 @@
               <td style="border:1px solid #000;padding:2px 3px;text-align:center;font-size:10px;background:#f5f5f5;">ลงวันที่</td>
               <td style="border:1px solid #000;padding:2px 3px;text-align:center;font-size:10px;background:#f5f5f5;">รายการซ่อม/ปรับปรุงแก้ไข</td>
               <td style="border:1px solid #000;padding:2px 3px;text-align:center;font-size:10px;background:#f5f5f5;">จำนวนเงิน</td>
+            </tr>
+            <!-- ประเภท + เลขทะเบียนพัสดุ display row -->
+            <tr>
+              <td colspan="2" style="border:1px solid #000;padding:2px 6px;font-size:11px;background:#fffde7;">
+                ประเภท: <strong id="headerCategory" style="color:#cc0000;font-size:11.5px;"></strong>
+              </td>
+              <td colspan="4" style="border:1px solid #000;padding:2px 6px;font-size:11px;background:#fffde7;"></td>
+              <td colspan="5" style="border:1px solid #000;padding:2px 6px;font-size:11px;background:#fffde7;text-align:right;">
+                เลขทะเบียนพัสดุ: <strong id="headerAssetCode" style="color:#cc0000;font-size:12px;letter-spacing:.5px;"></strong>
+              </td>
             </tr>
 
             <!-- ROW: สาขา/หน่วยงาน -->
@@ -1881,7 +1899,7 @@
             <tr>
               <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">เลขทะเบียนพัสดุ <span style="color:red;">*</span></td>
               <td colspan="3" style="border:1px solid #000;padding:1px 5px;">
-                <input id="fAssetCode" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:13px;font-weight:bold;padding:2px 0;" placeholder="รหัสครุภัณฑ์">
+                <input id="fAssetCode" oninput="var h=document.getElementById('headerAssetCode');if(h)h.textContent=this.value;" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:13px;font-weight:bold;padding:2px 0;" placeholder="รหัสครุภัณฑ์">
               </td>
               <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">รหัสเก่า</td>
               <td style="border:1px solid #000;padding:1px 5px;">
@@ -1898,7 +1916,7 @@
             <tr>
               <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">ประเภทครุภัณฑ์</td>
               <td colspan="3" style="border:1px solid #000;padding:1px 4px;">
-                <select id="fCategory" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" onchange="autofillLifeYears(this.value)">
+                <select id="fCategory" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" onchange="autofillLifeYears(this.value);var h=document.getElementById('headerCategory');if(h)h.textContent=this.options[this.selectedIndex].text.replace(/\s*\(\d+.*\)$/,'').trim();">
                   <option value="">-- เลือกประเภท --</option>
                   <optgroup label="ครุภัณฑ์สำนักงาน">
                     <option value="ครุภัณฑ์สำนักงาน">ครุภัณฑ์สำนักงาน (8 ปี)</option>
@@ -1998,7 +2016,7 @@
               </td>
               <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">ราคา (บาท)</td>
               <td style="border:1px solid #000;padding:1px 5px;">
-                <input id="fPrice" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="0.00" step="0.01">
+                <input id="fPrice" type="number" oninput="updateDepreciationTable()" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="0.00" step="0.01">
               </td>
               <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๖</td>
               <td style="border:1px solid #000;padding:1px;"></td>
@@ -2065,7 +2083,7 @@
               </td>
               <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">อายุใช้งาน (ปี)</td>
               <td style="border:1px solid #000;padding:1px 5px;">
-                <input id="fLifeYears" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="ปี" title="อายุใช้งานขั้นต่ำ">
+                <input id="fLifeYears" type="number" oninput="updateDepreciationTable()" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="ปี" title="อายุใช้งานขั้นต่ำ">
               </td>
               <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๙</td>
               <td style="border:1px solid #000;padding:1px;"></td>
@@ -2111,12 +2129,65 @@
               <td style="border:1px solid #000;padding:1px;"></td>
             </tr>
 
+            <!-- ค่าเสื่อมราคา HEADER -->
+            <tr>
+              <td colspan="4" style="border:1px solid #000;background:#e8f0fe;text-align:center;font-weight:bold;font-size:11px;padding:2px 4px;">
+                ค่าเสื่อมราคา (วิธีเส้นตรง) &nbsp;·&nbsp; อัตรา <span id="depRateDisplay">—</span>% ต่อปี &nbsp;·&nbsp; อายุ <span id="depLifeDisplay">—</span> ปี
+              </td>
+              <td colspan="2" style="border:1px solid #000;background:#e8f0fe;text-align:center;font-size:10px;padding:2px 4px;color:#555;">
+                ราคาต้นทุน: <span id="depPriceDisplay">—</span> บาท
+              </td>
+              <td colspan="5" style="border:1px solid #000;background:#e8f0fe;padding:2px 4px;font-size:10px;text-align:center;color:#666;">
+                ลายมือชื่อผู้ตรวจ / เจ้าหน้าที่พัสดุ
+              </td>
+            </tr>
+            <!-- ค่าเสื่อมราคา ปีที่ ๑ -->
+            <tr>
+              <td style="border:1px solid #000;text-align:center;font-size:11px;background:#f8f8f8;padding:2px 3px;white-space:nowrap;">ปีที่ ๑</td>
+              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;padding:2px 3px;"><span id="depPct_1">—</span></td>
+              <td style="border:1px solid #000;text-align:center;font-size:10px;color:#666;padding:1px 3px;">คงเหลือราคา</td>
+              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;font-weight:600;padding:2px 3px;"><span id="depBaht_1">—</span> บาท</td>
+              <td colspan="5" style="border:1px solid #000;padding:1px;"></td>
+            </tr>
+            <!-- ค่าเสื่อมราคา ปีที่ ๒ -->
+            <tr>
+              <td style="border:1px solid #000;text-align:center;font-size:11px;background:#f8f8f8;padding:2px 3px;white-space:nowrap;">ปีที่ ๒</td>
+              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;padding:2px 3px;"><span id="depPct_2">—</span></td>
+              <td style="border:1px solid #000;text-align:center;font-size:10px;color:#666;padding:1px 3px;">คงเหลือราคา</td>
+              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;font-weight:600;padding:2px 3px;"><span id="depBaht_2">—</span> บาท</td>
+              <td colspan="5" style="border:1px solid #000;padding:1px;"></td>
+            </tr>
+            <!-- ค่าเสื่อมราคา ปีที่ ๓ -->
+            <tr>
+              <td style="border:1px solid #000;text-align:center;font-size:11px;background:#f8f8f8;padding:2px 3px;white-space:nowrap;">ปีที่ ๓</td>
+              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;padding:2px 3px;"><span id="depPct_3">—</span></td>
+              <td style="border:1px solid #000;text-align:center;font-size:10px;color:#666;padding:1px 3px;">คงเหลือราคา</td>
+              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;font-weight:600;padding:2px 3px;"><span id="depBaht_3">—</span> บาท</td>
+              <td colspan="5" style="border:1px solid #000;padding:1px;"></td>
+            </tr>
+            <!-- ค่าเสื่อมราคา ปีที่ ๔ -->
+            <tr>
+              <td style="border:1px solid #000;text-align:center;font-size:11px;background:#f8f8f8;padding:2px 3px;white-space:nowrap;">ปีที่ ๔</td>
+              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;padding:2px 3px;"><span id="depPct_4">—</span></td>
+              <td style="border:1px solid #000;text-align:center;font-size:10px;color:#666;padding:1px 3px;">คงเหลือราคา</td>
+              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;font-weight:600;padding:2px 3px;"><span id="depBaht_4">—</span> บาท</td>
+              <td colspan="5" style="border:1px solid #000;padding:1px;"></td>
+            </tr>
+            <!-- ค่าเสื่อมราคา ปีที่ ๕ -->
+            <tr>
+              <td style="border:1px solid #000;text-align:center;font-size:11px;background:#f8f8f8;padding:2px 3px;white-space:nowrap;">ปีที่ ๕</td>
+              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;padding:2px 3px;"><span id="depPct_5">—</span></td>
+              <td style="border:1px solid #000;text-align:center;font-size:10px;color:#666;padding:1px 3px;">คงเหลือราคา</td>
+              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;font-weight:600;padding:2px 3px;"><span id="depBaht_5">—</span> บาท</td>
+              <td colspan="5" style="border:1px solid #000;padding:1px;"></td>
+            </tr>
+
             <!-- ROW: รูปภาพ -->
             <tr>
               <td colspan="6" style="border:1px solid #000;padding:6px 8px;">
                 <div class="no-print">
                   <div style="font-weight:bold;font-size:11.5px;color:#1d4ed8;margin-bottom:8px;">
-                    <i class="bi bi-camera me-1"></i>รูปภาพตรวจรับครุภัณฑ์
+                    <i class="bi bi-camera me-1"></i>รูปถ่ายพัสดุ (ถ้ามี) หรือตำหนิรูปพรรณสัตว์
                     <span id="photoRequired" class="text-danger" style="font-size:11px;"> * ต้องแนบอย่างน้อย 2 รูป</span>
                   </div>
                   <!-- รูปที่มีอยู่แล้ว (แสดงเมื่อแก้ไข) -->
@@ -2154,6 +2225,26 @@
                 (ช่องสำรอง)
               </td>
             </tr>
+
+            <!-- การหาผลประโยชน์ในพัสดุ -->
+            <tr>
+              <td colspan="11" style="border:1.5px solid #000;background:#f0f4f8;text-align:center;font-weight:bold;font-size:11.5px;padding:3px 6px;">
+                การหาผลประโยชน์ในพัสดุ
+              </td>
+            </tr>
+            <tr>
+              <td style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;">พ.ศ.</td>
+              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;">รายการ</td>
+              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;line-height:1.3;">ผลประโยชน์ (บาท) ที่ได้รับ<br>เป็นรายเดือนหรือรายปี</td>
+              <td style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;">พ.ศ.</td>
+              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;">รายการ</td>
+              <td colspan="3" style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;line-height:1.3;">ผลประโยชน์ (บาท) ที่ได้รับ<br>เป็นรายเดือนหรือรายปี</td>
+            </tr>
+            <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="3" style="border:1px solid #000;padding:1px;"></td></tr>
+            <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="3" style="border:1px solid #000;padding:1px;"></td></tr>
+            <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="3" style="border:1px solid #000;padding:1px;"></td></tr>
+            <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="3" style="border:1px solid #000;padding:1px;"></td></tr>
+
           </table>
           </div>
 
@@ -4736,6 +4827,14 @@ async function showAssetForm(id) {
     document.getElementById('photo2Preview').innerHTML = '';
     // โหลดรูปที่มีอยู่แล้ว
     _loadExistingPhotos(id);
+    // sync header display cells
+    (function(){
+      var hc = document.getElementById('headerAssetCode');
+      if (hc) hc.textContent = a.asset_code || '';
+      var hcat = document.getElementById('headerCategory');
+      if (hcat) hcat.textContent = (a.category || '').replace(/\s*\(\d+.*\)$/, '').trim();
+    })();
+    updateDepreciationTable();
     var nlbl = document.getElementById('newPhotoLabel');
     if (nlbl) nlbl.textContent = 'เพิ่มรูปใหม่ (ไม่บังคับ)';
     var _tpt = document.getElementById('topPageTitle');
@@ -4788,6 +4887,12 @@ async function showAssetForm(id) {
     // ซ่อนปุ่มพิมพ์สำหรับรายการใหม่
     var _pBtn2 = document.getElementById('btnPrintFromForm');
     if (_pBtn2) _pBtn2.style.display = 'none';
+    // clear header display cells
+    var _hc = document.getElementById('headerAssetCode');
+    if (_hc) _hc.textContent = '';
+    var _hcat = document.getElementById('headerCategory');
+    if (_hcat) _hcat.textContent = '';
+    updateDepreciationTable();
   }
   showPage('asset-form');
 }
@@ -8864,13 +8969,40 @@ var _LIFESPAN_TABLE = {
 function autofillLifeYears(category) {
   if (!category) return;
   var el = document.getElementById('fLifeYears');
-  if (!el || el.value) return; // ไม่ทับค่าที่กรอกไว้แล้ว
+  if (!el || el.value) { updateDepreciationTable(); return; }
   var years = _LIFESPAN_TABLE[category];
   if (years) {
     el.value = years;
     el.style.background = '#fef9c3';
     el.title = 'กรอกอัตโนมัติจากตารางอายุใช้งานขั้นต่ำ (กรมการปกครอง)';
     setTimeout(function(){ el.style.background = ''; }, 2000);
+  }
+  updateDepreciationTable();
+}
+
+function updateDepreciationTable() {
+  var price = parseFloat((document.getElementById('fPrice')||{}).value) || 0;
+  var life  = parseInt((document.getElementById('fLifeYears')||{}).value) || 0;
+  var rate  = life > 0 ? 100 / life : 0;
+
+  var _e = function(id) { return document.getElementById(id); };
+  if (_e('depRateDisplay'))  _e('depRateDisplay').textContent  = life > 0 ? rate.toFixed(2) : '—';
+  if (_e('depLifeDisplay'))  _e('depLifeDisplay').textContent  = life > 0 ? life : '—';
+  if (_e('depPriceDisplay')) _e('depPriceDisplay').textContent = price > 0 ? price.toLocaleString('th', {minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+
+  for (var i = 1; i <= 5; i++) {
+    var pctCell  = _e('depPct_'  + i);
+    var bahtCell = _e('depBaht_' + i);
+    if (!pctCell && !bahtCell) continue;
+    if (life <= 0 || price <= 0) {
+      if (pctCell)  pctCell.textContent  = '—';
+      if (bahtCell) bahtCell.textContent = '—';
+      continue;
+    }
+    var remPct    = Math.max(0, 100 - i * rate);
+    var remaining = Math.max(0, price * remPct / 100);
+    if (pctCell)  pctCell.textContent  = remPct.toFixed(2) + '%';
+    if (bahtCell) bahtCell.textContent = remaining.toLocaleString('th', {minimumFractionDigits:2,maximumFractionDigits:2});
   }
 }
 
