@@ -187,8 +187,7 @@ BEGIN
   ) INTO v_result
   FROM assets a
   LEFT JOIN branches b ON b.id = a.branch_id
-  WHERE a.id = p_id
-    AND (a.is_deleted IS NULL OR a.is_deleted = false);
+  WHERE a.id = p_id;
 
   RETURN v_result;
 END;
@@ -224,7 +223,7 @@ SELECT
 FROM assets a
 LEFT JOIN branches b ON b.id = a.branch_id
 WHERE a.asset_code !~ '^\d{4}-\d{3}'   -- รหัสที่ไม่ใช่รูปแบบใหม่
-  AND (a.is_deleted IS NULL OR a.is_deleted = false)
+  AND a.status != 'disposed'
 ORDER BY a.asset_code;
 
 -- STEP 2: นับ
@@ -233,7 +232,7 @@ SELECT
   COUNT(DISTINCT a.branch_id) AS branch_count
 FROM assets a
 WHERE a.asset_code !~ '^\d{4}-\d{3}'
-  AND (a.is_deleted IS NULL OR a.is_deleted = false);
+  AND a.status != 'disposed';
 
 -- STEP 3: ลบ (uncomment ทั้งบล็อกเมื่อแน่ใจแล้ว)
 -- ⚠️  ไม่สามารถย้อนกลับได้ — ตรวจสอบ STEP 1 ก่อนเสมอ
@@ -245,7 +244,7 @@ BEGIN;
   WHERE asset_id IN (
     SELECT id FROM assets
     WHERE asset_code !~ '^\d{4}-\d{3}'
-      AND (is_deleted IS NULL OR is_deleted = false)
+      AND status != 'disposed'
   );
 
   -- 3b) ลบ transaction_logs ที่ผูกกับ asset เหล่านี้
@@ -253,7 +252,7 @@ BEGIN;
   WHERE asset_id IN (
     SELECT id FROM assets
     WHERE asset_code !~ '^\d{4}-\d{3}'
-      AND (is_deleted IS NULL OR is_deleted = false)
+      AND status != 'disposed'
   );
 
   -- 3c) ลบ repairs/transfers ที่ผูกกับ asset เหล่านี้ (ถ้ามี)
@@ -261,20 +260,20 @@ BEGIN;
   WHERE asset_id IN (
     SELECT id FROM assets
     WHERE asset_code !~ '^\d{4}-\d{3}'
-      AND (is_deleted IS NULL OR is_deleted = false)
+      AND status != 'disposed'
   );
 
   DELETE FROM transfers
   WHERE asset_id IN (
     SELECT id FROM assets
     WHERE asset_code !~ '^\d{4}-\d{3}'
-      AND (is_deleted IS NULL OR is_deleted = false)
+      AND status != 'disposed'
   );
 
   -- 3d) ลบ assets ตัวจริง
   DELETE FROM assets
   WHERE asset_code !~ '^\d{4}-\d{3}'
-    AND (is_deleted IS NULL OR is_deleted = false);
+    AND status != 'disposed';
 
 COMMIT;
 */
