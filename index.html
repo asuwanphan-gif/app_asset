@@ -5148,6 +5148,17 @@ async function showAssetDetail(id) {
     transfers = trRes.data || [];
   } catch(e) { transfers = []; }
 
+  // ประวัติการจำหน่ายของครุภัณฑ์นี้ (จาก transaction_logs)
+  var disposalLogs = [];
+  try {
+    var dlRes = await sb.from('transaction_logs')
+      .select('action,detail,username,created_at')
+      .eq('asset_id', id)
+      .eq('action', 'disposal')
+      .order('created_at', {ascending: false});
+    disposalLogs = dlRes.data || [];
+  } catch(e) { disposalLogs = []; }
+
   var photoHtml = photos.length
     ? '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + photos.map(function(p) {
         return '<div style="position:relative;width:90px;height:90px;cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,.1);" onclick="window.open(\'' + p.photo_url + '\')">' +
@@ -5176,6 +5187,36 @@ async function showAssetDetail(id) {
     }).join('');
   } else {
     repairHtml = '<div style="font-size:13px;color:#94a3b8;text-align:center;padding:16px 0;"><i class="bi bi-tools" style="font-size:24px;display:block;margin-bottom:6px;opacity:.3;"></i>ไม่มีประวัติการซ่อม</div>';
+  }
+
+  // สร้าง HTML ประวัติการจำหน่าย
+  var dispStatusCfg = {
+    disposed:         {label:'อนุมัติจำหน่ายแล้ว', color:'#991b1b', bg:'#fee2e2', icon:'bi-trash3-fill'},
+    disposal_pending: {label:'เสนอจำหน่าย',        color:'#92400e', bg:'#fef9c3', icon:'bi-hourglass-split'},
+    damaged_unfixable:{label:'ยกเลิกเสนอจำหน่าย',  color:'#64748b', bg:'#f1f5f9', icon:'bi-arrow-counterclockwise'}
+  };
+  var disposalHtml = '';
+  if (disposalLogs.length) {
+    disposalHtml = disposalLogs.map(function(d) {
+      var st  = (d.detail && d.detail.status) || 'disposed';
+      var cfg = dispStatusCfg[st] || dispStatusCfg['disposed'];
+      var note = d.detail && d.detail.note ? d.detail.note : '';
+      return '<div style="background:#fff5f5;border:1px solid #fecaca;border-radius:8px;padding:10px 12px;margin-bottom:8px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
+          '<div style="flex:1;">' +
+            '<div style="font-size:12px;font-weight:600;color:#b91c1c;"><i class="bi ' + cfg.icon + ' me-1"></i>' + cfg.label + '</div>' +
+            (note ? '<div style="font-size:11px;color:#475569;margin-top:2px;">' + note + '</div>' : '') +
+            (d.username ? '<div style="font-size:11px;color:#94a3b8;margin-top:2px;"><i class="bi bi-person me-1"></i>' + d.username + '</div>' : '') +
+          '</div>' +
+          '<div style="text-align:right;flex-shrink:0;">' +
+            '<span style="background:' + cfg.bg + ';color:' + cfg.color + ';font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">' + cfg.label + '</span>' +
+            '<div style="font-size:11px;color:#94a3b8;margin-top:4px;"><i class="bi bi-calendar3 me-1"></i>' + fmtDate(d.created_at) + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } else {
+    disposalHtml = '<div style="font-size:13px;color:#94a3b8;text-align:center;padding:16px 0;"><i class="bi bi-trash3" style="font-size:24px;display:block;margin-bottom:6px;opacity:.3;"></i>ไม่มีประวัติการจำหน่าย</div>';
   }
 
   var trStatusCfg = {
@@ -5249,6 +5290,9 @@ async function showAssetDetail(id) {
         '<hr>' +
         '<div style="font-size:13px;font-weight:600;margin-bottom:8px;"><i class="bi bi-arrow-left-right me-1 text-muted"></i>ประวัติการโอนย้าย (' + transfers.length + ')</div>' +
         transferHtml +
+        '<hr>' +
+        '<div style="font-size:13px;font-weight:600;margin-bottom:8px;"><i class="bi bi-trash3 me-1 text-muted"></i>ประวัติการจำหน่าย (' + disposalLogs.length + ')</div>' +
+        disposalHtml +
         (comps.length ? '<hr><div style="font-size:13px;font-weight:600;margin-bottom:8px;"><i class="bi bi-diagram-3 me-1" style="color:#7c3aed;"></i>องค์ประกอบ (' + comps.length + ')</div>' +
           '<div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">' +
           comps.map(function(c, i) {
