@@ -1466,6 +1466,7 @@
           <div class="modal-body">
             <input type="hidden" id="repResultId">
             <input type="hidden" id="repResultAssetId">
+            <input type="hidden" id="repResultProblem">
             <div id="repResultAssetInfo" style="background:#f8fafc;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;"></div>
             <div class="mb-3">
               <label class="form-label fw-semibold" style="font-size:13px;">ผลการซ่อม <span class="text-danger">*</span></label>
@@ -5136,6 +5137,17 @@ async function showAssetDetail(id) {
   var photos = a.asset_photos || [];
   var repairs = a.asset_repairs || [];
 
+  // ประวัติการโอนย้ายของครุภัณฑ์นี้
+  var transfers = [];
+  try {
+    var trRes = await sb.from('asset_transfers')
+      .select('id,from_branch_name,to_branch_name,status,requested_at,responded_at,note,respond_note')
+      .contains('asset_ids', [id])
+      .neq('status', 'pending')
+      .order('responded_at', {ascending: false});
+    transfers = trRes.data || [];
+  } catch(e) { transfers = []; }
+
   var photoHtml = photos.length
     ? '<div style="display:flex;flex-wrap:wrap;gap:8px;">' + photos.map(function(p) {
         return '<div style="position:relative;width:90px;height:90px;cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,.1);" onclick="window.open(\'' + p.photo_url + '\')">' +
@@ -5164,6 +5176,34 @@ async function showAssetDetail(id) {
     }).join('');
   } else {
     repairHtml = '<div style="font-size:13px;color:#94a3b8;text-align:center;padding:16px 0;"><i class="bi bi-tools" style="font-size:24px;display:block;margin-bottom:6px;opacity:.3;"></i>ไม่มีประวัติการซ่อม</div>';
+  }
+
+  var trStatusCfg = {
+    accepted:  {label:'ยอมรับแล้ว', color:'#166534', bg:'#dcfce7'},
+    rejected:  {label:'ปฏิเสธ',     color:'#991b1b', bg:'#fee2e2'},
+    cancelled: {label:'ยกเลิก',     color:'#64748b', bg:'#f1f5f9'}
+  };
+  var transferHtml = '';
+  if (transfers.length) {
+    transferHtml = transfers.map(function(t) {
+      var cfg = trStatusCfg[t.status] || {label: t.status, color:'#64748b', bg:'#f1f5f9'};
+      var dateStr = fmtDate(t.responded_at || t.requested_at);
+      return '<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 12px;margin-bottom:8px;">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
+          '<div style="flex:1;">' +
+            '<div style="font-size:12px;color:#0369a1;font-weight:600;"><i class="bi bi-arrow-left-right me-1"></i>' + (t.from_branch_name||'?') + ' → ' + (t.to_branch_name||'?') + '</div>' +
+            (t.note ? '<div style="font-size:11px;color:#475569;margin-top:2px;">' + t.note + '</div>' : '') +
+            (t.respond_note ? '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">' + t.respond_note + '</div>' : '') +
+          '</div>' +
+          '<div style="text-align:right;flex-shrink:0;">' +
+            '<span style="background:' + cfg.bg + ';color:' + cfg.color + ';font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">' + cfg.label + '</span>' +
+            '<div style="font-size:11px;color:#94a3b8;margin-top:4px;"><i class="bi bi-calendar3 me-1"></i>' + dateStr + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } else {
+    transferHtml = '<div style="font-size:13px;color:#94a3b8;text-align:center;padding:16px 0;"><i class="bi bi-arrow-left-right" style="font-size:24px;display:block;margin-bottom:6px;opacity:.3;"></i>ไม่มีประวัติการโอนย้าย</div>';
   }
 
   var row = function(label, val) {
@@ -5206,6 +5246,9 @@ async function showAssetDetail(id) {
         '<div style="font-size:13px;font-weight:600;margin-bottom:8px;"><i class="bi bi-tools me-1 text-muted"></i>ประวัติการซ่อม (' + repairs.length + ')</div>' +
         repairHtml +
         '<button class="btn btn-sm btn-outline-primary mt-2" onclick="openRepairModal(\'' + a.id + '\')"><i class="bi bi-plus-lg me-1"></i>เพิ่มประวัติซ่อม</button>' +
+        '<hr>' +
+        '<div style="font-size:13px;font-weight:600;margin-bottom:8px;"><i class="bi bi-arrow-left-right me-1 text-muted"></i>ประวัติการโอนย้าย (' + transfers.length + ')</div>' +
+        transferHtml +
         (comps.length ? '<hr><div style="font-size:13px;font-weight:600;margin-bottom:8px;"><i class="bi bi-diagram-3 me-1" style="color:#7c3aed;"></i>องค์ประกอบ (' + comps.length + ')</div>' +
           '<div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">' +
           comps.map(function(c, i) {
@@ -6571,6 +6614,7 @@ function escHtml(s) { return (s||'').replace(/'/g,"\\'"); }
 function openRepairResult(repId, assetId, assetName, problem) {
   document.getElementById('repResultId').value = repId;
   document.getElementById('repResultAssetId').value = assetId;
+  document.getElementById('repResultProblem').value = problem;
   document.getElementById('repResultAssetInfo').innerHTML =
     '<div style="font-weight:700;margin-bottom:4px;">' + assetName + '</div>' +
     '<div style="font-size:12px;color:#64748b;"><i class="bi bi-exclamation-circle me-1"></i>' + problem + '</div>';
@@ -6606,6 +6650,20 @@ async function submitRepairResult() {
 
   if (btn) { btn.disabled=false; btn.innerHTML='<i class="bi bi-check2 me-1"></i>บันทึกผล'; }
   if (r1.error||r2.error) { showToast('เกิดข้อผิดพลาด: '+((r1.error||r2.error).message),'danger'); return; }
+
+  // auto-insert ประวัติซ่อมใน asset_repairs เมื่อซ่อมเสร็จ
+  if (newRepairStatus === 'repaired') {
+    var problemText = document.getElementById('repResultProblem').value || '';
+    var repairDesc  = problemText + (note ? ' (บันทึกผล: ' + note + ')' : '');
+    await sb.from('asset_repairs').insert({
+      asset_id:    assetId,
+      repair_date: new Date().toISOString().split('T')[0],
+      description: repairDesc,
+      cost:        0,
+      notes:       'บันทึกอัตโนมัติจากระบบแจ้งซ่อม',
+      created_by:  App.user ? App.user.id : null
+    });
+  }
 
   logTx('repair_resolve', { result: newRepairStatus, note: note || null }, assetId);
   bootstrap.Modal.getInstance(document.getElementById('modalRepairResult')).hide();
