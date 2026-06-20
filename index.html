@@ -745,6 +745,87 @@
   </div>
 </div>
 
+<!-- ===== PUBLIC SCAN PAGE (สแกนโดยไม่ต้อง login) ===== -->
+<div id="page-scan-public" style="display:none;position:fixed;inset:0;z-index:3000;background:#f0f4f8;overflow-y:auto;font-family:Kanit;">
+  <div style="position:sticky;top:0;z-index:10;background:#1a2332;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.25);">
+    <img src="logo_lasc.png" alt="LASC" style="height:32px;border-radius:6px;background:#fff;padding:2px;flex-shrink:0;">
+    <div style="color:#fff;font-size:14px;font-weight:700;flex:1;min-width:0;">
+      <div style="line-height:1.2;">ระบบทะเบียนครุภัณฑ์</div>
+      <div style="font-size:11px;font-weight:400;opacity:.6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">คณะศิลปศาสตร์และวิทยาศาสตร์ มรภ.ศรีสะเกษ</div>
+    </div>
+    <button onclick="document.getElementById('page-scan-public').style.display='none';document.getElementById('loginPage').style.display='flex';"
+      style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:7px 14px;color:#fff;font-family:Kanit;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+      <i class="bi bi-box-arrow-in-right me-1"></i>เข้าสู่ระบบ
+    </button>
+  </div>
+  <div style="max-width:520px;margin:0 auto;padding:16px 14px 48px;">
+    <div id="pubScanContent">
+      <div style="text-align:center;padding:60px 20px;color:#94a3b8;"><div class="spinner-border text-primary"></div><div style="margin-top:12px;font-size:14px;">กำลังโหลด...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- FEEDBACK MODAL -->
+<div class="modal-overlay" id="feedbackModal" onclick="Feedback.close()">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:480px">
+    <div class="modal-hdr" style="background:linear-gradient(135deg,#6d28d9,#7c3aed);">
+      <div class="modal-hdr-title"><i class="bi bi-chat-heart-fill" style="margin-right:8px;"></i>ประเมินความพึงพอใจ</div>
+      <button class="modal-hdr-close" onclick="Feedback.close()">&#x2715;</button>
+    </div>
+    <div class="modal-bdy">
+      <div style="margin-bottom:18px;text-align:center;">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">ความพึงพอใจโดยรวม <span style="color:#ef4444;">*</span></div>
+        <div id="fbStars" style="font-size:38px;letter-spacing:6px;line-height:1;"></div>
+        <div id="fbRatingLabel" style="font-size:13px;color:#f59e0b;margin-top:6px;min-height:20px;font-weight:600;"></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label class="form-label">ฟีเจอร์ที่ใช้บ่อยที่สุด</label>
+        <select id="fbFeature" class="form-select" style="font-family:Kanit;font-size:13px;">
+          <option value="">-- เลือก (ถ้ามี) --</option>
+          <option value="บันทึก/แก้ไขครุภัณฑ์">บันทึก/แก้ไขครุภัณฑ์</option>
+          <option value="นำเข้า Excel">นำเข้า Excel</option>
+          <option value="ตรวจสอบประจำปี">ตรวจสอบประจำปี</option>
+          <option value="สแกน QR">สแกน QR</option>
+          <option value="โอนย้ายครุภัณฑ์">โอนย้ายครุภัณฑ์</option>
+          <option value="รายงาน/Export Excel">รายงาน/Export Excel</option>
+          <option value="Dashboard">Dashboard</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label class="form-label">ปัญหาที่พบ <span style="color:var(--muted);font-weight:400;">(ถ้ามี)</span></label>
+        <textarea id="fbProblems" class="form-control" rows="2" placeholder="เช่น ระบบช้า, ปุ่มกดไม่ได้..." style="font-family:Kanit;font-size:13px;resize:none;"></textarea>
+      </div>
+      <div style="margin-bottom:8px;">
+        <label class="form-label">ข้อเสนอแนะ <span style="color:var(--muted);font-weight:400;">(ถ้ามี)</span></label>
+        <textarea id="fbSuggestions" class="form-control" rows="2" placeholder="อยากให้เพิ่มหรือปรับอะไรบ้าง..." style="font-family:Kanit;font-size:13px;resize:none;"></textarea>
+      </div>
+      <div id="fbAlert" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:13px;"></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-outline-secondary" onclick="Feedback.close()">ยกเลิก</button>
+      <button class="btn" style="background:#7c3aed;color:#fff;" onclick="Feedback.save()"><i class="bi bi-send-fill me-1"></i>ส่งแบบประเมิน</button>
+    </div>
+  </div>
+</div>
+
+<!-- FEEDBACK REPORT MODAL (admin) -->
+<div class="modal-overlay" id="feedbackReportModal" onclick="Feedback.closeReport()">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:720px">
+    <div class="modal-hdr" style="background:linear-gradient(135deg,#6d28d9,#7c3aed);">
+      <div class="modal-hdr-title"><i class="bi bi-bar-chart-fill" style="margin-right:8px;"></i>ผลประเมินความพึงพอใจ</div>
+      <button class="modal-hdr-close" onclick="Feedback.closeReport()">&#x2715;</button>
+    </div>
+    <div class="modal-bdy" style="max-height:65vh;overflow-y:auto;">
+      <div id="fbReportSummary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;"></div>
+      <div id="fbReportTable"></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-outline-secondary" onclick="Feedback.closeReport()">ปิด</button>
+      <button class="btn btn-success" onclick="Feedback.exportExcel()"><i class="bi bi-file-earmark-excel-fill me-1"></i>Export Excel</button>
+    </div>
+  </div>
+</div>
+
 <!-- SIDEBAR -->
 <nav id="sidebar" style="display:none;">
   <div class="sb-brand">
@@ -777,11 +858,15 @@
 
     <div class="sb-section" id="adminSection">จัดการระบบ</div>
     <div class="nav-link" id="menuAdminUsers" onclick="showPage('admin-users')"><i class="bi bi-people-fill"></i>จัดการผู้ใช้</div>
+    <div class="nav-link" id="menuFeedbackReport" onclick="Feedback.openReport()" style="display:none;"><i class="bi bi-bar-chart-fill" style="color:#a78bfa;"></i>ผลประเมินความพึงพอใจ</div>
   </div>
 
   <div class="sb-footer">
     <button onclick="showHelp()" class="btn-logout">
       <i class="bi bi-question-circle"></i>วิธีใช้งาน
+    </button>
+    <button onclick="Feedback.open()" class="btn-logout">
+      <i class="bi bi-chat-heart-fill" style="color:#a78bfa;"></i>ส่งข้อเสนอแนะ
     </button>
     <button onclick="openChangePassword()" class="btn-logout">
       <i class="bi bi-key"></i>เปลี่ยนรหัสผ่าน
@@ -3169,6 +3254,8 @@ function _startApp() {
   var _isAdminRole = (p.role === 'admin');
   if (adminSection) adminSection.style.display = _isAdminRole ? '' : 'none';
   if (adminMenu)    adminMenu.style.display    = _isAdminRole ? '' : 'none';
+  var menuFeedbackReport = document.getElementById('menuFeedbackReport');
+  if (menuFeedbackReport) menuFeedbackReport.style.display = _isAdminRole ? '' : 'none';
 
   // ซ่อน branch filter สำหรับ branch user ทันที (synchronous ก่อน loadDashboard)
   var _bWrap = document.getElementById('dashBranchWrap');
@@ -8258,6 +8345,247 @@ async function saveUser() {
 }
 
 // ============================================================
+// FEEDBACK — ประเมินความพึงพอใจ
+// ============================================================
+var Feedback = {
+  _rating: 0,
+  _labels: ['','ควรปรับปรุงมาก','ควรปรับปรุง','พอใช้ได้','ดี','ดีมาก'],
+  _data: [],
+
+  open: function() {
+    this._rating = 0;
+    var el;
+    el = document.getElementById('fbFeature');     if (el) el.value = '';
+    el = document.getElementById('fbProblems');    if (el) el.value = '';
+    el = document.getElementById('fbSuggestions'); if (el) el.value = '';
+    el = document.getElementById('fbAlert');       if (el) el.style.display = 'none';
+    el = document.getElementById('fbRatingLabel'); if (el) el.textContent = '';
+    this._renderStars(0);
+    el = document.getElementById('feedbackModal'); if (el) el.classList.add('show');
+  },
+
+  close: function() {
+    var el = document.getElementById('feedbackModal');
+    if (el) el.classList.remove('show');
+  },
+
+  setRating: function(n) {
+    this._rating = n;
+    this._renderStars(n);
+    var el = document.getElementById('fbRatingLabel');
+    if (el) el.textContent = this._labels[n] || '';
+  },
+
+  _renderStars: function(n) {
+    var el = document.getElementById('fbStars');
+    if (!el) return;
+    var html = '';
+    for (var i = 1; i <= 5; i++) {
+      html += '<span onclick="Feedback.setRating(' + i + ')" style="color:' + (i <= n ? '#f59e0b' : '#94a3b8') + ';cursor:pointer;">'
+            + (i <= n ? '&#9733;' : '&#9734;') + '</span>';
+    }
+    el.innerHTML = html;
+  },
+
+  save: async function() {
+    if (!this._rating) {
+      var a = document.getElementById('fbAlert');
+      if (a) {
+        a.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;background:#fef3c7;color:#92400e;border-left:3px solid #f59e0b;font-size:13px;margin-top:10px;';
+        a.textContent = 'กรุณาให้คะแนนความพึงพอใจก่อน';
+      }
+      return;
+    }
+    var payload = {
+      branch_id:   App.profile ? App.profile.branch_id : null,
+      user_id:     App.user ? App.user.id : null,
+      rating:      this._rating,
+      fav_feature: (document.getElementById('fbFeature').value) || null,
+      problems:    (document.getElementById('fbProblems').value.trim()) || null,
+      suggestions: (document.getElementById('fbSuggestions').value.trim()) || null
+    };
+    var res = await sb.from('feedback').insert(payload);
+    if (res.error) {
+      var a2 = document.getElementById('fbAlert');
+      if (a2) {
+        a2.style.cssText = 'display:block;padding:10px 14px;border-radius:8px;background:#fee2e2;color:#991b1b;border-left:3px solid #dc2626;font-size:13px;margin-top:10px;';
+        a2.textContent = 'เกิดข้อผิดพลาด: ' + res.error.message;
+      }
+      return;
+    }
+    this.close();
+    showConfirm('ขอบคุณสำหรับข้อเสนอแนะ', 'ข้อมูลของท่านจะช่วยพัฒนาระบบให้ดียิ่งขึ้น');
+  },
+
+  openReport: async function() {
+    var sumEl = document.getElementById('fbReportSummary');
+    var tblEl = document.getElementById('fbReportTable');
+    if (sumEl) sumEl.innerHTML = '<div style="color:var(--muted);font-size:13px;grid-column:span 3;padding:8px;">กำลังโหลด...</div>';
+    if (tblEl) tblEl.innerHTML = '';
+    var modal = document.getElementById('feedbackReportModal');
+    if (modal) modal.classList.add('show');
+
+    var res = await sb.from('feedback')
+      .select('id,rating,fav_feature,problems,suggestions,created_at,branch_id')
+      .order('created_at', { ascending: false });
+    if (res.error || !res.data) {
+      if (sumEl) sumEl.innerHTML = '<div style="color:#ef4444;grid-column:span 3;">โหลดข้อมูลไม่สำเร็จ</div>';
+      return;
+    }
+    this._data = res.data;
+    var total = res.data.length;
+    var avg   = total ? (res.data.reduce(function(s, r) { return s + r.rating; }, 0) / total).toFixed(1) : '-';
+    var dist  = [0, 0, 0, 0, 0];
+    res.data.forEach(function(r) { if (r.rating >= 1 && r.rating <= 5) dist[r.rating - 1]++; });
+
+    if (sumEl) sumEl.innerHTML =
+      '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;text-align:center;">'
+        + '<div style="font-size:28px;font-weight:700;color:#f59e0b;">' + avg + ' <span style="font-size:18px;">&#9733;</span></div>'
+        + '<div style="font-size:12px;color:#64748b;margin-top:2px;">คะแนนเฉลี่ย</div>'
+      + '</div>'
+      + '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;text-align:center;">'
+        + '<div style="font-size:28px;font-weight:700;color:#2563eb;">' + total + '</div>'
+        + '<div style="font-size:12px;color:#64748b;margin-top:2px;">แบบประเมินทั้งหมด</div>'
+      + '</div>'
+      + '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;">'
+        + dist.slice().reverse().map(function(c, i) {
+            var stars = 5 - i;
+            return '<div style="display:flex;align-items:center;gap:6px;font-size:12px;">'
+              + '<span style="color:#f59e0b;min-width:54px;">' + '&#9733;'.repeat(stars) + '</span>'
+              + '<div style="flex:1;background:#e2e8f0;border-radius:4px;height:6px;">'
+                + '<div style="width:' + (total ? Math.round(c / total * 100) : 0) + '%;background:#f59e0b;height:6px;border-radius:4px;"></div>'
+              + '</div>'
+              + '<span style="color:#64748b;min-width:18px;text-align:right;">' + c + '</span>'
+            + '</div>';
+          }).join('')
+      + '</div>';
+
+    if (!total) {
+      if (tblEl) tblEl.innerHTML = '<div style="text-align:center;color:#64748b;padding:32px;font-size:13px;">ยังไม่มีแบบประเมิน</div>';
+      return;
+    }
+    var _esc = function(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+    var rows = res.data.map(function(r) {
+      var br     = (App.branches||[]).find(function(b) { return b.id === r.branch_id; });
+      var brName = br ? ((br.code ? br.code + ' ' : '') + br.name) : '-';
+      var d      = r.created_at ? new Date(r.created_at).toLocaleDateString('th-TH',{day:'2-digit',month:'short',year:'2-digit'}) : '-';
+      return '<tr>'
+        + '<td style="white-space:nowrap;font-size:12px;">' + d + '</td>'
+        + '<td style="font-size:12px;">' + _esc(brName) + '</td>'
+        + '<td style="color:#f59e0b;font-size:13px;letter-spacing:2px;">' + '&#9733;'.repeat(r.rating) + '</td>'
+        + '<td style="font-size:12px;">' + (r.fav_feature ? _esc(r.fav_feature) : '<span style="color:#94a3b8;">-</span>') + '</td>'
+        + '<td style="max-width:150px;word-break:break-word;font-size:12px;">' + (r.problems ? _esc(r.problems) : '<span style="color:#94a3b8;">-</span>') + '</td>'
+        + '<td style="max-width:150px;word-break:break-word;font-size:12px;">' + (r.suggestions ? _esc(r.suggestions) : '<span style="color:#94a3b8;">-</span>') + '</td>'
+      + '</tr>';
+    }).join('');
+    if (tblEl) tblEl.innerHTML =
+      '<div style="overflow-x:auto;">'
+        + '<table class="table table-sm table-hover mb-0" style="font-size:13px;font-family:Kanit;">'
+          + '<thead style="background:#1e3a5f;color:#fff;"><tr>'
+            + '<th>วันที่</th><th>สาขา</th><th>คะแนน</th><th>ฟีเจอร์ที่ใช้บ่อย</th><th>ปัญหาที่พบ</th><th>ข้อเสนอแนะ</th>'
+          + '</tr></thead>'
+          + '<tbody>' + rows + '</tbody>'
+        + '</table>'
+      + '</div>';
+  },
+
+  closeReport: function() {
+    var el = document.getElementById('feedbackReportModal');
+    if (el) el.classList.remove('show');
+  },
+
+  exportExcel: function() {
+    if (!this._data || !this._data.length) { showToast('ยังไม่มีแบบประเมิน','warning'); return; }
+    var fmtDate   = function(d) { return d ? new Date(d).toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}) : ''; };
+    var starLabel = function(n) { return ['','ควรปรับปรุงมาก','ควรปรับปรุง','พอใช้ได้','ดี','ดีมาก'][n]||''; };
+    var dataRows = this._data.map(function(r) {
+      var br = (App.branches||[]).find(function(b) { return b.id === r.branch_id; });
+      return [
+        fmtDate(r.created_at),
+        br ? ((br.code ? br.code + ' ' : '') + br.name) : '-',
+        r.rating, starLabel(r.rating),
+        r.fav_feature || '', r.problems || '', r.suggestions || ''
+      ];
+    });
+    var header = ['วันที่','สาขา','คะแนน (1-5)','ระดับความพึงพอใจ','ฟีเจอร์ที่ใช้บ่อย','ปัญหาที่พบ','ข้อเสนอแนะ'];
+    var ws = XLSX.utils.aoa_to_sheet([header].concat(dataRows));
+    ws['!cols'] = [14,20,12,20,22,30,30].map(function(w){ return {wch:w}; });
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'ผลประเมินความพึงพอใจ');
+    XLSX.writeFile(wb, 'ผลประเมิน_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  }
+};
+
+// ============================================================
+// PUBLIC SCAN — สแกนโดยไม่ต้อง login
+// ============================================================
+function showPublicScanPage(assetId) {
+  var pg = document.getElementById('page-scan-public');
+  if (!pg) return;
+  pg.style.display = 'block';
+  _loadPublicScanAsset(assetId);
+}
+
+async function _loadPublicScanAsset(assetId) {
+  var el = document.getElementById('pubScanContent');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#94a3b8;"><div class="spinner-border text-primary"></div><div style="margin-top:12px;font-size:14px;">กำลังโหลด...</div></div>';
+
+  var res = await sb.rpc('public_asset_scan', { p_id: assetId });
+  if (res.error || !res.data) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;font-size:14px;">'
+      + '<i class="bi bi-exclamation-triangle-fill" style="font-size:36px;display:block;margin-bottom:12px;"></i>'
+      + 'ไม่พบครุภัณฑ์นี้ในระบบ<br><span style="font-size:12px;color:#94a3b8;margin-top:6px;display:block;">กรุณาตรวจสอบ QR Code ของครุภัณฑ์</span></div>';
+    return;
+  }
+  var a  = res.data;
+  var st = STATUS[a.status] || { label: a.status||'-', cls: 'badge-disposed' };
+
+  var inspHtml = '';
+  if (a.recent_inspections && a.recent_inspections.length) {
+    inspHtml = '<div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:12px;">'
+      + '<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:8px;"><i class="bi bi-clock-history me-1"></i>ประวัติการตรวจล่าสุด</div>'
+      + a.recent_inspections.map(function(it) {
+          var iSt = INSP_STATUS[it.status] || { label: it.status||'-', cls: 'badge-disposed' };
+          var d   = it.inspected_at ? new Date(it.inspected_at).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '-';
+          return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f8fafc;">'
+            + '<span class="badge ' + iSt.cls + '" style="font-size:11px;white-space:nowrap;">' + iSt.label + '</span>'
+            + '<span style="font-size:12px;color:#475569;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (it.round_name||'') + '</span>'
+            + '<span style="font-size:11px;color:#94a3b8;white-space:nowrap;">' + d + '</span>'
+          + '</div>';
+        }).join('')
+    + '</div>';
+  }
+
+  el.innerHTML =
+    '<div style="background:#fff;border-radius:14px;overflow:hidden;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,.10);">'
+      + '<div style="background:linear-gradient(135deg,#1a2332,#2d4a6e);padding:16px 18px 14px;">'
+        + '<div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);letter-spacing:.3px;margin-bottom:5px;text-transform:uppercase;">'
+          + (a.branch_name||'') + '</div>'
+        + '<div style="font-size:17px;font-weight:800;color:#fff;line-height:1.3;margin-bottom:6px;">' + (a.name||'—') + '</div>'
+        + '<div style="font-size:12px;color:rgba(255,255,255,.65);"><i class="bi bi-upc me-1"></i>' + (a.asset_code||'—') + '</div>'
+      + '</div>'
+      + '<div style="padding:14px 18px;">'
+        + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
+          + '<span style="font-size:12px;color:#64748b;min-width:56px;">สถานะ</span>'
+          + '<span class="badge ' + st.cls + '">' + st.label + '</span>'
+        + '</div>'
+        + (a.location ? '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:6px;"><span style="font-size:12px;color:#64748b;min-width:56px;">ที่ตั้ง</span><span style="font-size:12px;color:#0f172a;">' + a.location + '</span></div>' : '')
+        + (a.brand ? '<div style="display:flex;gap:10px;margin-bottom:6px;"><span style="font-size:12px;color:#64748b;min-width:56px;">ยี่ห้อ</span><span style="font-size:12px;">' + a.brand + (a.model ? ' / ' + a.model : '') + '</span></div>' : '')
+        + (a.price ? '<div style="display:flex;gap:10px;"><span style="font-size:12px;color:#64748b;min-width:56px;">ราคา</span><span style="font-size:12px;">' + Number(a.price).toLocaleString('th-TH') + ' บาท</span></div>' : '')
+        + inspHtml
+      + '</div>'
+    + '</div>'
+    + '<div style="background:#fff;border-radius:14px;padding:20px 18px;box-shadow:0 2px 8px rgba(0,0,0,.07);text-align:center;">'
+      + '<i class="bi bi-lock-fill" style="font-size:32px;color:#94a3b8;display:block;margin-bottom:10px;"></i>'
+      + '<div style="font-size:14px;color:#64748b;margin-bottom:16px;">เข้าสู่ระบบเพื่อบันทึกผลการตรวจสอบ<br><span style="font-size:12px;color:#94a3b8;">และดูประวัติทั้งหมด</span></div>'
+      + '<button class="btn btn-primary" style="width:100%;padding:12px;font-size:15px;border-radius:11px;font-family:Kanit;" '
+        + 'onclick="document.getElementById(\'page-scan-public\').style.display=\'none\';document.getElementById(\'loginPage\').style.display=\'flex\';">'
+        + '<i class="bi bi-box-arrow-in-right me-2"></i>เข้าสู่ระบบ</button>'
+    + '</div>';
+}
+
+// ============================================================
 // STARTUP
 // ============================================================
 (async function() {
@@ -8297,9 +8625,11 @@ async function saveUser() {
     }
   } catch(e) { /* session check failed or timeout — fall through to login */ }
 
-  // No session (or profile load failed) — show login
+  // No session — ถ้ามี ?scan= ให้แสดง public scan page แทน login
   if (window._clearFallbackTimer) window._clearFallbackTimer();
   hideLoading();
+  var _pubScanId = new URLSearchParams(window.location.search).get('scan');
+  if (_pubScanId) { showPublicScanPage(_pubScanId); return; }
   document.getElementById('loginPage').style.display = 'flex';
 })();
 
