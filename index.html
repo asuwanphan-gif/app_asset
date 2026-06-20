@@ -7116,9 +7116,9 @@ async function _loadBranchInspDashboard(insp, showAll) {
 
   var statsHtml =
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">' +
-    _ovStatCard(total,    'รวมทั้งหมด',    '#2563eb',  'bi-archive-fill') +
-    _ovStatCard(done,     'ตรวจแล้ว',      '#22c55e',  'bi-check-circle-fill') +
-    _ovStatCard(remaining,'ยังไม่ตรวจ',    '#f59e0b',  'bi-hourglass-split') +
+    _ovStatCard(total,    'รวมทั้งหมด',    '#2563eb',  'bi-archive-fill',       'goFillInspection()') +
+    _ovStatCard(done,     'ตรวจแล้ว',      '#22c55e',  'bi-check-circle-fill',  '_goInspFilter(\'done\')') +
+    _ovStatCard(remaining,'ยังไม่ตรวจ',    '#f59e0b',  'bi-hourglass-split',    '_goInspFilter(\'pending\')') +
     _ovStatCard(pct+'%',  'ความคืบหน้า',   barColor,   'bi-speedometer2') +
     '</div>';
 
@@ -7297,9 +7297,9 @@ function _renderInspOverview(totalAssets, totalDone, totalPct) {
   // Summary stats box
   var statsBox =
     '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">' +
-      _ovStatCard(totalAssets, 'รวมทั้งหมด', '#2563eb', 'bi-archive-fill') +
-      _ovStatCard(totalDone, 'ตรวจแล้ว', '#22c55e', 'bi-check-circle-fill') +
-      _ovStatCard(totalAssets - totalDone, 'ยังไม่ตรวจ', '#f59e0b', 'bi-hourglass-split') +
+      _ovStatCard(totalAssets, 'รวมทั้งหมด', '#2563eb', 'bi-archive-fill', '_goInspFilter(\'\')') +
+      _ovStatCard(totalDone, 'ตรวจแล้ว', '#22c55e', 'bi-check-circle-fill', '_goInspFilter(\'done\')') +
+      _ovStatCard(totalAssets - totalDone, 'ยังไม่ตรวจ', '#f59e0b', 'bi-hourglass-split', '_goInspFilter(\'pending\')') +
       _ovStatCard(totalPct + '%', 'ความคืบหน้ารวม', pctColor, 'bi-speedometer2') +
     '</div>';
 
@@ -7336,10 +7336,10 @@ function _renderInspOverview(totalAssets, totalDone, totalPct) {
 
     // ปุ่มขวาบน
     var rightBtns = '';
-    if (isAdmin) rightBtns += '<button style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:2px 8px;font-size:11px;color:#2563eb;cursor:pointer;white-space:nowrap;" onclick="notifyBranch(\'' + item.bId + '\')" title="แจ้งสาขาทางอีเมล"><i class="bi bi-envelope me-1"></i>แจ้ง</button>';
-    if (remaining > 0) rightBtns += '<button style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:2px 8px;font-size:11px;color:#2563eb;cursor:pointer;white-space:nowrap;" onclick="_showAllUnsurveyed(\'' + item.bId + '\')"><i class="bi bi-list-check me-1"></i>ดูทั้งหมด (' + remaining + ')</button>';
+    if (isAdmin) rightBtns += '<button style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:2px 8px;font-size:11px;color:#2563eb;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();notifyBranch(\'' + item.bId + '\')" title="แจ้งสาขาทางอีเมล"><i class="bi bi-envelope me-1"></i>แจ้ง</button>';
+    if (remaining > 0) rightBtns += '<button style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:2px 8px;font-size:11px;color:#2563eb;cursor:pointer;white-space:nowrap;" onclick="event.stopPropagation();_showAllUnsurveyed(\'' + item.bId + '\')"><i class="bi bi-list-check me-1"></i>ยังไม่ตรวจ (' + remaining + ')</button>';
 
-    return '<div style="background:' + bg + ';border:1px solid #e2e8f0;border-left:4px solid ' + color + ';border-radius:10px;padding:12px 14px;">' +
+    return '<div style="background:' + bg + ';border:1px solid #e2e8f0;border-left:4px solid ' + color + ';border-radius:10px;padding:12px 14px;cursor:pointer;transition:box-shadow .15s;" onclick="_goInspFilter(\'\',\'' + item.bId + '\')" onmouseover="this.style.boxShadow=\'0 4px 14px rgba(0,0,0,.10)\'" onmouseout="this.style.boxShadow=\'none\'" title="คลิกเพื่อดูรายการของ ' + item.name + '">' +
       '<div class="d-flex justify-content-between align-items-start mb-2 gap-2">' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + item.name + '</div>' +
@@ -7363,15 +7363,26 @@ function _renderInspOverview(totalAssets, totalDone, totalPct) {
   container.innerHTML = statsBox + sortBar + grid;
 }
 
-function _ovStatCard(val, label, color, icon) {
+function _ovStatCard(val, label, color, icon, onclick) {
   var bg = color + '18';
-  return '<div class="stat-card" style="border-left-color:' + color + ';--sc:' + color + ';cursor:default;" onmouseover="" onmouseout="">' +
+  var clickable = !!onclick;
+  return '<div class="stat-card" style="border-left-color:' + color + ';--sc:' + color + ';' + (clickable ? 'cursor:pointer;' : 'cursor:default;') + '"'
+    + (clickable ? ' onclick="' + onclick + '" title="คลิกเพื่อดูรายการ"' : ' onmouseover="" onmouseout=""') + '>' +
     '<div class="sc-icon" style="background:' + bg + ';"><i class="bi ' + icon + '" style="color:' + color + ';font-size:20px;"></i></div>' +
     '<div style="flex:1;">' +
-      '<div class="sc-label">' + label + '</div>' +
+      '<div class="sc-label">' + label + (clickable ? ' <i class="bi bi-arrow-right-short" style="font-size:13px;opacity:.6;"></i>' : '') + '</div>' +
       '<div class="sc-num" style="color:' + color + ';">' + val + '</div>' +
     '</div>' +
   '</div>';
+}
+
+async function _goInspFilter(doneFilter, bId) {
+  await goFillInspection();
+  var brEl   = document.getElementById('inspFilterBranch');
+  var doneEl = document.getElementById('inspFilterDone');
+  if (bId   && brEl)   brEl.value   = bId;
+  if (doneEl) doneEl.value = doneFilter || '';
+  filterInspItems();
 }
 
 async function _loadInspPending() {
