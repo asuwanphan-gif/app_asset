@@ -5403,6 +5403,17 @@ function _getImpAssetCode(r) {
   // รูปแบบใหม่: กลุ่มประเภท เช่น "6730-010-0006-68-051"
   var newCode = String(r['กลุ่มประเภท'] || '').trim();
   if (newCode && /^\d{4}-\d{3}/.test(newCode)) return newCode;
+  // รูปแบบกลาง: 5 คอลัมน์แยก กลุ่มประเภท(4)+ชนิด(3)+ลักษณะ(4)+ปี(2)+ครุภัณฑ์ลำดับที่(3)
+  // เช่น G=3431, H=002, I=0002, J=66, K=003 → "3431-002-0002-66-003"
+  var _cat  = String(r['กลุ่มประเภท']       || '').trim();
+  var _kind = String(r['ชนิด']             || '').trim();
+  var _styl = String(r['ลักษณะ']            || '').trim();
+  var _yr   = String(r['ปี']               || '').trim();
+  var _seq  = String(r['ครุภัณฑ์ลำดับที่']  || '').trim();
+  if (_cat && /^\d+$/.test(_cat) && _kind && _yr && _seq) {
+    var _p = function(v, n) { return String(parseInt(v) || 0).padStart(n, '0'); };
+    return _p(_cat,4) + '-' + _p(_kind,3) + (_styl ? '-' + _p(_styl,4) : '') + '-' + _p(_yr,2) + '-' + _p(_seq,3);
+  }
   // รูปแบบเก่า: ต่อ 3 คอลัมน์ (col 2, 3, 4)
   // XLSX.js ใช้ "Unnamed: N" สำหรับ empty header (จาก _sheetToRows)
   var p1 = String(r['รหัสเก่า'] || '').trim().replace(/\.$/, '');
