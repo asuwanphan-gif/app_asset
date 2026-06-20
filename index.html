@@ -4874,8 +4874,8 @@ async function saveAsset(silent) {
       logTx('asset_update', { code: payload.asset_code, name: payload.name }, id);
     }
 
-    // Upload photos
-    var photos = isNew ? [photo1, photo2] : [];
+    // Upload photos — ทั้ง new และ edit (edit จะ upload เฉพาะ slot ที่เลือกไฟล์ใหม่)
+    var photos = [photo1, photo2];
     for (var i = 0; i < photos.length; i++) {
       var file = photos[i];
       if (!file) continue;
@@ -5017,23 +5017,35 @@ async function _qaDoAction(assetId, newStatus, actionLabel) {
 
 // ===== EXISTING PHOTO PREVIEW IN FORM =====
 async function _loadExistingPhotos(assetId) {
+  // ซ่อน area เดิม — แสดงใน slot แทน
   var area = document.getElementById('existingPhotosArea');
-  var list = document.getElementById('existingPhotosList');
-  if (!area || !list) return;
+  if (area) area.style.display = 'none';
+
+  // reset slot preview ก่อน
+  ['photo1Preview','photo2Preview'].forEach(function(pid) {
+    var el = document.getElementById(pid);
+    if (el) el.innerHTML = '';
+  });
+
   var res = await sb.from('asset_photos').select('*').eq('asset_id', assetId).order('created_at');
   var photos = res.data || [];
-  if (!photos.length) { area.style.display = 'none'; return; }
-  area.style.display = '';
-  list.innerHTML = photos.map(function(p) {
-    return '<div style="position:relative;width:110px;height:90px;border-radius:8px;overflow:hidden;border:2px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,.08);">' +
-      '<img src="' + p.photo_url + '" style="width:100%;height:100%;object-fit:cover;" onclick="window.open(\'' + p.photo_url + '\')" title="คลิกดูรูปเต็ม" loading="lazy">' +
-      '<div style="position:absolute;inset:0;background:linear-gradient(transparent 55%,rgba(0,0,0,.55));pointer-events:none;"></div>' +
-      '<div style="position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:3px 5px;">' +
-        '<span style="color:#fff;font-size:9px;font-weight:600;">' + (p.photo_type||'รูป') + '</span>' +
-        '<button onclick="event.stopPropagation();_deleteAssetPhoto(\'' + p.id + '\',\'' + assetId + '\')" style="background:rgba(220,38,38,.8);border:none;border-radius:4px;padding:1px 5px;color:#fff;font-size:10px;cursor:pointer;line-height:1.4;" title="ลบรูปนี้"><i class="bi bi-trash3"></i></button>' +
+
+  photos.slice(0, 2).forEach(function(p, idx) {
+    var prev = document.getElementById('photo' + (idx + 1) + 'Preview');
+    if (!prev) return;
+    prev.innerHTML =
+      '<div style="position:relative;width:160px;border-radius:8px;overflow:hidden;border:2px solid #bfdbfe;box-shadow:0 2px 8px rgba(0,0,0,.1);margin-top:4px;">' +
+        '<img src="' + p.photo_url + '" data-photo-id="' + p.id + '" loading="lazy"' +
+          ' style="width:160px;height:128px;object-fit:cover;display:block;cursor:pointer;"' +
+          ' onclick="window.open(\'' + p.photo_url + '\')" title="คลิกดูรูปเต็ม">' +
+        '<div style="position:absolute;inset:0;background:linear-gradient(transparent 50%,rgba(0,0,0,.55));pointer-events:none;"></div>' +
+        '<div style="position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:4px 6px;">' +
+          '<span style="color:#fff;font-size:9px;font-weight:600;"><i class="bi bi-image me-1"></i>รูปปัจจุบัน</span>' +
+          '<button onclick="event.stopPropagation();_deleteAssetPhoto(\'' + p.id + '\',\'' + assetId + '\')" style="background:rgba(220,38,38,.8);border:none;border-radius:4px;padding:2px 6px;color:#fff;font-size:10px;cursor:pointer;" title="ลบรูปนี้"><i class="bi bi-trash3"></i></button>' +
+        '</div>' +
       '</div>' +
-    '</div>';
-  }).join('');
+      '<div style="font-size:10px;color:#3b82f6;margin-top:3px;"><i class="bi bi-arrow-repeat me-1"></i>เลือกไฟล์ใหม่เพื่อเปลี่ยนรูป</div>';
+  });
 }
 
 async function _deleteAssetPhoto(photoId, assetId) {
