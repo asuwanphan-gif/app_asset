@@ -255,15 +255,7 @@ BEGIN;
       AND status != 'disposed'
   );
 
-  -- 3c) ลบ transfers ที่ผูกกับ asset เหล่านี้ (ถ้ามี)
-  DELETE FROM transfers
-  WHERE asset_id IN (
-    SELECT id FROM assets
-    WHERE asset_code !~ '^\d{4}-\d{3}'
-      AND status != 'disposed'
-  );
-
-  -- 3d) ลบ assets ตัวจริง
+  -- 3c) ลบ assets ตัวจริง
   DELETE FROM assets
   WHERE asset_code !~ '^\d{4}-\d{3}'
     AND status != 'disposed';
