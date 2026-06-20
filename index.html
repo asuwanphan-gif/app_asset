@@ -5494,7 +5494,7 @@ function previewImportSheet() {
         tr += '<td>' + String(r['ชื่อครุภัณฑ์']||r.name||'').substring(0,30) + '</td>';
         tr += '<td>' + String(r['ราคา']||'') + '</td>';
         tr += '<td>' + String(r['วดป.ที่ได้มา']||'').substring(0,15) + '</td>';
-        tr += '<td>' + String(r['ใช้ประจำที่']||'').substring(0,20) + '</td>';
+        tr += '<td>' + String(r['ใช้ประจำที่']||r['สถานที่ใช้งาน/หน่วยรับผิดชอบ']||r['สถานที่']||'').substring(0,22) + '</td>';
         tr += '<td>' + String(r['ยี่ห้อ']||'').substring(0,15) + '</td>';
         tr += '<td>' + String(r['รุ่น']||'').substring(0,15) + '</td>';
         tr += '</tr>';
@@ -5651,7 +5651,7 @@ async function doImportModal() {
         _lastMainCode = code;
         _subIdx = 0;
         // จดจำ loc และ date ของ parent เพื่อให้ sub-item inherit
-        var pLoc = String(r['ใช้ประจำที่'] || r['สถานที่'] || r.location || '').trim();
+        var pLoc = String(r['ใช้ประจำที่'] || r['สถานที่ใช้งาน/หน่วยรับผิดชอบ'] || r['สถานที่'] || r.location || '').trim();
         var pDate = r['วดป.ที่ได้มา'] || r.acquired_date || r['วันที่ได้มา'] || r['วันที่'] || '';
         if (pLoc) _lastParentLoc = pLoc;
         if (pDate) _lastParentDate = pDate;
@@ -5674,7 +5674,7 @@ async function doImportModal() {
 
       // Sub-item ที่ไม่มีสถานที่/วันที่ → inherit จาก parent เพื่อให้ auto-detect สาขาได้
       var rowOverride = { _resolvedCode: code };
-      if (!String(r['ใช้ประจำที่'] || r['สถานที่'] || r.location || '').trim() && _lastParentLoc) {
+      if (!String(r['ใช้ประจำที่'] || r['สถานที่ใช้งาน/หน่วยรับผิดชอบ'] || r['สถานที่'] || r.location || '').trim() && _lastParentLoc) {
         rowOverride['ใช้ประจำที่'] = _lastParentLoc;
       }
       if (!(r['วดป.ที่ได้มา'] || r.acquired_date || r['วันที่ได้มา'] || r['วันที่'] || '') && _lastParentDate) {
