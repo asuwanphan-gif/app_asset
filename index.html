@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -102,6 +102,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -683,6 +684,52 @@
   body.printing-sticker #page-qr-sticker{display:block!important;}
   @page{size:A4 landscape;margin:5mm;}
 }
+/* repair inputs ที่ดึงจาก DB — แสดงผลอย่างเดียว ไม่ให้แก้ */
+#pd2Table input[readonly] { pointer-events: none; user-select: text; }
+/* Flatpickr alt-input styling — ให้ดูเหมือน input เดิม */
+.pd2-date.form-control {
+  border: none !important;
+  background-color: transparent !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23888' d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 3px center !important;
+  background-size: 10px 10px !important;
+  font-family: 'Sarabun', Arial, sans-serif !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  font-size: 11px !important;
+  padding: 0 15px 0 0 !important;
+  width: 100% !important;
+  box-shadow: none !important;
+  outline: none !important;
+  color: inherit !important;
+  height: auto !important;
+}
+.pd2-date.form-control:focus { outline: none !important; }
+/* Flatpickr calendar — ย่อให้กระชับ */
+.flatpickr-calendar {
+  font-size: 11px !important;
+  width: 216px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
+}
+.flatpickr-rContainer,
+.flatpickr-days,
+.flatpickr-innerContainer,
+.dayContainer {
+  width: 210px !important;
+  min-width: 210px !important;
+  max-width: 210px !important;
+}
+.flatpickr-day {
+  max-width: 28px !important;
+  height: 26px !important;
+  line-height: 26px !important;
+  font-size: 10px !important;
+}
+.flatpickr-months .flatpickr-month { height: 28px !important; }
+.flatpickr-current-month { font-size: 11px !important; padding-top: 2px !important; }
+.flatpickr-weekday { font-size: 9px !important; height: 22px !important; line-height: 22px !important; }
+.flatpickr-weekdays { height: 22px !important; }
 </style>
 </head>
 <body>
@@ -1081,6 +1128,9 @@
 <button class="btn btn-sm" onclick="openBulkPhotoModal()" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;font-family:Kanit;font-weight:600;padding:6px 14px;" id="btnBulkPhoto">
             <i class="bi bi-images me-1"></i>นำเข้ารูปภาพ
           </button>
+          <button class="btn btn-sm" id="btnAutoMove" onclick="autoMoveBranchByLocation()" style="display:none;background:#d97706;color:#fff;border:none;border-radius:8px;font-family:Kanit;font-weight:600;padding:6px 14px;">
+            <i class="bi bi-arrow-left-right me-1"></i>ย้ายสาขาอัตโนมัติ
+          </button>
           <button class="btn btn-primary btn-sm" onclick="showAssetForm()" id="btnAddAsset">
             <i class="bi bi-plus-lg me-1"></i>เพิ่มครุภัณฑ์
           </button>
@@ -1149,7 +1199,7 @@
                 <col style="width:6%"> <!-- อายุ -->
                 <col style="width:7%"> <!-- สถานะ -->
                 <col style="width:8%"> <!-- ตรวจล่าสุด -->
-                <col class="no-print" style="width:9%"><!-- จัดการ -->
+                <col class="no-print" style="width:12%"><!-- จัดการ -->
               </colgroup>
               <thead>
                 <tr style="background:#f1f5f9;border-bottom:2px solid #dde3ec;">
@@ -1163,7 +1213,7 @@
                   <th style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;text-align:center;">อายุ (ปี)</th>
                   <th style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;">สถานะ</th>
                   <th style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;">ตรวจล่าสุด</th>
-                  <th class="no-print" style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;text-align:center;">จัดการ</th>
+                  <th class="no-print" style="padding:9px 10px;font-weight:700;font-family:Kanit;font-size:12px;color:#475569;white-space:nowrap;text-align:center;position:sticky;right:0;z-index:2;background:#f1f5f9;box-shadow:-3px 0 6px rgba(0,0,0,.06);">จัดการ</th>
                 </tr>
               </thead>
               <tbody id="assetTableBody"></tbody>
@@ -1828,422 +1878,675 @@
             </div>
           </div>
 
+          <!-- fBranch — ซ่อนจาก branch user; admin เห็นเพื่อเปลี่ยนสาขาได้ -->
+          <div id="fBranchRow" class="no-print" style="display:none;margin-bottom:10px;">
+            <label style="font-family:Kanit;font-size:13px;font-weight:600;color:#475569;margin-right:8px;"><i class="bi bi-arrow-left-right me-1" style="color:#d97706;"></i>สาขาครุภัณฑ์ :</label>
+            <select id="fBranch" class="form-select form-select-sm d-inline-block" style="width:auto;font-family:Kanit;font-size:13px;" onchange="_onFBranchChange()"></select>
+          </div>
+          <input type="hidden" id="fCustodian">
+          <select id="fStatus" style="display:none;"><option value="active">พบ / ปกติ</option><option value="not_found">ไม่พบ</option><option value="damaged_fixable">ชำรุด ซ่อมได้</option><option value="damaged_unfixable">ชำรุด ซ่อมไม่ได้</option><option value="disposal_pending">รออนุมัติจำหน่าย</option><option value="disposed">จำหน่ายแล้ว</option></select>
+
           <!-- พ.ด. 2 TABLE -->
           <div style="overflow-x:auto;">
-          <table id="pd2Table" style="width:100%;min-width:920px;border-collapse:collapse;font-family:'Sarabun',Arial,sans-serif;font-size:12.5px;">
+          <table id="pd2Table" style="width:100%;min-width:1100px;border-collapse:collapse;font-family:'Sarabun',Arial,sans-serif;font-size:12px;table-layout:fixed;">
             <colgroup>
-              <col style="width:11%">
-              <col style="width:13%">
-              <col style="width:9%">
-              <col style="width:11%">
-              <col style="width:9%">
-              <col style="width:12%">
-              <col style="width:4%">
-              <col style="width:7%">
-              <col style="width:7%">
-              <col style="width:11%">
-              <col style="width:6%">
+              <col style="width:10%"><!-- c1: label -->
+              <col style="width:8%"> <!-- c2: value -->
+              <col style="width:8%"> <!-- c3: value ext (ส่วนซ้าย) -->
+              <col style="width:7%"> <!-- c4: dep ปีที่ -->
+              <col style="width:7%"> <!-- c5: dep % -->
+              <col style="width:8%"> <!-- c6: dep คงเหลือ/บาท -->
+              <col style="width:4%"> <!-- c7 -->
+              <col style="width:8%"> <!-- c8 -->
+              <col style="width:7%"> <!-- c9 -->
+              <col style="width:6%"> <!-- c10 -->
+              <col style="width:3%"> <!-- c11 -->
+              <col style="width:5%"> <!-- c12 -->
+              <col style="width:4%"> <!-- c13 -->
+              <col style="width:8%"> <!-- c14 -->
+              <col style="width:6%"> <!-- c15 -->
+              <col style="width:4%"> <!-- c16 -->
             </colgroup>
 
-            <!-- PRE-HEADER: form number / พ.ด. 2 -->
+            <!-- ROW 1: PRE-HEADER (removed — org name shown in ROW 2 title area) -->
+
+            <!-- ROW 2: TITLE (colspan=10) + REPAIR TITLE -->
             <tr>
-              <td colspan="6" style="border:1.5px solid #000;border-bottom:none;padding:1px 8px;font-size:10px;background:#fffde7;">
-                ชื่อหน่วยงานราชการ... &nbsp; มหาวิทยาลัยราชภัฏศรีสะเกษ &nbsp; อำเภอเมืองศรีสะเกษ &nbsp; จังหวัดศรีสะเกษ
-              </td>
-              <td colspan="5" style="border:1.5px solid #000;border-bottom:none;padding:1px 8px;font-size:10px;text-align:right;background:#fffde7;font-weight:bold;">
-                เลขหมู่ 50-10-05 &nbsp;&nbsp; พ.ด. 2
-              </td>
-            </tr>
-            <!-- HEADER ROW -->
-            <tr>
-              <td colspan="6" rowspan="2" style="border:1.5px solid #000;text-align:center;padding:6px 8px;font-weight:bold;font-size:14.5px;background:#fffde7;vertical-align:middle;line-height:1.5;">
+              <td colspan="10" style="border:1.5px solid #000;text-align:center;padding:6px 8px;font-weight:bold;font-size:14px;background:#fffde7;vertical-align:middle;line-height:1.5;">
                 ทะเบียนพัสดุครุภัณฑ์ ปศุสัตว์และสัตว์พาหนะ<br>
-                <span style="font-size:11px;font-weight:normal;color:#555;">มหาวิทยาลัยราชภัฏศรีสะเกษ &nbsp; อำเภอเมืองศรีสะเกษ &nbsp; จังหวัดศรีสะเกษ</span>
+                <span style="font-size:11px;font-weight:normal;color:#555;">มหาวิทยาลัยราชภัฏศรีสะเกษ อำเภอเมืองศรีสะเกษ จังหวัดศรีสะเกษ</span>
               </td>
-              <td colspan="5" style="border:1.5px solid #000;text-align:center;padding:4px 6px;font-weight:bold;font-size:12px;background:#fffde7;">
+              <td colspan="6" style="border:1.5px solid #000;text-align:center;padding:4px 6px;font-weight:bold;font-size:12px;background:#fffde7;">
                 บันทึกการซ่อม/ปรับปรุงแก้ไขพัสดุ
               </td>
             </tr>
+
+            <!-- ROW 2b: ประเภท (c1-c6) | เลขรหัสพัสดุ (c7-c10) | ว่าง (c11-c16) — ไม่ผสานเซลล์ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 3px;text-align:center;font-size:10px;background:#f5f5f5;">ครั้งที่</td>
-              <td style="border:1px solid #000;padding:2px 3px;text-align:center;font-size:10px;background:#f5f5f5;">เลขที่หนังสือ</td>
-              <td style="border:1px solid #000;padding:2px 3px;text-align:center;font-size:10px;background:#f5f5f5;">ลงวันที่</td>
-              <td style="border:1px solid #000;padding:2px 3px;text-align:center;font-size:10px;background:#f5f5f5;">รายการซ่อม/ปรับปรุงแก้ไข</td>
-              <td style="border:1px solid #000;padding:2px 3px;text-align:center;font-size:10px;background:#f5f5f5;">จำนวนเงิน</td>
-            </tr>
-            <!-- ประเภท + เลขทะเบียนพัสดุ display row -->
-            <tr>
-              <td colspan="2" style="border:1px solid #000;padding:2px 6px;font-size:11px;background:#fffde7;">
-                ประเภท: <strong id="headerCategory" style="color:#cc0000;font-size:11.5px;"></strong>
+              <td colspan="6" style="border:1px solid #000;padding:2px 4px;font-size:11px;background:#fffde7;">
+                ประเภท&nbsp;<input id="fCategory" readonly style="border:none;background:transparent;width:70%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;font-weight:bold;color:#1a1a1a;padding:1px 0;cursor:default;">
               </td>
-              <td colspan="4" style="border:1px solid #000;padding:2px 6px;font-size:11px;background:#fffde7;"></td>
-              <td colspan="5" style="border:1px solid #000;padding:2px 6px;font-size:11px;background:#fffde7;text-align:right;">
-                เลขทะเบียนพัสดุ: <strong id="headerAssetCode" style="color:#cc0000;font-size:12px;letter-spacing:.5px;"></strong>
+              <td colspan="4" style="border:1px solid #000;padding:2px 6px;font-size:11px;background:#f0f0f0;overflow:hidden;">
+                <span style="color:#666;font-size:10px;white-space:nowrap;">เลขรหัสพัสดุ :</span>
+                &nbsp;<span id="pd2CodeHeader" style="font-weight:bold;color:#cc0000;font-size:11px;white-space:nowrap;">—</span><span id="pd2OldCodeHeader" style="display:none;"></span>
+              </td>
+              <td colspan="6" rowspan="27" style="border:1px solid #000;padding:0;vertical-align:top;height:1px;">
+                <table style="width:100%;height:100%;border-collapse:collapse;table-layout:fixed;">
+                  <colgroup>
+                    <col style="width:7%">
+                    <col style="width:13%">
+                    <col style="width:11%">
+                    <col style="width:32%">
+                    <col style="width:11%">
+                    <col style="width:14%">
+                    <col style="width:12%">
+                  </colgroup>
+                  <tr>
+                    <td rowspan="2" style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:9px;font-weight:bold;background:#f0f0f0;vertical-align:middle;">ครั้งที่</td>
+                    <td colspan="2" style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:9px;font-weight:bold;background:#f0f0f0;">หนังสืออนุมัติ</td>
+                    <td rowspan="2" style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:9px;font-weight:bold;background:#f0f0f0;vertical-align:middle;line-height:1.3;">รายการซ่อม/ปรับปรุงแก้ไข</td>
+                    <td colspan="2" style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:9px;font-weight:bold;background:#f0f0f0;">ชื่อบุคคล - บริษัท</td>
+                    <td rowspan="2" style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:9px;font-weight:bold;background:#f0f0f0;vertical-align:middle;">หมายเหตุ</td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:2px 2px;text-align:center;font-size:9px;font-weight:bold;background:#f0f0f0;line-height:1.3;">เลขที่หนังสือ</td>
+                    <td style="border:1px solid #000;padding:2px 2px;text-align:center;font-size:9px;font-weight:bold;background:#f0f0f0;line-height:1.3;">ลงวันที่</td>
+                    <td style="border:1px solid #000;padding:2px 2px;text-align:center;font-size:9px;font-weight:bold;background:#f0f0f0;line-height:1.3;">จำนวนเงิน</td>
+                    <td style="border:1px solid #000;padding:2px 2px;text-align:center;font-size:9px;font-weight:bold;background:#f0f0f0;line-height:1.3;">ผู้ซ่อม/ปรับปรุง</td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๑</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_1" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_1" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_1" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_1" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_1" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๒</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_2" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_2" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_2" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_2" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_2" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๓</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_3" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_3" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_3" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_3" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_3" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๔</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_4" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_4" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_4" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_4" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_4" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๕</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_5" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_5" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_5" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_5" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_5" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๖</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_6" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_6" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_6" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_6" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_6" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๗</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_7" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_7" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_7" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_7" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_7" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๘</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_8" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_8" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_8" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_8" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_8" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๙</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_9" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_9" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_9" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_9" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_9" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๑๐</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_10" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_10" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_10" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_10" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_10" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๑๑</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_11" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_11" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_11" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_11" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_11" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๑๒</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_12" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_12" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_12" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_12" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_12" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๑๓</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_13" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_13" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_13" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_13" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_13" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๑๔</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_14" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_14" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_14" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_14" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_14" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๑๕</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_15" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_15" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_15" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_15" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_15" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๑๖</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_16" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_16" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_16" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_16" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_16" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๑๗</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_17" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_17" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_17" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_17" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_17" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๑๘</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_18" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_18" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_18" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_18" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_18" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๑๙</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_19" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_19" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_19" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_19" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_19" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๒๐</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_20" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_20" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_20" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_20" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_20" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๒๑</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_21" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_21" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_21" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_21" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_21" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๒๒</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_22" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_22" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_22" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_22" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_22" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๒๓</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_23" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_23" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_23" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_23" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_23" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๒๔</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_24" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_24" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_24" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_24" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_24" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:1px;text-align:center;font-size:9.5px;color:#888;">๒๕</td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rRef_25" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:1px;"><span id="pd2rDate_25" style="font-size:8.5px;display:inline-block;width:100%;color:#cc0000;padding:0;"></span></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rDetail_25" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rAmt_25" type="number" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0;"><input id="pd2rVendor_25" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;"></td>
+                    <td style="border:1px solid #000;padding:0;"></td>
+                  </tr>
+                </table>
               </td>
             </tr>
 
-            <!-- ROW: สาขา/หน่วยงาน -->
+            <!-- ROW 5: ชื่อพัสดุ+ซื้อ/จ้าง | ชื่อผู้ใช้-ดูแล header | repair 2 -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">สาขา/หน่วยงาน <span style="color:red;">*</span></td>
-              <td colspan="5" style="border:1px solid #000;padding:1px 4px;">
-                <select id="fBranch" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12.5px;padding:2px 0;"></select>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">ชื่อพัสดุ&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
+                <input id="fName" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;line-height:16px;padding:2px 0;" placeholder="ชื่อครุภัณฑ์">
               </td>
-              <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๑</td>
-              <td style="border:1px solid #000;padding:1px;min-height:24px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
+              <td colspan="2" style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">ซื้อ/จ้าง/ได้มา จาก&nbsp;:</td>
+              <td colspan="1" style="border:1px solid #000;padding:1px 5px;">
+                <input id="fVendor" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;line-height:16px;padding:2px 0;" placeholder="ร้าน/บริษัท">
+                <input type="hidden" id="fMethod">
+                <input type="hidden" id="fAssetCode"><input type="hidden" id="fOldCode">
+              </td>
+              <td colspan="4" rowspan="26" style="border:1.5px solid #000;padding:0;vertical-align:top;height:1px;">
+                <table style="width:100%;height:100%;border-collapse:collapse;table-layout:fixed;">
+                  <colgroup>
+                    <col style="width:12%">
+                    <col style="width:30%">
+                    <col style="width:30%">
+                    <col style="width:28%">
+                  </colgroup>
+                  <tr>
+                    <td colspan="4" style="border:1px solid #000;text-align:center;padding:2px 4px;font-weight:bold;font-size:11px;line-height:16px;background:#fffde7;">ชื่อผู้ใช้ - ดูแล - รับผิดชอบพัสดุ</td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #000;padding:2px 3px;text-align:center;font-size:10px;background:#f0f0f0;">พ.ศ.</td>
+                    <td style="border:1px solid #000;padding:2px 3px;text-align:center;font-size:10px;background:#f0f0f0;">ชื่อส่วนราชการ</td>
+                    <td style="border:1px solid #000;padding:2px 3px;text-align:center;font-size:10px;background:#f0f0f0;">ชื่อผู้ใช้พัสดุ</td>
+                    <td style="border:1px solid #000;padding:2px 3px;text-align:center;font-size:10px;background:#f0f0f0;">ชื่อหัวหน้าส่วนราชการ</td>
+                  </tr>
+                  <tr style="height:20px;">
+                    <td style="border:1px solid #000;padding:1px 2px;text-align:center;vertical-align:middle;font-size:11px;"><span id="pd2CustYear" style="font-weight:bold;color:#cc0000;"></span></td>
+                    <td style="border:1px solid #000;padding:1px 3px;vertical-align:middle;font-size:11px;"><span id="pd2CustDept" style="color:#cc0000;"></span></td>
+                    <td style="border:1px solid #000;padding:0;vertical-align:middle;font-size:11px;"><input id="pd2CustName" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;color:#cc0000;padding:1px 3px;"></td>
+                    <td style="border:1px solid #000;padding:1px 3px;vertical-align:middle;font-size:11px;"><input id="fBossName" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;color:#cc0000;padding:1px 0;" placeholder=""></td>
+                  </tr>
+                  <tr style="height:20px;"><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+                  <tr style="height:20px;"><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+                  <tr style="height:20px;"><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+                  <tr style="height:20px;"><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+                  <tr style="height:20px;"><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+                  <tr style="height:20px;"><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+                  <tr style="height:20px;"><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+                  <tr style="height:20px;"><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+                  <tr style="height:20px;"><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+                  <tr>
+                    <td colspan="4" style="border:1px solid #000;padding:4px;vertical-align:top;font-size:10.5px;">
+                      <div style="font-weight:bold;color:#333;margin-bottom:4px;">รูปถ่ายพัสดุ (ถ้ามี) หรือตำหนิรูปพรรณสัตว์<span id="photoRequired" class="text-danger no-print" style="font-size:10px;"></span></div>
+                      <div class="no-print">
+                        <div style="margin-bottom:6px;">
+                          <div style="font-size:10px;margin-bottom:2px;">รูปที่ 1 <span class="text-danger" id="photo1req">*</span></div>
+                          <input type="file" id="fPhoto1" class="form-control form-control-sm" accept="image/*" style="font-size:11px;">
+                          <div id="photo1Preview" class="mt-1"></div>
+                        </div>
+                        <div>
+                          <div style="font-size:10px;margin-bottom:2px;">รูปที่ 2 <span class="text-danger" id="photo2req">*</span></div>
+                          <input type="file" id="fPhoto2" class="form-control form-control-sm" accept="image/*" style="font-size:11px;">
+                          <div id="photo2Preview" class="mt-1"></div>
+                        </div>
+                        <div id="existingPhotosArea" style="display:none;margin-top:6px;">
+                          <div style="font-size:10px;color:#64748b;margin-bottom:3px;">รูปภาพปัจจุบัน</div>
+                          <div id="existingPhotosList" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+                        </div>
+                        <div style="font-size:9.5px;color:#94a3b8;margin-top:3px;">jpg, png, webp</div>
+                      </div>
+                      <div id="photoPrintArea" style="display:none;">
+                        <div style="display:flex;flex-direction:column;gap:4px;">
+                          <img id="photo1Print" src="" style="max-width:100%;max-height:120px;border:1px solid #ccc;object-fit:cover;" onerror="this.style.display='none'">
+                          <img id="photo2Print" src="" style="max-width:100%;max-height:120px;border:1px solid #ccc;object-fit:cover;" onerror="this.style.display='none'">
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+
             </tr>
 
-            <!-- ROW: เลขทะเบียน + รหัสเก่า -->
+            <!-- ROW 6: ซื้อ/จ้าง + blank c7-c10 + repair 3 -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">เลขทะเบียนพัสดุ <span style="color:red;">*</span></td>
-              <td colspan="3" style="border:1px solid #000;padding:1px 5px;">
-                <input id="fAssetCode" oninput="var h=document.getElementById('headerAssetCode');if(h)h.textContent=this.value;" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:13px;font-weight:bold;padding:2px 0;" placeholder="รหัสครุภัณฑ์">
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">ใบส่งของที่&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
+                <input id="fReceipt" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;line-height:16px;padding:2px 0;" placeholder="เลขที่ใบเสร็จ">
               </td>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">รหัสเก่า</td>
-              <td style="border:1px solid #000;padding:1px 5px;">
-                <input id="fOldCode" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="-">
+              <td colspan="2" style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">ซื้อ/จ้าง/ได้มา วันที่&nbsp;:</td>
+              <td colspan="1" style="border:1px solid #000;padding:1px 5px;">
+                <input id="fAcquiredDate" type="date" class="pd2-date" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:0;">
               </td>
-              <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๒</td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
+
             </tr>
 
-            <!-- ROW: ประเภท + สถานะ -->
+            <!-- ROW 7: ยี่ห้อผู้ผลิต + ราคา/งบ + repair 4 -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">ประเภทครุภัณฑ์</td>
-              <td colspan="3" style="border:1px solid #000;padding:1px 4px;">
-                <select id="fCategory" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" onchange="autofillLifeYears(this.value);var h=document.getElementById('headerCategory');if(h)h.textContent=this.options[this.selectedIndex].text.replace(/\s*\(\d+.*\)$/,'').trim();">
-                  <option value="">-- เลือกประเภท --</option>
-                  <optgroup label="ครุภัณฑ์สำนักงาน">
-                    <option value="ครุภัณฑ์สำนักงาน">ครุภัณฑ์สำนักงาน (8 ปี)</option>
-                    <option value="โทรศัพท์เคลื่อนที่">โทรศัพท์เคลื่อนที่ (3 ปี)</option>
-                  </optgroup>
-                  <optgroup label="ครุภัณฑ์คอมพิวเตอร์">
-                    <option value="ครุภัณฑ์คอมพิวเตอร์">ครุภัณฑ์คอมพิวเตอร์ (4 ปี)</option>
-                    <option value="ครุภัณฑ์คอมพิวเตอร์ขนาดใหญ่">ครุภัณฑ์คอมพิวเตอร์ขนาดใหญ่ Main Frame (5 ปี)</option>
-                    <option value="โปรแกรมคอมพิวเตอร์">โปรแกรมคอมพิวเตอร์ (6 ปี)</option>
-                  </optgroup>
-                  <optgroup label="ครุภัณฑ์ไฟฟ้าและวิทยุ">
-                    <option value="ครุภัณฑ์ไฟฟ้าและวิทยุ">ครุภัณฑ์ไฟฟ้าและวิทยุ (6 ปี)</option>
-                    <option value="เครื่องกำเนิดไฟฟ้า">เครื่องกำเนิดไฟฟ้า (15 ปี)</option>
-                  </optgroup>
-                  <optgroup label="ครุภัณฑ์ยานพาหนะ">
-                    <option value="ครุภัณฑ์ยานพาหนะและขนส่ง">ครุภัณฑ์ยานพาหนะและขนส่ง (6 ปี)</option>
-                  </optgroup>
-                  <optgroup label="ครุภัณฑ์การศึกษาและวิทยาศาสตร์">
-                    <option value="ครุภัณฑ์การศึกษา">ครุภัณฑ์การศึกษา (3 ปี)</option>
-                    <option value="ครุภัณฑ์วิทยาศาสตร์และการแพทย์">ครุภัณฑ์วิทยาศาสตร์และการแพทย์ (6 ปี)</option>
-                    <option value="ครุภัณฑ์การแพทย์">ครุภัณฑ์การแพทย์ (6 ปี)</option>
-                  </optgroup>
-                  <optgroup label="ครุภัณฑ์สื่อและกีฬา">
-                    <option value="ครุภัณฑ์โฆษณาและเผยแพร่">ครุภัณฑ์โฆษณาและเผยแพร่ (5 ปี)</option>
-                    <option value="ครุภัณฑ์กีฬาและนันทนาการ">ครุภัณฑ์กีฬาและนันทนาการ (3 ปี)</option>
-                    <option value="ครุภัณฑ์ดนตรีและนาฏศิลป์">ครุภัณฑ์ดนตรีและนาฏศิลป์ (3 ปี)</option>
-                  </optgroup>
-                  <optgroup label="ครุภัณฑ์อุตสาหกรรม">
-                    <option value="ครุภัณฑ์การเกษตร">ครุภัณฑ์การเกษตร เครื่องมือ (2 ปี)</option>
-                    <option value="ครุภัณฑ์การเกษตร เครื่องจักร">ครุภัณฑ์การเกษตร เครื่องจักรกล (5 ปี)</option>
-                    <option value="ครุภัณฑ์โรงงาน">ครุภัณฑ์โรงงาน เครื่องมือ (2 ปี)</option>
-                    <option value="ครุภัณฑ์โรงงาน เครื่องจักร">ครุภัณฑ์โรงงาน เครื่องจักรกล (5 ปี)</option>
-                    <option value="ครุภัณฑ์ก่อสร้าง">ครุภัณฑ์ก่อสร้าง เครื่องมือ (2 ปี)</option>
-                    <option value="ครุภัณฑ์ก่อสร้าง เครื่องจักร">ครุภัณฑ์ก่อสร้าง เครื่องจักรกล (5 ปี)</option>
-                    <option value="ครุภัณฑ์สำรวจ">ครุภัณฑ์สำรวจ (8 ปี)</option>
-                  </optgroup>
-                  <optgroup label="ครุภัณฑ์อื่น">
-                    <option value="ครุภัณฑ์งานบ้านงานครัว">ครุภัณฑ์งานบ้านงานครัว (2 ปี)</option>
-                    <option value="ครุภัณฑ์สนาม">ครุภัณฑ์สนาม (3 ปี)</option>
-                    <option value="ครุภัณฑ์อื่นๆ">ครุภัณฑ์อื่นๆ (8 ปี)</option>
-                  </optgroup>
-                </select>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;">ชื่อ/ยี่ห้อผู้ทำหรือผลิต&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
+                <input id="fBrand" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:2px 0;" placeholder="ยี่ห้อ">
               </td>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">สถานะ</td>
-              <td style="border:1px solid #000;padding:1px 4px;">
-                <select id="fStatus" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;">
-                  <option value="active">พบ / ปกติ</option>
-                  <option value="not_found">ไม่พบ</option>
-                  <option value="damaged_fixable">ชำรุด ซ่อมได้</option>
-                  <option value="damaged_unfixable">ชำรุด ซ่อมไม่ได้</option>
-                  <option value="disposal_pending">รออนุมัติจำหน่าย</option>
-                  <option value="disposed">จำหน่ายแล้ว</option>
-                </select>
-              </td>
-              <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๓</td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-            </tr>
-
-            <!-- ROW: ชื่อครุภัณฑ์ -->
-            <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">ข้อของที่ (ชื่อ) <span style="color:red;">*</span></td>
-              <td colspan="5" style="border:1px solid #000;padding:1px 5px;">
-                <input id="fName" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:13px;font-weight:600;padding:2px 0;" placeholder="ชื่อครุภัณฑ์">
-              </td>
-              <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๔</td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-            </tr>
-
-            <!-- ROW: ซื้อ/จ้างจาก + วันที่ได้มา -->
-            <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">ซื้อ/จ้าง/โดยมาจาก</td>
-              <td colspan="3" style="border:1px solid #000;padding:1px 5px;">
-                <input id="fVendor" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="ชื่อร้านหรือบริษัท">
-              </td>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">วันที่ได้มา</td>
-              <td style="border:1px solid #000;padding:1px 5px;">
-                <input id="fAcquiredDate" type="date" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;">
-              </td>
-              <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๕</td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-            </tr>
-
-            <!-- ROW: ใบเสร็จ + ราคา -->
-            <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">ใบส่งของ/ใบเสร็จ เลขที่</td>
-              <td colspan="3" style="border:1px solid #000;padding:1px 5px;">
-                <input id="fReceipt" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="เลขที่ใบเสร็จ">
-              </td>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">ราคา (บาท)</td>
-              <td style="border:1px solid #000;padding:1px 5px;">
-                <input id="fPrice" type="number" oninput="updateDepreciationTable()" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="0.00" step="0.01">
-              </td>
-              <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๖</td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-            </tr>
-
-            <!-- ROW: ยี่ห้อ + รุ่น + วิธีได้มา -->
-            <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">ยี่ห้อ/ผู้ผลิต</td>
-              <td style="border:1px solid #000;padding:1px 5px;">
-                <input id="fBrand" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="ยี่ห้อ">
-              </td>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">รุ่น/แบบ</td>
-              <td style="border:1px solid #000;padding:1px 5px;">
-                <input id="fModel" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="รุ่น">
-              </td>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">วิธีได้มา</td>
-              <td style="border:1px solid #000;padding:1px 4px;">
-                <select id="fMethod" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;">
-                  <option value="">-- เลือก --</option>
-                  <option>ซื้อ</option><option>จ้าง</option><option>บริจาค</option>
-                  <option>โอนย้าย</option><option>อื่นๆ</option>
-                </select>
-              </td>
-              <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๗</td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-            </tr>
-
-            <!-- ROW: S/N + งบประมาณ -->
-            <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">หมายเลขเครื่อง S/N</td>
-              <td colspan="3" style="border:1px solid #000;padding:1px 5px;">
-                <input id="fSerial" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="S/N หรือ Model No.">
-              </td>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">งบประมาณ</td>
-              <td style="border:1px solid #000;padding:1px 4px;">
-                <select id="fBudget" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;">
-                  <option value="">-- เลือก --</option>
-                  <option>งบแผ่นดิน</option><option>เงินรายได้</option>
-                  <option>เงินบริจาค</option><option>โอนมาจาก</option><option>อื่นๆ</option>
-                </select>
-              </td>
-              <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๘</td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-            </tr>
-
-            <!-- ROW: จำนวน/หน่วย + อายุ -->
-            <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">จำนวน / หน่วยนับ</td>
-              <td colspan="3" style="border:1px solid #000;padding:1px 5px;">
-                <span style="display:inline-flex;align-items:center;gap:6px;width:100%;">
-                  <input id="fQty" type="number" style="border:none;background:transparent;width:50px;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" value="1" min="1">
-                  <span style="font-size:11px;color:#777;">หน่วย:</span>
-                  <input id="fUnit" style="border:none;background:transparent;flex:1;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" value="เครื่อง">
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
+                <span style="display:inline-flex;align-items:center;gap:3px;width:100%;">
+                  <span style="font-size:11px;color:#555;white-space:nowrap;flex-shrink:0;">ราคา&nbsp;:</span>
+                  <input id="fPrice" type="number" oninput="updateDepreciationTable()" style="border:none;background:transparent;flex:1;min-width:0;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:2px 0;" placeholder="0.00" step="0.01">
                 </span>
               </td>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">อายุใช้งาน (ปี)</td>
-              <td style="border:1px solid #000;padding:1px 5px;">
-                <input id="fLifeYears" type="number" oninput="updateDepreciationTable()" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="ปี" title="อายุใช้งานขั้นต่ำ">
+              <td colspan="1" style="border:1px solid #000;padding:1px 3px;">
+                <span style="display:inline-flex;align-items:center;gap:2px;width:100%;">
+                  <span style="font-size:8.5px;color:#666;white-space:nowrap;flex-shrink:0;">งบ:</span>
+                  <select id="fBudget" style="border:none;background:transparent;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:0;flex:1;min-width:0;">
+                    <option value="">-- เลือก --</option>
+                    <option>งบแผ่นดิน</option>
+                    <option>เงินรายได้</option>
+                    <option>เงินบริจาค</option>
+                    <option>โอนมาจาก</option>
+                    <option>อื่นๆ</option>
+                  </select>
+                </span>
               </td>
-              <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๙</td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
             </tr>
 
-            <!-- ROW: ใช้ประจำที่ + ผู้รับผิดชอบ -->
+            <!-- ROW 8: ชื่อครุภัณฑ์ + (photo spanned) + repair 5 -->
+            
+            <!-- ROW 9: ซื้อ/จ้าง + วันที่ + (photo spanned) + repair 6 -->
+            
+            <!-- ROW 10: ใบเสร็จ + ราคา + (photo spanned) + repair 7 -->
+            
+            <!-- ROW 11-16: แบบ/ชนิด + ค่าเสื่อมราคา (c4-c6) + (photo spanned) + repair 8 -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">ใช้ประจำที่</td>
-              <td colspan="3" style="border:1px solid #000;padding:1px 5px;">
-                <input id="fLocation" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="ห้อง / อาคาร">
-              </td>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;">ผู้รับผิดชอบ/ผู้ดูแล</td>
-              <td style="border:1px solid #000;padding:1px 5px;">
-                <input id="fCustodian" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="ชื่อผู้รับผิดชอบ">
-              </td>
-              <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๑๐</td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">แบบ/ชนิด/ลักษณะ&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fModel" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="รุ่น/แบบ"></td>
+              <td colspan="3" style="border:1px solid #000;background:#f0f0f0;text-align:center;font-weight:bold;font-size:11px;padding:2px 4px;">ค่าเสื่อมราคา</td>
             </tr>
-
-            <!-- ROW: หมายเหตุ (2 rows tall) + repair 11-12 -->
+            <!-- ROW 12: หมายเลขลำดับ + ปีที่ ๑ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f8f8f8;white-space:nowrap;" rowspan="2">หมายเหตุ</td>
-              <td colspan="5" rowspan="2" style="border:1px solid #000;padding:2px 5px;vertical-align:top;">
-                <textarea id="fNotes" style="border:none;background:transparent;width:100%;height:52px;font-family:'Sarabun',Arial,sans-serif;font-size:12px;resize:none;padding:2px 0;" placeholder="หมายเหตุเพิ่มเติม"></textarea>
-              </td>
-              <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๑๑</td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-            </tr>
-            <tr>
-              <td style="border:1px solid #000;padding:1px 2px;text-align:center;font-size:11px;color:#888;">๑๒</td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-              <td style="border:1px solid #000;padding:1px;"></td>
-            </tr>
-
-            <!-- ค่าเสื่อมราคา HEADER -->
-            <tr>
-              <td colspan="4" style="border:1px solid #000;background:#e8f0fe;text-align:center;font-weight:bold;font-size:11px;padding:2px 4px;">
-                ค่าเสื่อมราคา (วิธีเส้นตรง) &nbsp;·&nbsp; อัตรา <span id="depRateDisplay">—</span>% ต่อปี &nbsp;·&nbsp; อายุ <span id="depLifeDisplay">—</span> ปี
-              </td>
-              <td colspan="2" style="border:1px solid #000;background:#e8f0fe;text-align:center;font-size:10px;padding:2px 4px;color:#555;">
-                ราคาต้นทุน: <span id="depPriceDisplay">—</span> บาท
-              </td>
-              <td colspan="5" style="border:1px solid #000;background:#e8f0fe;padding:2px 4px;font-size:10px;text-align:center;color:#666;">
-                ลายมือชื่อผู้ตรวจ / เจ้าหน้าที่พัสดุ
-              </td>
-            </tr>
-            <!-- ค่าเสื่อมราคา ปีที่ ๑ -->
-            <tr>
-              <td style="border:1px solid #000;text-align:center;font-size:11px;background:#f8f8f8;padding:2px 3px;white-space:nowrap;">ปีที่ ๑</td>
-              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;padding:2px 3px;"><span id="depPct_1">—</span></td>
-              <td style="border:1px solid #000;text-align:center;font-size:10px;color:#666;padding:1px 3px;">คงเหลือราคา</td>
-              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;font-weight:600;padding:2px 3px;"><span id="depBaht_1">—</span> บาท</td>
-              <td colspan="5" style="border:1px solid #000;padding:1px;"></td>
-            </tr>
-            <!-- ค่าเสื่อมราคา ปีที่ ๒ -->
-            <tr>
-              <td style="border:1px solid #000;text-align:center;font-size:11px;background:#f8f8f8;padding:2px 3px;white-space:nowrap;">ปีที่ ๒</td>
-              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;padding:2px 3px;"><span id="depPct_2">—</span></td>
-              <td style="border:1px solid #000;text-align:center;font-size:10px;color:#666;padding:1px 3px;">คงเหลือราคา</td>
-              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;font-weight:600;padding:2px 3px;"><span id="depBaht_2">—</span> บาท</td>
-              <td colspan="5" style="border:1px solid #000;padding:1px;"></td>
-            </tr>
-            <!-- ค่าเสื่อมราคา ปีที่ ๓ -->
-            <tr>
-              <td style="border:1px solid #000;text-align:center;font-size:11px;background:#f8f8f8;padding:2px 3px;white-space:nowrap;">ปีที่ ๓</td>
-              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;padding:2px 3px;"><span id="depPct_3">—</span></td>
-              <td style="border:1px solid #000;text-align:center;font-size:10px;color:#666;padding:1px 3px;">คงเหลือราคา</td>
-              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;font-weight:600;padding:2px 3px;"><span id="depBaht_3">—</span> บาท</td>
-              <td colspan="5" style="border:1px solid #000;padding:1px;"></td>
-            </tr>
-            <!-- ค่าเสื่อมราคา ปีที่ ๔ -->
-            <tr>
-              <td style="border:1px solid #000;text-align:center;font-size:11px;background:#f8f8f8;padding:2px 3px;white-space:nowrap;">ปีที่ ๔</td>
-              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;padding:2px 3px;"><span id="depPct_4">—</span></td>
-              <td style="border:1px solid #000;text-align:center;font-size:10px;color:#666;padding:1px 3px;">คงเหลือราคา</td>
-              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;font-weight:600;padding:2px 3px;"><span id="depBaht_4">—</span> บาท</td>
-              <td colspan="5" style="border:1px solid #000;padding:1px;"></td>
-            </tr>
-            <!-- ค่าเสื่อมราคา ปีที่ ๕ -->
-            <tr>
-              <td style="border:1px solid #000;text-align:center;font-size:11px;background:#f8f8f8;padding:2px 3px;white-space:nowrap;">ปีที่ ๕</td>
-              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;padding:2px 3px;"><span id="depPct_5">—</span></td>
-              <td style="border:1px solid #000;text-align:center;font-size:10px;color:#666;padding:1px 3px;">คงเหลือราคา</td>
-              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:11px;font-weight:600;padding:2px 3px;"><span id="depBaht_5">—</span> บาท</td>
-              <td colspan="5" style="border:1px solid #000;padding:1px;"></td>
-            </tr>
-
-            <!-- ROW: รูปภาพ -->
-            <tr>
-              <td colspan="6" style="border:1px solid #000;padding:6px 8px;">
-                <div class="no-print">
-                  <div style="font-weight:bold;font-size:11.5px;color:#1d4ed8;margin-bottom:8px;">
-                    <i class="bi bi-camera me-1"></i>รูปถ่ายพัสดุ (ถ้ามี) หรือตำหนิรูปพรรณสัตว์
-                    <span id="photoRequired" class="text-danger" style="font-size:11px;"> * ต้องแนบอย่างน้อย 2 รูป</span>
-                  </div>
-                  <!-- รูปที่มีอยู่แล้ว (แสดงเมื่อแก้ไข) -->
-                  <div id="existingPhotosArea" style="display:none;margin-bottom:10px;">
-                    <div style="font-size:11px;color:#64748b;margin-bottom:6px;">รูปภาพปัจจุบัน</div>
-                    <div id="existingPhotosList" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
-                  </div>
-                  <!-- อัปโหลดรูปใหม่ -->
-                  <div id="uploadNewPhotosArea">
-                    <div id="newPhotoLabel" style="font-size:11px;color:#64748b;margin-bottom:6px;">อัปโหลดรูปใหม่</div>
-                    <div style="display:flex;gap:16px;">
-                      <div style="flex:1;">
-                        <div style="font-size:11px;margin-bottom:3px;">รูปที่ 1 <span class="text-danger" id="photo1req">*</span></div>
-                        <input type="file" id="fPhoto1" class="form-control form-control-sm" accept="image/*">
-                        <div id="photo1Preview" class="mt-1"></div>
-                      </div>
-                      <div style="flex:1;">
-                        <div style="font-size:11px;margin-bottom:3px;">รูปที่ 2 <span class="text-danger" id="photo2req">*</span></div>
-                        <input type="file" id="fPhoto2" class="form-control form-control-sm" accept="image/*">
-                        <div id="photo2Preview" class="mt-1"></div>
-                      </div>
-                    </div>
-                  </div>
-                  <div style="font-size:10.5px;color:#94a3b8;margin-top:4px;">อัปโหลดรูปถ่ายขณะรับครุภัณฑ์ (jpg, png, webp)</div>
-                </div>
-                <div id="photoPrintArea" style="display:none;font-size:11px;">
-                  <b>รูปถ่ายพัสดุ</b><br>
-                  <div style="display:flex;gap:8px;margin-top:4px;">
-                    <img id="photo1Print" src="" style="max-width:220px;max-height:160px;border:1px solid #ccc;" onerror="this.style.display='none'">
-                    <img id="photo2Print" src="" style="max-width:220px;max-height:160px;border:1px solid #ccc;" onerror="this.style.display='none'">
-                  </div>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">หมายเลขลำดับ&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fOrderNum" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="ลำดับ"></td>
+              <td colspan="3" style="border:1px solid #000;padding:0;">
+                <div style="display:flex;align-items:stretch;">
+                  <div style="width:24%;border-right:1px solid #000;background:#f0f0f0;font-size:11px;padding:1px 3px;display:flex;align-items:center;justify-content:center;white-space:nowrap;">ปีที่ ๑&nbsp;:</div>
+                  <div style="width:19%;border-right:1px solid #000;font-size:11px;padding:1px 3px;display:flex;align-items:center;"><input id="depPct_1" onblur="_fmtDepPct(this)" oninput="_calcDepBahtFromPct(1)" style="border:none;background:transparent;width:100%;text-align:right;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:0;" placeholder=""><span style="font-size:10px;color:#555;white-space:nowrap;">%</span></div>
+                  <div style="flex:1;font-size:10px;padding:1px 4px;display:flex;align-items:center;gap:2px;overflow:hidden;"><span style="color:#666;white-space:nowrap;flex-shrink:0;">คงเหลือ</span><input id="depBaht_1" style="border:none;background:transparent;min-width:0;flex:1;text-align:right;font-family:'Sarabun',Arial,sans-serif;font-size:11px;font-weight:600;padding:0;" placeholder="—"><span style="font-size:10px;white-space:nowrap;flex-shrink:0;">บาท</span></div>
                 </div>
               </td>
-              <td colspan="5" style="border:1px solid #000;padding:4px 6px;font-size:10.5px;color:#aaa;text-align:center;vertical-align:top;">
-                (ช่องสำรอง)
+            </tr>
+            <!-- ROW 13: หมายเลขเครื่อง + ปีที่ ๒ -->
+            <tr>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">หมายเลขเครื่อง (ถ้ามี)&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fSerial" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="S/N"></td>
+              <td colspan="3" style="border:1px solid #000;padding:0;">
+                <div style="display:flex;align-items:stretch;">
+                  <div style="width:24%;border-right:1px solid #000;background:#f0f0f0;font-size:11px;padding:1px 3px;display:flex;align-items:center;justify-content:center;white-space:nowrap;">ปีที่ ๒&nbsp;:</div>
+                  <div style="width:19%;border-right:1px solid #000;font-size:11px;padding:1px 3px;display:flex;align-items:center;"><input id="depPct_2" onblur="_fmtDepPct(this)" oninput="_calcDepBahtFromPct(2)" style="border:none;background:transparent;width:100%;text-align:right;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:0;" placeholder=""><span style="font-size:10px;color:#555;white-space:nowrap;">%</span></div>
+                  <div style="flex:1;font-size:10px;padding:1px 4px;display:flex;align-items:center;gap:2px;overflow:hidden;"><span style="color:#666;white-space:nowrap;flex-shrink:0;">คงเหลือ</span><input id="depBaht_2" style="border:none;background:transparent;min-width:0;flex:1;text-align:right;font-family:'Sarabun',Arial,sans-serif;font-size:11px;font-weight:600;padding:0;" placeholder="—"><span style="font-size:10px;white-space:nowrap;flex-shrink:0;">บาท</span></div>
+                </div>
+              </td>
+            </tr>
+            <!-- ROW 14: หมายเลขกรอบ + ปีที่ ๓ -->
+            <tr>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">หมายเลขกรอบ (ถ้ามี)&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fRegNum" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="กรอบ"></td>
+              <td colspan="3" style="border:1px solid #000;padding:0;">
+                <div style="display:flex;align-items:stretch;">
+                  <div style="width:24%;border-right:1px solid #000;background:#f0f0f0;font-size:11px;padding:1px 3px;display:flex;align-items:center;justify-content:center;white-space:nowrap;">ปีที่ ๓&nbsp;:</div>
+                  <div style="width:19%;border-right:1px solid #000;font-size:11px;padding:1px 3px;display:flex;align-items:center;"><input id="depPct_3" onblur="_fmtDepPct(this)" oninput="_calcDepBahtFromPct(3)" style="border:none;background:transparent;width:100%;text-align:right;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:0;" placeholder=""><span style="font-size:10px;color:#555;white-space:nowrap;">%</span></div>
+                  <div style="flex:1;font-size:10px;padding:1px 4px;display:flex;align-items:center;gap:2px;overflow:hidden;"><span style="color:#666;white-space:nowrap;flex-shrink:0;">คงเหลือ</span><input id="depBaht_3" style="border:none;background:transparent;min-width:0;flex:1;text-align:right;font-family:'Sarabun',Arial,sans-serif;font-size:11px;font-weight:600;padding:0;" placeholder="—"><span style="font-size:10px;white-space:nowrap;flex-shrink:0;">บาท</span></div>
+                </div>
+              </td>
+            </tr>
+            <!-- ROW 15: หมายเลขจดทะเบียน + ปีที่ ๔ -->
+            <tr>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">หมายเลขจดทะเบียน (ถ้ามี)&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fRegNum2" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="ทะเบียน"></td>
+              <td colspan="3" style="border:1px solid #000;padding:0;">
+                <div style="display:flex;align-items:stretch;">
+                  <div style="width:24%;border-right:1px solid #000;background:#f0f0f0;font-size:11px;padding:1px 3px;display:flex;align-items:center;justify-content:center;white-space:nowrap;">ปีที่ ๔&nbsp;:</div>
+                  <div style="width:19%;border-right:1px solid #000;font-size:11px;padding:1px 3px;display:flex;align-items:center;"><input id="depPct_4" onblur="_fmtDepPct(this)" oninput="_calcDepBahtFromPct(4)" style="border:none;background:transparent;width:100%;text-align:right;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:0;" placeholder=""><span style="font-size:10px;color:#555;white-space:nowrap;">%</span></div>
+                  <div style="flex:1;font-size:10px;padding:1px 4px;display:flex;align-items:center;gap:2px;overflow:hidden;"><span style="color:#666;white-space:nowrap;flex-shrink:0;">คงเหลือ</span><input id="depBaht_4" style="border:none;background:transparent;min-width:0;flex:1;text-align:right;font-family:'Sarabun',Arial,sans-serif;font-size:11px;font-weight:600;padding:0;" placeholder="—"><span style="font-size:10px;white-space:nowrap;flex-shrink:0;">บาท</span></div>
+                </div>
+              </td>
+            </tr>
+            <!-- ROW 16: สีของพัสดุ + ปีที่ ๕ -->
+            <tr>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">สีของพัสดุ&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fColor" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="สี"></td>
+              <td colspan="3" style="border:1px solid #000;padding:0;">
+                <div style="display:flex;align-items:stretch;">
+                  <div style="width:24%;border-right:1px solid #000;background:#f0f0f0;font-size:11px;padding:1px 3px;display:flex;align-items:center;justify-content:center;white-space:nowrap;">ปีที่ ๕&nbsp;:</div>
+                  <div style="width:19%;border-right:1px solid #000;font-size:11px;padding:1px 3px;display:flex;align-items:center;"><input id="depPct_5" onblur="_fmtDepPct(this)" oninput="_calcDepBahtFromPct(5)" style="border:none;background:transparent;width:100%;text-align:right;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:0;" placeholder=""><span style="font-size:10px;color:#555;white-space:nowrap;">%</span></div>
+                  <div style="flex:1;font-size:10px;padding:1px 4px;display:flex;align-items:center;gap:2px;overflow:hidden;"><span style="color:#666;white-space:nowrap;flex-shrink:0;">คงเหลือ</span><input id="depBaht_5" style="border:none;background:transparent;min-width:0;flex:1;text-align:right;font-family:'Sarabun',Arial,sans-serif;font-size:11px;font-weight:600;padding:0;" placeholder="—"><span style="font-size:10px;white-space:nowrap;flex-shrink:0;">บาท</span></div>
+                </div>
               </td>
             </tr>
 
-            <!-- การหาผลประโยชน์ในพัสดุ -->
+
+            <!-- ROW 20: ผู้รับผิดชอบ/ผู้ดูแล ถูกตัดออก — fCustodian อยู่เป็น hidden input ด้านบน -->
+
+                        
+            
+            <!-- ROW 19: อื่นๆ + การจำหน่าย HEADER -->
             <tr>
-              <td colspan="11" style="border:1.5px solid #000;background:#f0f4f8;text-align:center;font-weight:bold;font-size:11.5px;padding:3px 6px;">
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;">อื่นๆ (ถ้ามีระบุ)&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
+                <input id="fOther" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="ระบุ (ถ้ามี)">
+                <input type="hidden" id="fQty" value="1">
+                <input type="hidden" id="fUnit" value="เครื่อง">
+                <input type="hidden" id="fLifeYears">
+                <input type="hidden" id="fLocation">
+              </td>
+              <td colspan="3" style="border:1px solid #000;background:#f0f0f0;text-align:center;font-weight:bold;font-size:11px;padding:2px 4px;">
+                การจำหน่าย
+              </td>
+            </tr>
+
+            <!-- ROW 25: เงื่อนไขประกัน + วันที่จำหน่าย + repair ๒๒ -->
+            <tr>
+              <td colspan="3" style="border:1px solid #000;padding:3px 5px;font-size:11px;background:#f0f0f0;font-weight:bold;text-align:center;">เงื่อนไขการประกัน<input type="hidden" id="fWarrantyTerms"><input type="hidden" id="fNotes"></td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">วันที่จำหน่าย&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
+                <input id="fDisposalDate" type="date" class="pd2-date" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;">
+              </td>
+
+            </tr>
+
+            <!-- ROW 26: รับประกันถึง + วิธีจำหน่าย + repair ๒๓ -->
+            <tr>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;">พัสดุรับประกันถึงวันที่&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
+                <input id="fWarrantyExpiry" type="date" class="pd2-date" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;">
+              </td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;">วิธีจำหน่าย&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
+                <input id="fDisposalMethod" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="วิธีจำหน่าย">
+              </td>
+
+            </tr>
+
+            <!-- ROW 27: บริษัทประกัน + เลขหนังสืออนุมัติ + repair ๒๔ -->
+            <tr>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;">พัสดุประกันไว้ที่บริษัท&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
+                <input id="fWarrantyCompany" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="บริษัทประกัน">
+              </td>
+              <td colspan="2" style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">เลขที่หนังสืออนุมัติ&nbsp;:</td>
+              <td colspan="1" style="border:1px solid #000;padding:1px 5px;">
+                <input id="fDisposalRef" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:2px 0;" placeholder="เลขหนังสือ">
+              </td>
+
+            </tr>
+
+            <!-- ROW 28: ราคาจำหน่าย + กำไร/ขาดทุน + repair ๒๕ -->
+            <tr>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;">วันที่ประกันพัสดุ&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
+                <input id="fWarrantyDate" type="date" class="pd2-date" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;">
+              </td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;">ราคาจำหน่าย&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
+                <span style="display:inline-flex;align-items:center;gap:4px;width:100%;">
+                  <input id="fDisposalPrice" type="number" style="border:none;background:transparent;flex:1;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="0.00">
+                  <span style="font-size:11px;color:#555;">บาท</span>
+                </span>
+              </td>
+
+            </tr>
+
+            <!-- ROW 28b: กำไร/ขาดทุน -->
+            <tr>
+              <td colspan="3" style="border:1px solid #000;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">กำไร/ขาดทุน&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
+                <span style="display:inline-flex;align-items:center;gap:4px;width:100%;">
+                  <input id="fGainLoss" type="number" style="border:none;background:transparent;flex:1;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="0.00">
+                  <span style="font-size:11px;color:#555;">บาท</span>
+                </span>
+              </td>
+            </tr>
+
+            <!-- ROW 29: การหาผลประโยชน์ HEADER (c1-c6 only, c7-c16 covered by rowspan) -->
+            <tr>
+              <td colspan="6" style="border:1.5px solid #000;background:#f0f4f8;text-align:center;font-weight:bold;font-size:11.5px;padding:3px 6px;">
                 การหาผลประโยชน์ในพัสดุ
               </td>
             </tr>
+
+            <!-- ROW 30: การหาผลประโยชน์ COLUMN HEADERS (c1-c6 only, 6 sub-cols) -->
             <tr>
-              <td style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;">พ.ศ.</td>
-              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;">รายการ</td>
-              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;line-height:1.3;">ผลประโยชน์ (บาท) ที่ได้รับ<br>เป็นรายเดือนหรือรายปี</td>
-              <td style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;">พ.ศ.</td>
-              <td colspan="2" style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;">รายการ</td>
-              <td colspan="3" style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;line-height:1.3;">ผลประโยชน์ (บาท) ที่ได้รับ<br>เป็นรายเดือนหรือรายปี</td>
+              <td style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;line-height:1.3;">พ.ศ.</td>
+              <td style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;line-height:1.3;">รายการ</td>
+              <td style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;line-height:1.3;">ผลประโยชน์ (บาท)<br>รายเดือน/รายปี</td>
+              <td style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;line-height:1.3;">พ.ศ.</td>
+              <td style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;">รายการ</td>
+              <td style="border:1px solid #000;text-align:center;font-size:10px;background:#f5f5f5;padding:2px 3px;line-height:1.3;">ผลประโยชน์ (บาท)<br>รายเดือน/รายปี</td>
             </tr>
-            <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="3" style="border:1px solid #000;padding:1px;"></td></tr>
-            <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="3" style="border:1px solid #000;padding:1px;"></td></tr>
-            <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="3" style="border:1px solid #000;padding:1px;"></td></tr>
-            <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td colspan="2" style="border:1px solid #000;padding:1px;"></td><td colspan="3" style="border:1px solid #000;padding:1px;"></td></tr>
+
+            <!-- ROWS 31-34: การหาผลประโยชน์ data rows (c1-c6 only) -->
+            <tr style="height:22px;">
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr_1" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem_1" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt_1" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr2_1" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem2_1" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt2_1" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+            </tr>
+            <tr style="height:22px;">
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr_2" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem_2" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt_2" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr2_2" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem2_2" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt2_2" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+            </tr>
+            <tr style="height:22px;">
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr_3" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem_3" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt_3" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr2_3" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem2_3" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt2_3" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+            </tr>
+            <tr style="height:22px;">
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr_4" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem_4" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt_4" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr2_4" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem2_4" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt2_4" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+            </tr>
+            <tr style="height:22px;">
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr_5" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem_5" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt_5" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr2_5" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem2_5" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt2_5" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+            </tr>
+            <tr style="height:22px;">
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr_6" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem_6" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt_6" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr2_6" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem2_6" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt2_6" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+            </tr>
+            <tr style="height:22px;">
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr_7" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem_7" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt_7" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr2_7" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem2_7" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt2_7" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+            </tr>
+            <tr style="height:22px;">
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr_8" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem_8" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt_8" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr2_8" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem2_8" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt2_8" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+            </tr>
+            <tr style="height:22px;">
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr_9" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem_9" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt_9" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bYr2_9" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bItem2_9" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;"></td>
+              <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt2_9" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
+            </tr>
 
           </table>
           </div>
@@ -2921,6 +3224,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
 // ============================================================
 // CONFIG & SUPABASE
@@ -3069,6 +3373,14 @@ function fmtDate(s) {
   var yr = dt.getFullYear();
   if (yr > 2500) dt.setFullYear(yr - 543);
   return dt.toLocaleDateString('th-TH', {year:'numeric',month:'long',day:'numeric'});
+}
+
+function fmtDateShort(s) {
+  if (!s) return '';
+  var dt = new Date(s + 'T00:00:00');
+  if (isNaN(dt)) return String(s);
+  var d = dt.getDate(), m = dt.getMonth() + 1, y = dt.getFullYear() + 543;
+  return (d < 10 ? '0' + d : d) + '/' + (m < 10 ? '0' + m : m) + '/' + y;
 }
 
 function fmtNum(n) {
@@ -3675,33 +3987,99 @@ const Pager = {
 // ============================================================
 // TRANSACTION LOG + FEATURE DETECTION (ต้องรัน fix_database.sql)
 // ============================================================
-App.feat = { txLog: true, rpcReceive: true };
+App.feat = { txLog: true, rpcReceive: true, assetExtended: false };
 
-// probe ว่า DB มี transaction_logs + RPC receive_transfer หรือยัง
+// probe ว่า DB มี transaction_logs + RPC receive_transfer + asset extended cols หรือยัง
 async function detectFeatures() {
   try {
     var r1 = await sb.from('transaction_logs').select('id').limit(1);
     App.feat.txLog = !r1.error;
-    // เรียกด้วย id ที่ไม่มีจริง — function มีอยู่จะได้ exception ธรรมดา / ไม่มีจะได้ PGRST202
     var r2 = await sb.rpc('receive_transfer', { p_transfer_id: '00000000-0000-0000-0000-000000000000' });
     App.feat.rpcReceive = !(r2.error && (r2.error.code === 'PGRST202' || /could not find/i.test(r2.error.message || '')));
-  } catch(_) { App.feat.txLog = false; App.feat.rpcReceive = false; }
+    var r3 = await sb.from('assets').select('color').limit(1);
+    App.feat.assetExtended = !r3.error;
+  } catch(_) { App.feat.txLog = false; App.feat.rpcReceive = false; App.feat.assetExtended = false; }
   _showSqlNotice();
+}
+
+// sync custodian display cells in พ.ด. 2 header
+function _syncCustYear(dateVal) {
+  var el = document.getElementById('pd2CustYear');
+  if (!el) return;
+  if (!dateVal) { el.textContent = ''; return; }
+  var y = parseInt((dateVal + '').split('-')[0], 10);
+  el.textContent = isNaN(y) ? '' : (y + 543).toString();
+}
+function _syncCustName(val) {
+  var el = document.getElementById('pd2CustName');
+  if (!el) return;
+  if (el.tagName === 'INPUT') el.value = val || '';
+  else el.textContent = val || '';
+}
+function _onFBranchChange() {
+  var sel = document.getElementById('fBranch');
+  var deptEl = document.getElementById('pd2CustDept');
+  if (!sel || !deptEl) return;
+  var bid = sel.value;
+  deptEl.textContent = (App.branchMap && bid && App.branchMap[bid]) ? App.branchMap[bid].name : '';
+}
+
+// โหลดประวัติซ่อม + โอนย้ายลงช่องซ่อมบำรุงในตาราง พ.ด. 2
+async function _loadPD2History(assetId) {
+  // slot IDs จริงที่มีใน HTML (ลำดับ top→bottom)
+  var _PD2_SLOTS = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25];
+  // เคลียร์ทุกช่องก่อน + คืน readonly
+  _PD2_SLOTS.forEach(function(_ci) {
+    ['pd2rRef_','pd2rDate_','pd2rDetail_','pd2rVendor_','pd2rAmt_','pd2rNote_'].forEach(function(pfx) {
+      var el = document.getElementById(pfx + _ci);
+      if (!el) return;
+      if (el.tagName === 'SPAN') el.textContent = '';
+      else { el.value = ''; el.removeAttribute('readonly'); }
+    });
+  });
+  if (!assetId) return;
+  try {
+    // โหลด asset_repairs เท่านั้น — transfers แสดงในส่วนผู้ใช้ฯ (c7-c10) ไม่ใส่ที่นี่
+    var rr = await sb.from('asset_repairs')
+      .select('repair_date,description,cost,vendor')
+      .eq('asset_id', assetId)
+      .order('repair_date', { ascending: true });
+    var repairs = (rr.data || []).map(function(r) {
+      return {
+        date: r.repair_date || '',
+        detail: r.description || '',
+        vendor: r.vendor || '',
+        cost: r.cost || ''
+      };
+    });
+    // เติมตามลำดับ slot จริง (ไม่ข้ามช่อง)
+    repairs.slice(0, _PD2_SLOTS.length).forEach(function(item, idx) {
+      var n = _PD2_SLOTS[idx];
+      var d = document.getElementById('pd2rDate_' + n); if (d) { if (d.tagName === 'SPAN') d.textContent = fmtDateShort(item.date); else d.value = item.date || ''; }
+      var t = document.getElementById('pd2rDetail_' + n); if (t) { t.value = item.detail || ''; t.setAttribute('readonly', ''); }
+      var v = document.getElementById('pd2rVendor_' + n); if (v) { v.value = item.vendor || ''; v.setAttribute('readonly', ''); }
+      var a = document.getElementById('pd2rAmt_'    + n); if (a) { a.value = item.cost || ''; a.setAttribute('readonly', ''); }
+    });
+  } catch(_) { /* fail gracefully */ }
 }
 
 // banner เตือน admin ถ้ายังไม่ได้รัน fix_database.sql
 function _showSqlNotice() {
   var old = document.getElementById('sqlNotice');
-  var need = App.profile && App.profile.role === 'admin' && !(App.feat.txLog && App.feat.rpcReceive);
+  var allOk = App.feat.txLog && App.feat.rpcReceive && App.feat.assetExtended;
+  var need = App.profile && App.profile.role === 'admin' && !allOk;
   if (!need) { if (old) old.remove(); return; }
   if (old) return;
   var main = document.getElementById('main');
   if (!main) return;
+  var _missing = [];
+  if (!App.feat.txLog || !App.feat.rpcReceive) _missing.push('transaction log / RPC รับโอน');
+  if (!App.feat.assetExtended) _missing.push('คอลัมน์ขยาย พ.ด.2 (color, warranty, disposal…)');
   var div = document.createElement('div');
   div.id = 'sqlNotice';
   div.style.cssText = 'margin:12px 16px 0;padding:10px 16px;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;font-family:Kanit;font-size:13px;color:#92400e;display:flex;align-items:center;gap:10px;';
   div.innerHTML = '<i class="bi bi-exclamation-triangle-fill" style="color:#f59e0b;font-size:16px;flex-shrink:0;"></i>'
-    + '<div>ยังไม่ได้รันไฟล์ <strong>fix_database.sql</strong> ใน Supabase SQL Editor — transaction log และการรับโอนแบบปลอดภัย (RPC) จะยังไม่ทำงาน</div>';
+    + '<div>ยังไม่ได้รันไฟล์ <strong>fix_database.sql</strong> ใน Supabase SQL Editor — ขาด: ' + _missing.join(', ') + '</div>';
   main.insertBefore(div, main.firstChild);
 }
 
@@ -4400,6 +4778,73 @@ const QRScanner = {
 };
 
 // ============================================================
+// ── ลบครุภัณฑ์ออกจากระบบ (admin only) ──────────────────────
+async function deleteAsset(id) {
+  if (!App.profile || App.profile.role !== 'admin') {
+    showToast('เฉพาะผู้ดูแลระบบเท่านั้น', 'error'); return;
+  }
+  var res = await sb.from('assets').select('asset_code,name').eq('id', id).single();
+  if (res.error || !res.data) { showToast('ไม่พบข้อมูลครุภัณฑ์', 'error'); return; }
+  var a = res.data;
+  var ok = await showDangerConfirm({
+    title: 'ลบครุภัณฑ์ออกจากระบบ',
+    msg: '<strong>' + (a.name || '(ไม่มีชื่อ)') + '</strong><br>รหัส: ' + (a.asset_code || '—') + '<br><span style="color:#dc2626;">การลบจะไม่สามารถกู้คืนได้</span>',
+    keyword: 'ลบ',
+    confirmLabel: 'ลบถาวร'
+  });
+  if (!ok) return;
+  var delRes = await sb.from('assets').delete().eq('id', id);
+  if (delRes.error) { showToast('เกิดข้อผิดพลาด: ' + delRes.error.message, 'error'); return; }
+  logTx('asset_delete', { asset_code: a.asset_code, name: a.name });
+  showToast('ลบ "' + (a.name || a.asset_code) + '" เรียบร้อยแล้ว', 'success');
+  loadAssetsPage();
+}
+
+// ── ย้ายสาขาอัตโนมัติจากรหัสนำหน้าใน "ใช้ประจำที่" ──────────
+async function autoMoveBranchByLocation() {
+  if (!App.profile || App.profile.role !== 'admin') return;
+  var assets = App.filteredAssets || [];
+  // สร้าง map: code(int) → branch
+  var branchByCode = {};
+  (App.branches || []).forEach(function(b) {
+    var c = parseInt(b.code, 10);
+    if (!isNaN(c)) branchByCode[c] = b;
+  });
+  // หาของที่ต้องย้าย
+  var moves = [];
+  assets.forEach(function(a) {
+    if (!a.location) return;
+    var m = a.location.match(/^(\d+)/);
+    if (!m) return;
+    var targetBranch = branchByCode[parseInt(m[1], 10)];
+    if (!targetBranch) return;
+    if (a.branch_id === targetBranch.id) return;
+    moves.push({ asset: a, targetBranch: targetBranch });
+  });
+  if (!moves.length) { showToast('ทุกรายการอยู่สาขาถูกต้องแล้ว หรือไม่พบรหัสสาขาในช่องใช้ประจำที่', 'info'); return; }
+  // สรุปว่าจะย้ายไปสาขาไหนกี่รายการ
+  var summary = {};
+  moves.forEach(function(m) {
+    var k = (m.targetBranch.code ? m.targetBranch.code + ' – ' : '') + m.targetBranch.name;
+    summary[k] = (summary[k] || 0) + 1;
+  });
+  var sumHtml = Object.keys(summary).sort().map(function(k) { return '• ' + k + ': <b>' + summary[k] + '</b> รายการ'; }).join('<br>');
+  var ok = await showConfirm('ย้ายสาขาอัตโนมัติ',
+    'จะย้าย <b>' + moves.length + ' รายการ</b> จากรายการที่กรองอยู่ ตามรหัสนำหน้าในช่อง "ใช้ประจำที่":<br><br>' + sumHtml,
+    { okLabel: 'ย้ายเลย', okColor: '#d97706', icon: 'bi-arrow-left-right', iconColor: '#d97706', iconBg: '#fffbeb' }
+  );
+  if (!ok) return;
+  var errors = 0;
+  for (var i = 0; i < moves.length; i++) {
+    var mv = moves[i];
+    var r = await sb.from('assets').update({ branch_id: mv.targetBranch.id }).eq('id', mv.asset.id);
+    if (r.error) { errors++; }
+    else { logTx('auto_move_branch', { to_branch: mv.targetBranch.name, location: mv.asset.location }, mv.asset.id); }
+  }
+  showToast('ย้ายสำเร็จ ' + (moves.length - errors) + ' รายการ' + (errors ? ' | ผิดพลาด ' + errors : ''), errors ? 'error' : 'success');
+  loadAssetsPage();
+}
+
 // ASSETS PAGE
 // ============================================================
 async function loadAssetsPage() {
@@ -4421,6 +4866,8 @@ async function loadAssetsPage() {
   // ซ่อนตัวกรองสาขาสำหรับ branch user (เห็นแค่สาขาตัวเองอยู่แล้ว)
   var fbWrap = document.getElementById('filterBranch');
   if (fbWrap) fbWrap.style.display = (App.profile && App.profile.role === 'branch') ? 'none' : '';
+  var _amBtn = document.getElementById('btnAutoMove');
+  if (_amBtn) _amBtn.style.display = (App.profile && App.profile.role === 'admin') ? '' : 'none';
 
   // Populate branch filter
   _populateBranchSelects();
@@ -4528,7 +4975,8 @@ function renderAssetTable() {
   if (chkAll) chkAll.checked = false;
 
   // ซ่อน/แสดง คอลัมน์สาขาตาม role
-  var _isBr = App.profile && App.profile.role === 'branch';
+  var _isBr    = App.profile && App.profile.role === 'branch';
+  var _isAdmin = App.profile && App.profile.role === 'admin';
   var colB = document.getElementById('colBranch');
   var thB  = document.getElementById('thBranch');
   if (colB) colB.style.display = _isBr ? 'none' : '';
@@ -4612,10 +5060,11 @@ function renderAssetTable() {
         + '<td style="padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;overflow:hidden;max-width:0;">' + ageHtml(a.acquired_date, a.name) + '</td>'
         + '<td style="padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;overflow:hidden;max-width:0;">' + badgeHtml(a.status, true) + '</td>'
         + '<td id="insp_' + a.id + '" style="padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle;overflow:hidden;max-width:0;"><span style="font-family:Kanit;font-size:11px;color:#cbd5e1;">...</span></td>'
-        + '<td class="no-print" style="padding:5px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle;text-align:center;white-space:nowrap;" onclick="event.stopPropagation();">'
+        + '<td class="no-print" style="padding:5px 6px;border-bottom:1px solid #f1f5f9;vertical-align:middle;text-align:center;white-space:nowrap;position:sticky;right:0;z-index:1;background:' + rowBg + ';box-shadow:-3px 0 6px rgba(0,0,0,.06);" onclick="event.stopPropagation();">'
           + '<button style="background:none;border:1px solid #93c5fd;border-radius:6px;padding:4px 7px;cursor:pointer;color:#2563eb;font-size:12px;" onclick="showAssetForm(\'' + a.id + '\')" title="แก้ไข"><i class="bi bi-pencil"></i></button>'
           + '<button style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:4px 7px;cursor:pointer;color:#64748b;font-size:12px;margin-left:3px;" onclick="printAssetCard(\'' + a.id + '\')" title="พิมพ์ พ.ด.2"><i class="bi bi-printer"></i></button>'
           + '<button style="background:none;border:1px solid #a7f3d0;border-radius:6px;padding:4px 7px;cursor:pointer;color:#059669;font-size:12px;margin-left:3px;" onclick="showQRModal(\'' + a.id + '\')" title="QR Code"><i class="bi bi-qr-code"></i></button>'
+          + (_isAdmin ? '<button style="background:none;border:1px solid #fca5a5;border-radius:6px;padding:4px 7px;cursor:pointer;color:#dc2626;font-size:12px;margin-left:3px;" onclick="deleteAsset(\'' + a.id + '\')" title="ลบออกจากระบบ"><i class="bi bi-trash3"></i></button>' : '')
         + '</td>'
         + '</tr>';
     }).join('');
@@ -4786,6 +5235,8 @@ async function showAssetForm(id) {
     if (lbl) lbl.textContent = 'แก้ไข: ' + (a.name || id);
     document.getElementById('fAssetCode').value = a.asset_code || '';
     document.getElementById('fOldCode').value = a.old_code || '';
+    var _ch = document.getElementById('pd2CodeHeader'); if (_ch) _ch.textContent = a.asset_code ? 'มรภ.ศก. ' + a.asset_code : '—';
+    var _oh = document.getElementById('pd2OldCodeHeader'); if (_oh) _oh.textContent = a.old_code || '—';
     document.getElementById('fBranch').value = a.branch_id || '';
     document.getElementById('fName').value = a.name || '';
     document.getElementById('fCategory').value = a.category || '';
@@ -4797,6 +5248,10 @@ async function showAssetForm(id) {
     document.getElementById('fPrice').value = a.price || '';
     document.getElementById('fBudget').value = a.budget_type || '';
     document.getElementById('fLifeYears').value = a.life_years || '';
+    if (!a.life_years && a.category && typeof _LIFESPAN_TABLE !== 'undefined') {
+      var _autoLife = _LIFESPAN_TABLE[a.category];
+      if (_autoLife) document.getElementById('fLifeYears').value = _autoLife;
+    }
     document.getElementById('fAcquiredDate').value = a.acquired_date || '';
     document.getElementById('fMethod').value = a.acquisition_method || '';
     document.getElementById('fVendor').value = a.vendor || '';
@@ -4835,6 +5290,33 @@ async function showAssetForm(id) {
       if (hcat) hcat.textContent = (a.category || '').replace(/\s*\(\d+.*\)$/, '').trim();
     })();
     updateDepreciationTable();
+    // extended fields (ถ้า DB มีคอลัมน์แล้ว)
+    var _fe = function(fid, val) { var el = document.getElementById(fid); if (el) el.value = val || ''; };
+    _fe('fColor',           a.color);
+    _fe('fOrderNum',        a.order_num);
+    _fe('fRegNum',          a.reg_number);
+    _fe('fRegNum2',         a.reg_number2);
+    _fe('fBossName',        a.boss_name);
+    _fe('fWarrantyTerms',   a.warranty_terms);
+    _fe('fWarrantyDate',    a.warranty_date);
+    _fe('fWarrantyExpiry',  a.warranty_expiry);
+    _fe('fWarrantyCompany', a.warranty_company);
+    _fe('fDisposalDate',    a.disposal_date);
+    _fe('fDisposalMethod',  a.disposal_method);
+    _fe('fDisposalRef',     a.disposal_ref);
+    _fe('fDisposalPrice',   a.disposal_price);
+    _fe('fGainLoss',        a.gain_loss);
+    _fe('fOther',           a.other_notes);
+    // show/hide branch row for admin
+    var _fbRow = document.getElementById('fBranchRow');
+    if (_fbRow) _fbRow.style.display = (App.profile && App.profile.role === 'admin') ? '' : 'none';
+    // custodian display cells
+    _syncCustYear(a.acquired_date);
+    _syncCustName(a.custodian);
+    var _deptEl = document.getElementById('pd2CustDept');
+    if (_deptEl) _deptEl.textContent = (App.branchMap && a.branch_id && App.branchMap[a.branch_id]) ? App.branchMap[a.branch_id].name : '';
+    // load repair/transfer history into พ.ด.2 table
+    _loadPD2History(a.id);
     var nlbl = document.getElementById('newPhotoLabel');
     if (nlbl) nlbl.textContent = 'เพิ่มรูปใหม่ (ไม่บังคับ)';
     var _tpt = document.getElementById('topPageTitle');
@@ -4851,6 +5333,8 @@ async function showAssetForm(id) {
     document.getElementById('assetId').value = '';
     document.getElementById('fAssetCode').value = '';
     document.getElementById('fOldCode').value = '';
+    var _ch2 = document.getElementById('pd2CodeHeader'); if (_ch2) _ch2.textContent = '—';
+    var _oh2 = document.getElementById('pd2OldCodeHeader'); if (_oh2) _oh2.textContent = '—';
     document.getElementById('fName').value = '';
     document.getElementById('fCategory').value = '';
     document.getElementById('fBrand').value = '';
@@ -4893,12 +5377,90 @@ async function showAssetForm(id) {
     var _hcat = document.getElementById('headerCategory');
     if (_hcat) _hcat.textContent = '';
     updateDepreciationTable();
+    // clear extended fields
+    ['fColor','fOrderNum','fRegNum','fBossName','fWarrantyTerms','fWarrantyExpiry','fWarrantyCompany','fDisposalDate','fDisposalMethod','fDisposalRef','fDisposalPrice','fGainLoss','fOther'].forEach(function(fid) {
+      var el = document.getElementById(fid); if (el) el.value = '';
+    });
+    // clear custodian display cells
+    _syncCustYear('');
+    _syncCustName('');
+    var _deptEl2 = document.getElementById('pd2CustDept');
+    if (_deptEl2) _deptEl2.textContent = '';
+    // clear repair rows (slot IDs จริงในตาราง)
+    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25].forEach(function(_ri) {
+      ['pd2rRef_','pd2rDate_','pd2rDetail_','pd2rVendor_','pd2rAmt_','pd2rNote_'].forEach(function(pfx) {
+        var el = document.getElementById(pfx + _ri); if (el) { if (el.tagName === 'SPAN') el.textContent = ''; else el.value = ''; }
+      });
+    });
   }
   showPage('asset-form');
 }
 
 // photo preview
+function _initDatePickers() {
+  if (typeof flatpickr === 'undefined') return;
+  var origDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  function _bindFp(el, opts) {
+    var fp = flatpickr(el, Object.assign({ dateFormat: 'Y-m-d', altInput: true, altFormat: 'd/m/Y', disableMobile: true }, opts));
+    var _busy = false;
+    Object.defineProperty(el, 'value', {
+      get: function() { return origDesc.get.call(this); },
+      set: function(v) {
+        origDesc.set.call(this, v);
+        if (_busy) return;
+        _busy = true;
+        try { fp.setDate(v || null, false); } finally { _busy = false; }
+      },
+      configurable: true
+    });
+  }
+  _bindFp(document.getElementById('fAcquiredDate'), { onChange: function(sel, str) { _syncCustYear(str || ''); } });
+  ['fDisposalDate','fWarrantyExpiry','fWarrantyDate','inspStart','inspEnd','repDate'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) _bindFp(el, {});
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+  _initDatePickers();
+  // inject editable inputs into custodian table empty rows (rows 2-10)
+  (function() {
+    var _custEl = document.getElementById('pd2CustYear');
+    if (!_custEl) return;
+    var _ct = _custEl.closest('table');
+    if (!_ct) return;
+    var _css = "border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:0;";
+    var _ctrs = _ct.querySelectorAll('tr');
+    var _ri = 0;
+    for (var _ci = 3; _ci < _ctrs.length; _ci++) {
+      var _ctds = _ctrs[_ci].querySelectorAll('td');
+      if (_ctds.length !== 4) break;
+      _ri++;
+      [['pd2CustYear_', 0], ['pd2CustDept_', 1], ['pd2CustName_', 2], ['pd2BossName_', 3]].forEach(function(p) {
+        var _td = _ctds[p[1]];
+        if (!_td.querySelector('input')) {
+          var _inp = document.createElement('input');
+          _inp.id = p[0] + _ri;
+          _inp.style.cssText = _css;
+          _td.style.padding = '0';
+          _td.appendChild(_inp);
+        }
+      });
+    }
+  })();
+  // inject pd2rNote inputs into หมายเหตุ column (7th col ของ repair inner table)
+  for (var _rn = 1; _rn <= 25; _rn++) {
+    var _rv = document.getElementById('pd2rVendor_' + _rn);
+    if (_rv) {
+      var _rntd = _rv.closest('td').nextElementSibling;
+      if (_rntd && !_rntd.querySelector('input')) {
+        var _rni = document.createElement('input');
+        _rni.id = 'pd2rNote_' + _rn;
+        _rni.style.cssText = "border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9.5px;padding:1px;";
+        _rntd.appendChild(_rni);
+      }
+    }
+  }
   ['fPhoto1','fPhoto2'].forEach(function(id, idx) {
     var el = document.getElementById(id);
     var previewId = 'photo' + (idx+1) + 'Preview';
@@ -4963,6 +5525,28 @@ async function saveAsset(silent) {
       status:              document.getElementById('fStatus').value || 'active',
       notes:               document.getElementById('fNotes').value.trim() || null
     };
+
+    // extended fields — เพิ่มเฉพาะเมื่อ DB มีคอลัมน์แล้ว (App.feat.assetExtended)
+    if (App.feat.assetExtended) {
+      var _gv = function(fid) { var el = document.getElementById(fid); return el && el.value.trim() ? el.value.trim() : null; };
+      payload.color            = _gv('fColor');
+      payload.order_num        = _gv('fOrderNum');
+      payload.reg_number       = _gv('fRegNum');
+      payload.reg_number2      = _gv('fRegNum2');
+      payload.boss_name        = _gv('fBossName');
+      payload.warranty_terms   = _gv('fWarrantyTerms');
+      payload.warranty_date    = _gv('fWarrantyDate') || null;
+      payload.warranty_expiry  = _gv('fWarrantyExpiry') || null;
+      payload.warranty_company = _gv('fWarrantyCompany');
+      payload.disposal_date    = _gv('fDisposalDate') || null;
+      payload.disposal_method  = _gv('fDisposalMethod');
+      payload.disposal_ref     = _gv('fDisposalRef');
+      var _dpEl = document.getElementById('fDisposalPrice');
+      payload.disposal_price   = (_dpEl && _dpEl.value) ? parseFloat(_dpEl.value) || null : null;
+      var _glEl = document.getElementById('fGainLoss');
+      payload.gain_loss = (_glEl && _glEl.value) ? parseFloat(_glEl.value) || null : null;
+    }
+    payload.other_notes = _gv('fOther') || null;
 
     var savedId;
     if (isNew) {
@@ -8980,6 +9564,38 @@ function autofillLifeYears(category) {
   updateDepreciationTable();
 }
 
+// format % display เมื่อออกจากช่อง: "20" → "20.00%"
+function _fmtDepPct(el) {
+  var v = parseFloat((el.value || '').replace('%', '')) || 0;
+  el.value = v > 0 ? v.toFixed(2) + '%' : '';
+  _calcDepBahtFromPct(0);
+}
+
+// คำนวณคงเหลือแบบเส้นตรง (straight-line): หัก % × ราคาต้นทุน ทุกปี (สะสม)
+// เช่น 20% ปีที่1: 9000×(1-1×20%)=7200, ปีที่5: 9000×(1-5×20%)=0
+function _calcDepBahtFromPct(_changedYear) {
+  var price = parseFloat((document.getElementById('fPrice') || {}).value) || 0;
+  var cumPct = 0;
+  for (var i = 1; i <= 5; i++) {
+    var pctEl  = document.getElementById('depPct_'  + i);
+    var bahtEl = document.getElementById('depBaht_' + i);
+    if (!pctEl || !bahtEl) continue;
+    if (price <= 0) {
+      if (bahtEl.tagName === 'INPUT') bahtEl.value = '—'; else bahtEl.textContent = '—';
+      continue;
+    }
+    var pct = parseFloat((pctEl.value || '').replace('%', '')) || 0;
+    if (pct <= 0) {
+      if (bahtEl.tagName === 'INPUT') bahtEl.value = '—'; else bahtEl.textContent = '—';
+      continue;
+    }
+    cumPct += pct;
+    var remaining = Math.max(0, price * (1 - cumPct / 100));
+    var bv = remaining.toLocaleString('th', {minimumFractionDigits:2, maximumFractionDigits:2});
+    if (bahtEl.tagName === 'INPUT') bahtEl.value = bv; else bahtEl.textContent = bv;
+  }
+}
+
 function updateDepreciationTable() {
   var price = parseFloat((document.getElementById('fPrice')||{}).value) || 0;
   var life  = parseInt((document.getElementById('fLifeYears')||{}).value) || 0;
@@ -8990,19 +9606,21 @@ function updateDepreciationTable() {
   if (_e('depLifeDisplay'))  _e('depLifeDisplay').textContent  = life > 0 ? life : '—';
   if (_e('depPriceDisplay')) _e('depPriceDisplay').textContent = price > 0 ? price.toLocaleString('th', {minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
 
+  var autoRemaining = price;
   for (var i = 1; i <= 5; i++) {
     var pctCell  = _e('depPct_'  + i);
     var bahtCell = _e('depBaht_' + i);
     if (!pctCell && !bahtCell) continue;
-    if (life <= 0 || price <= 0) {
-      if (pctCell)  pctCell.textContent  = '—';
-      if (bahtCell) bahtCell.textContent = '—';
+    if (life <= 0) {
+      if (pctCell)  { if (pctCell.tagName === 'INPUT') pctCell.value = ''; else pctCell.textContent = '—'; }
+      if (bahtCell) { if (bahtCell.tagName === 'INPUT') bahtCell.value = ''; else bahtCell.textContent = '—'; }
       continue;
     }
-    var remPct    = Math.max(0, 100 - i * rate);
-    var remaining = Math.max(0, price * remPct / 100);
-    if (pctCell)  pctCell.textContent  = remPct.toFixed(2) + '%';
-    if (bahtCell) bahtCell.textContent = remaining.toLocaleString('th', {minimumFractionDigits:2,maximumFractionDigits:2});
+    // straight-line: แต่ละปีหัก rate% × ราคาต้นทุน (สะสม)
+    if (price > 0) autoRemaining = Math.max(0, price * (1 - i * rate / 100));
+    var remaining = (price > 0) ? autoRemaining : null;
+    if (pctCell)  { var pv = rate.toFixed(2) + '%';  if (pctCell.tagName === 'INPUT') pctCell.value = pv; else pctCell.textContent = pv; }
+    if (bahtCell) { var bv = (remaining !== null) ? remaining.toLocaleString('th',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—'; if (bahtCell.tagName === 'INPUT') bahtCell.value = bv; else bahtCell.textContent = bv; }
   }
 }
 
