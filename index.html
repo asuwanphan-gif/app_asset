@@ -1179,6 +1179,9 @@
             <button class="btn btn-primary btn-sm px-3" onclick="bulkAssignBranch()">
               <i class="bi bi-check2-all me-1"></i>ยืนยัน
             </button>
+            <button id="bulkDisposeBtn" class="btn btn-danger btn-sm px-3" onclick="bulkDispose()" style="display:none;">
+              <i class="bi bi-trash3 me-1"></i>แทงจำหน่าย
+            </button>
             <button class="btn btn-outline-secondary btn-sm px-3" onclick="clearBulkSelect()">
               <i class="bi bi-x me-1"></i>ยกเลิก
             </button>
@@ -5179,9 +5182,44 @@ function updateBulkBar() {
         bulkSel.appendChild(o);
       });
     }
+    // แสดงปุ่มจำหน่ายเฉพาะเมื่อทุก item เลือกมีสถานะ damaged_unfixable
+    var allUnfixable = Array.from(App.selectedAssets).every(function(id) {
+      var a = (App.allAssets || []).find(function(x) { return x.id === id; });
+      return a && a.status === 'damaged_unfixable';
+    });
+    var dispBtn = document.getElementById('bulkDisposeBtn');
+    if (dispBtn) dispBtn.style.display = allUnfixable ? '' : 'none';
   } else {
     bar.style.display = 'none';
   }
+}
+
+async function bulkDispose() {
+  if (!App.selectedAssets || App.selectedAssets.size === 0) return;
+  var ids = Array.from(App.selectedAssets);
+  var names = ids.slice(0, 3).map(function(id) {
+    var a = (App.allAssets || []).find(function(x) { return x.id === id; });
+    return a ? (a.asset_code || a.name) : id;
+  }).join(', ') + (ids.length > 3 ? ' และอีก ' + (ids.length - 3) + ' รายการ' : '');
+  var ok = await showDangerConfirm({
+    title: 'แทงจำหน่าย ' + ids.length + ' รายการ',
+    msg: '<strong>' + names + '</strong><br><br>ครุภัณฑ์ทั้งหมดจะถูกเปลี่ยนสถานะเป็น <strong>"รออนุมัติจำหน่าย"</strong> ซึ่งต้องผ่านการแจ้งซ่อมและได้รับการยืนยันว่าซ่อมไม่ได้แล้ว',
+    keyword: 'จำหน่าย',
+    confirmLabel: 'ยืนยันแทงจำหน่าย'
+  });
+  if (!ok) return;
+  showToast('กำลังบันทึก...', 'primary');
+  var res = await sb.from('assets').update({ status: 'disposal_pending' }).in('id', ids).select('id');
+  if (res.error) { showToast('เกิดข้อผิดพลาด: ' + res.error.message, 'danger'); return; }
+  var updated = (res.data || []).length;
+  if (updated < ids.length) {
+    showToast('แทงจำหน่ายได้ ' + updated + '/' + ids.length + ' รายการ — บางรายการถูกจำกัดสิทธิ์', 'warning');
+  } else {
+    showToast('แทงจำหน่ายเรียบร้อย ' + updated + ' รายการ', 'success');
+  }
+  logTx('bulk_dispose', { count: updated, ids: ids, status: 'disposal_pending' });
+  clearBulkSelect();
+  loadAssetsPage();
 }
 
 async function bulkAssignBranch() {
