@@ -2229,6 +2229,10 @@
                   <tr style="height:20px;"><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td><td style="border:1px solid #000;padding:1px;"></td></tr>
                   <tr>
                     <td colspan="4" style="border:1px solid #000;padding:4px;vertical-align:top;font-size:10.5px;">
+                      <div style="margin-bottom:5px;padding-bottom:4px;border-bottom:1px dashed #ccc;">
+                        <span style="font-size:10px;font-weight:600;color:#475569;">ใช้ประจำที่: </span>
+                        <input id="pd2Location" style="border:none;border-bottom:1px solid #94a3b8;background:transparent;font-family:'Sarabun',Arial,sans-serif;font-size:11px;color:#cc0000;width:78%;padding:0 2px;" placeholder="อาคาร / ห้อง..." oninput="var f=document.getElementById('fLocation');if(f)f.value=this.value;">
+                      </div>
                       <div style="font-weight:bold;color:#333;margin-bottom:4px;">รูปถ่ายพัสดุ (ถ้ามี) หรือตำหนิรูปพรรณสัตว์<span id="photoRequired" class="text-danger no-print" style="font-size:10px;"></span></div>
                       <div class="no-print">
                         <div style="margin-bottom:6px;">
@@ -5144,10 +5148,8 @@ function toggleSelectAll(checked) {
   if (!App.selectedAssets) App.selectedAssets = new Set();
   var slice = Pager.slice('assets', App.filteredAssets);
   slice.forEach(function(a) {
-    if (!a.branch_id) { // เลือกเฉพาะที่ไม่มีสาขา
-      if (checked) App.selectedAssets.add(a.id);
-      else App.selectedAssets.delete(a.id);
-    }
+    if (checked) App.selectedAssets.add(a.id);
+    else App.selectedAssets.delete(a.id);
   });
   renderAssetTable();
   updateBulkBar();
@@ -5296,7 +5298,7 @@ async function showAssetForm(id) {
     _fe('fOrderNum',        a.order_num);
     _fe('fRegNum',          a.reg_number);
     _fe('fRegNum2',         a.reg_number2);
-    _fe('fBossName',        a.boss_name);
+    _fe('fBossName',        a.boss_name || 'ผศ.ดร.อัฐพร กิ่งบู');
     _fe('fWarrantyTerms',   a.warranty_terms);
     _fe('fWarrantyDate',    a.warranty_date);
     _fe('fWarrantyExpiry',  a.warranty_expiry);
@@ -5310,11 +5312,14 @@ async function showAssetForm(id) {
     // show/hide branch row for admin
     var _fbRow = document.getElementById('fBranchRow');
     if (_fbRow) _fbRow.style.display = (App.profile && App.profile.role === 'admin') ? '' : 'none';
+    // sync pd2Location display
+    var _pdLoc = document.getElementById('pd2Location');
+    if (_pdLoc) _pdLoc.value = a.location || '';
     // custodian display cells
     _syncCustYear(a.acquired_date);
     _syncCustName(a.custodian);
     var _deptEl = document.getElementById('pd2CustDept');
-    if (_deptEl) _deptEl.textContent = (App.branchMap && a.branch_id && App.branchMap[a.branch_id]) ? App.branchMap[a.branch_id].name : '';
+    if (_deptEl) _deptEl.textContent = 'คณะศิลปศาสตร์และวิทยาศาสตร์';
     // load repair/transfer history into พ.ด.2 table
     _loadPD2History(a.id);
     var nlbl = document.getElementById('newPhotoLabel');
@@ -7201,7 +7206,7 @@ async function loadRepairPage() {
   // Load damaged-fixable + overaged assets for modal
   var q = sb.from('assets')
     .select('id,asset_code,name,branch_id,status,life_years,acquired_date')
-    .in('status',['damaged_fixable','overaged'])
+    .not('status','in','("disposed","disposal_pending")')
     .order('branch_id',{ascending:true}).order('asset_code',{ascending:true}).limit(5000);
   if (isBranch && myBranchId) q = q.eq('branch_id', myBranchId);
   var res = await q;
@@ -8530,12 +8535,7 @@ async function resetInspRecord(idx, btn) {
   row.item = null;
   row._status = '';
   row.asset.status = 'active';
-  // อัปเดต summary bar
-  var done = App.inspItems.filter(function(r){ return !!r._status; }).length;
-  var total = App.inspItems.length;
-  var pct = total ? Math.round(done/total*100) : 0;
-  var sb2 = document.getElementById('inspSummaryBar');
-  if (sb2) { var s = sb2.querySelector('strong'); if (s) s.textContent = done; }
+  _updateInspSummaryBar();
   showToast('รีเซ็ตสำเร็จ — คืนเป็นยังไม่ตรวจแล้ว', 'success');
   filterInspItems();
 }
@@ -8589,17 +8589,7 @@ async function _autoSaveInspRow(idx, triggerEl) {
     if (badgeCell) badgeCell.innerHTML = row._status
       ? '<span class="badge" style="background:#dcfce7;color:#166534;font-size:10px;font-weight:600;border:1px solid #bbf7d0;"><i class="bi bi-check-circle-fill me-1"></i>ตรวจแล้ว</span>'
       : '';
-    // อัปเดต summary bar
-    var done = App.inspItems.filter(function(r){ return !!r._status; }).length;
-    var total = App.inspItems.length;
-    var pct = total ? Math.round(done/total*100) : 0;
-    var barColor = pct===100?'#22c55e':pct>=50?'#f59e0b':'#3b82f6';
-    var sb2 = document.getElementById('inspSummaryBar');
-    if (sb2) {
-      sb2.querySelector('strong') && (sb2.querySelector('strong').textContent = done);
-      var bar = sb2.querySelector('.progress-bar, div[style*="width:"]');
-      if (bar) bar.style.width = pct + '%';
-    }
+    _updateInspSummaryBar();
   } else {
     showToast('บันทึกไม่สำเร็จ: ' + res.error.message, 'danger');
     if (badgeCell) badgeCell.innerHTML = '<span class="badge" style="background:#fee2e2;color:#991b1b;font-size:10px;border:1px solid #fca5a5;">บันทึกไม่สำเร็จ</span>';
@@ -8610,6 +8600,33 @@ async function _autoSaveInspRow(idx, triggerEl) {
   if (!res.error && App._onBranchDashboard && App.currentInsp) {
     setTimeout(function(){ _loadBranchInspDashboard(App.currentInsp); }, 300);
   }
+}
+
+function _updateInspSummaryBar() {
+  var el = document.getElementById('inspSummaryBar');
+  if (!el || !App.inspItems) return;
+  var done = App.inspItems.filter(function(r){ return !!r._status; }).length;
+  var total = App.inspItems.length;
+  var pct = total ? Math.round(done/total*100) : 0;
+  var barColor = pct===100?'#22c55e':pct>=50?'#f59e0b':'#3b82f6';
+  el.innerHTML =
+    '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<div style="width:40px;height:40px;border-radius:50%;background:' + barColor + '22;display:flex;align-items:center;justify-content:center;">' +
+          '<i class="bi bi-clipboard2-check" style="color:' + barColor + ';font-size:18px;"></i>' +
+        '</div>' +
+        '<div>' +
+          '<div style="font-size:13px;font-weight:700;color:#0f172a;">ตรวจแล้ว <span style="color:' + barColor + ';">' + done + '</span> / ' + total + ' รายการ</div>' +
+          '<div style="font-size:11px;color:#94a3b8;">' + pct + '% ของทั้งหมด</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="flex:1;min-width:120px;">' +
+        '<div style="background:#f1f5f9;border-radius:99px;height:8px;overflow:hidden;">' +
+          '<div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:99px;transition:width .4s;"></div>' +
+        '</div>' +
+      '</div>' +
+      (pct===100 ? '<span style="font-size:12px;font-weight:700;color:#22c55e;"><i class="bi bi-check-circle-fill me-1"></i>ครบทุกรายการ</span>' : '<span style="font-size:12px;color:#94a3b8;">เหลือ ' + (total-done) + ' รายการ</span>') +
+    '</div>';
 }
 
 function filterPendingTable() { /* re-render pending tab */ _loadInspPending(); }
@@ -8780,11 +8797,11 @@ function _openNotifyModal(branchIds) {
     'ตามที่ฝ่ายพัสดุได้เปิดรอบการตรวจสอบครุภัณฑ์ประจำปี "' + inspName + '" นั้น\n' +
     'ขอความร่วมมือดำเนินการตรวจสอบครุภัณฑ์ให้แล้วเสร็จภายในวันที่ ' + endDate + '\n\n' +
     'วิธีดำเนินการ:\n' +
-    '  1. เข้าสู่ระบบบริหารจัดการครุภัณฑ์\n' +
+    '  1. เข้าสู่ระบบบริหารจัดการครุภัณฑ์ที่: ' + window.location.href + '\n' +
     '  2. เลือกเมนู "ตรวจสอบครุภัณฑ์"\n' +
     '  3. กดปุ่ม "กรอกผล" แล้วดำเนินการตรวจสอบและบันทึกผล\n\n' +
     'หากมีข้อสงสัยหรือปัญหาการใช้งาน กรุณาติดต่อฝ่ายพัสดุ\n\n' +
-    'ขอแสดงความนับถือ\nฝ่ายพัสดุ';
+    'ขอแสดงความนับถือ\nฝ่ายพัสดุ คณะศิลปศาสตร์และวิทยาศาสตร์';
 
   App._notifyRecipients = recipients;
   new bootstrap.Modal(document.getElementById('modalNotifyBranch')).show();

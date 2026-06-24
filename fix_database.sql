@@ -198,6 +198,25 @@ GRANT EXECUTE ON FUNCTION public_asset_scan(uuid) TO anon;
 GRANT EXECUTE ON FUNCTION public_asset_scan(uuid) TO authenticated;
 
 -- ============================================================
+-- 5) EXTENDED ASSET COLUMNS — สำหรับตาราง พ.ด. 2 ฉบับใหม่
+-- ============================================================
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS color            TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS order_num        TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS reg_number       TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS reg_number2      TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS boss_name        TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS warranty_terms   TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS warranty_date    DATE;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS warranty_expiry  DATE;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS warranty_company TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS disposal_date    DATE;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS disposal_method  TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS disposal_ref     TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS disposal_price   NUMERIC(14,2);
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS gain_loss        NUMERIC(14,2);
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS other_notes      TEXT;
+
+-- ============================================================
 -- เสร็จแล้ว — refresh แอป banner เตือนจะหายไปเอง
 -- ============================================================
 
