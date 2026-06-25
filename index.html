@@ -2736,9 +2736,10 @@
       </div>
       <!-- แท็บ: ผู้ใช้ -->
       <div id="adminTabUsers" style="display:none;">
-        <div class="alert alert-info py-2 mb-3" style="font-size:13px;">
-          <i class="bi bi-info-circle me-1"></i>
-          การเพิ่มผู้ใช้ใหม่ต้องทำผ่าน Supabase Dashboard → Authentication → Users ก่อน จากนั้นกำหนด profile ที่นี่
+        <div class="d-flex justify-content-end mb-3 no-print">
+          <button class="btn btn-primary btn-sm" onclick="showNewUser()">
+            <i class="bi bi-person-plus me-1"></i>เพิ่มผู้ใช้ใหม่
+          </button>
         </div>
         <div class="card shadow-sm">
           <div class="card-body p-0">
@@ -2836,6 +2837,14 @@
       <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
     <div class="modal-body">
       <input type="hidden" id="editUserId">
+      <!-- fields เฉพาะ create mode -->
+      <div id="uCreateFields" style="display:none;">
+        <div class="mb-3"><label class="form-label fw-semibold">อีเมล <span class="text-danger">*</span></label>
+          <input id="uEmail" type="email" class="form-control" placeholder="example@mail.com"></div>
+        <div class="mb-3"><label class="form-label fw-semibold">รหัสผ่าน <span class="text-danger">*</span></label>
+          <input id="uPassword" type="password" class="form-control" placeholder="อย่างน้อย 6 ตัวอักษร"></div>
+        <hr>
+      </div>
       <div class="mb-3"><label class="form-label">ชื่อ-นามสกุล</label>
         <input id="uFullName" class="form-control"></div>
       <div class="mb-3"><label class="form-label">ระดับสิทธิ์</label>
@@ -9238,15 +9247,30 @@ async function _loadUserTable() {
   }).join('');
 }
 
+function showNewUser() {
+  document.getElementById('editUserId').value = '';
+  document.getElementById('uEmail').value = '';
+  document.getElementById('uPassword').value = '';
+  document.getElementById('uFullName').value = '';
+  document.getElementById('uRole').value = 'branch';
+  document.getElementById('uActive').value = 'true';
+  document.getElementById('uCreateFields').style.display = '';
+  document.getElementById('userModalTitle').textContent = 'สร้างผู้ใช้ใหม่';
+  _populateBranchSelects();
+  toggleBranchSelect();
+  setTimeout(function() { document.getElementById('uBranch').value = ''; }, 100);
+  new bootstrap.Modal(document.getElementById('modalUser')).show();
+}
+
 function showEditUser(u) {
   document.getElementById('editUserId').value = u.id;
   document.getElementById('uFullName').value = u.full_name || '';
   document.getElementById('uRole').value = u.role || 'branch';
   document.getElementById('uBranch').value = u.branch_id || '';
   document.getElementById('uActive').value = u.active ? 'true' : 'false';
+  document.getElementById('uCreateFields').style.display = 'none';
   toggleBranchSelect();
   document.getElementById('userModalTitle').textContent = 'แก้ไขผู้ใช้: ' + (u.username||u.id);
-  // populate branch select
   _populateBranchSelects();
   setTimeout(function() {
     document.getElementById('uBranch').value = u.branch_id || '';
@@ -9262,16 +9286,49 @@ function toggleBranchSelect() {
 }
 
 async function saveUser() {
-  var id = document.getElementById('editUserId').value;
-  if (!id) return;
-  var res = await sb.from('profiles').update({
-    full_name: document.getElementById('uFullName').value.trim() || null,
-    role:      document.getElementById('uRole').value,
-    branch_id: document.getElementById('uBranch').value || null,
-    active:    document.getElementById('uActive').value === 'true'
-  }).eq('id', id);
-  if (res.error) { showToast(res.error.message, 'danger'); return; }
-  showToast('บันทึกเรียบร้อย', 'success');
+  var id       = document.getElementById('editUserId').value;
+  var fullName = document.getElementById('uFullName').value.trim() || null;
+  var role     = document.getElementById('uRole').value;
+  var branchId = document.getElementById('uBranch').value || null;
+  var active   = document.getElementById('uActive').value === 'true';
+
+  if (!id) {
+    // ══ CREATE MODE ══
+    var email    = document.getElementById('uEmail').value.trim();
+    var password = document.getElementById('uPassword').value;
+    if (!email || !password) { showToast('กรุณากรอกอีเมลและรหัสผ่าน', 'warning'); return; }
+    if (password.length < 6)  { showToast('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', 'warning'); return; }
+
+    showToast('กำลังสร้างผู้ใช้...', 'primary');
+
+    // บันทึก admin session ก่อน เพราะ signUp() อาจเปลี่ยน session
+    var adminSession = (await sb.auth.getSession()).data.session;
+
+    var signRes = await sb.auth.signUp({ email: email, password: password,
+      options: { data: { full_name: fullName } }
+    });
+    if (signRes.error) { showToast('สร้างไม่สำเร็จ: ' + signRes.error.message, 'danger'); return; }
+
+    var newUserId = signRes.data.user ? signRes.data.user.id : null;
+
+    // คืน session admin ถ้าถูกเปลี่ยน
+    if (adminSession) {
+      await sb.auth.setSession({ access_token: adminSession.access_token, refresh_token: adminSession.refresh_token });
+    }
+
+    if (!newUserId) { showToast('สร้างผู้ใช้สำเร็จ — รอยืนยันอีเมลก่อนล็อกอินได้', 'warning'); bootstrap.Modal.getInstance(document.getElementById('modalUser')).hide(); _loadUserTable(); return; }
+
+    // upsert profile
+    await sb.from('profiles').upsert({ id: newUserId, full_name: fullName, role: role, branch_id: branchId, active: active });
+    showToast('สร้างผู้ใช้เรียบร้อย', 'success');
+    logTx('create_user', { email: email, role: role, branch_id: branchId });
+  } else {
+    // ══ EDIT MODE ══
+    var res = await sb.from('profiles').update({ full_name: fullName, role: role, branch_id: branchId, active: active }).eq('id', id);
+    if (res.error) { showToast(res.error.message, 'danger'); return; }
+    showToast('บันทึกเรียบร้อย', 'success');
+  }
+
   bootstrap.Modal.getInstance(document.getElementById('modalUser')).hide();
   _loadUserTable();
 }
