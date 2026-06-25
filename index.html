@@ -2234,7 +2234,9 @@
                     <td colspan="4" style="border:1px solid #000;padding:4px;vertical-align:top;font-size:10.5px;">
                       <div style="margin-bottom:5px;padding-bottom:4px;border-bottom:1px dashed #ccc;">
                         <span style="font-size:10px;font-weight:600;color:#475569;">ใช้ประจำที่: </span>
-                        <input id="pd2Location" style="border:none;border-bottom:1px solid #94a3b8;background:transparent;font-family:'Sarabun',Arial,sans-serif;font-size:11px;color:#cc0000;width:78%;padding:0 2px;" placeholder="อาคาร / ห้อง..." oninput="var f=document.getElementById('fLocation');if(f)f.value=this.value;">
+                        <input id="pd2Location" list="locationList" style="border:none;border-bottom:1px solid #94a3b8;background:transparent;font-family:'Sarabun',Arial,sans-serif;font-size:11px;color:#cc0000;width:78%;padding:0 2px;" placeholder="อาคาร / ห้อง..." oninput="var f=document.getElementById('fLocation');if(f)f.value=this.value;" onblur="_validateLocation(this);">
+                        <datalist id="locationList"></datalist>
+                        <div id="locationWarn" style="display:none;font-size:10px;color:#f59e0b;margin-top:2px;"><i class="bi bi-exclamation-triangle me-1"></i><span id="locationWarnMsg"></span></div>
                       </div>
                       <div style="font-weight:bold;color:#333;margin-bottom:4px;">รูปถ่ายพัสดุ (ถ้ามี) หรือตำหนิรูปพรรณสัตว์<span id="photoRequired" class="text-danger no-print" style="font-size:10px;"></span></div>
                       <div class="no-print">
@@ -4038,6 +4040,41 @@ function _onFBranchChange() {
   if (!sel || !deptEl) return;
   var bid = sel.value;
   deptEl.textContent = (App.branchMap && bid && App.branchMap[bid]) ? App.branchMap[bid].name : '';
+  _loadLocationSuggestions(bid);
+}
+
+async function _loadLocationSuggestions(branchId) {
+  var dl = document.getElementById('locationList');
+  if (!dl) return;
+  dl.innerHTML = '';
+  if (!branchId) return;
+  var res = await sb.from('assets').select('location').eq('branch_id', branchId).not('location', 'is', null).order('location');
+  var seen = {};
+  (res.data || []).forEach(function(r) {
+    if (r.location && !seen[r.location]) {
+      seen[r.location] = true;
+      var opt = document.createElement('option');
+      opt.value = r.location;
+      dl.appendChild(opt);
+    }
+  });
+}
+
+function _validateLocation(inp) {
+  var val = (inp.value || '').trim();
+  var warn = document.getElementById('locationWarn');
+  var msg  = document.getElementById('locationWarnMsg');
+  if (!val || !warn || !msg) return;
+  var sel = document.getElementById('fBranch');
+  var bid = sel ? sel.value : '';
+  var branch = (App.branchMap && bid) ? App.branchMap[bid] : null;
+  var code = branch ? String(branch.code || '') : '';
+  if (code && !val.startsWith(code + ' ')) {
+    msg.textContent = 'ที่อยู่ควรขึ้นต้นด้วย "' + code + ' ..." (รหัสสาขา ' + code + ')';
+    warn.style.display = '';
+  } else {
+    warn.style.display = 'none';
+  }
 }
 
 // โหลดประวัติซ่อม + โอนย้ายลงช่องซ่อมบำรุงในตาราง พ.ด. 2
@@ -5287,6 +5324,7 @@ async function showAssetForm(id) {
     var _ch = document.getElementById('pd2CodeHeader'); if (_ch) _ch.textContent = a.asset_code ? 'มรภ.ศก. ' + a.asset_code : '—';
     var _oh = document.getElementById('pd2OldCodeHeader'); if (_oh) _oh.textContent = a.old_code || '—';
     document.getElementById('fBranch').value = a.branch_id || '';
+    _loadLocationSuggestions(a.branch_id || '');
     document.getElementById('fName').value = a.name || '';
     document.getElementById('fCategory').value = a.category || '';
     document.getElementById('fBrand').value = a.brand || '';
