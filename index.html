@@ -5047,7 +5047,7 @@ function renderAssetTable() {
 
       // checkbox
       var hasNoBranch = !a.branch_id;
-      var chkCell = '<td class="no-print" style="padding:8px 10px 8px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;">'
+      var chkCell = '<td class="no-print" onclick="event.stopPropagation();" style="padding:8px 10px 8px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;">'
         + (hasNoBranch ? '<input type="checkbox" class="form-check-input asset-chk" ' + (isChecked?'checked':'') + ' onchange="toggleAssetCheck(\'' + a.id + '\',this.checked)">' : '')
         + '</td>';
 
@@ -5056,7 +5056,8 @@ function renderAssetTable() {
       var nameCellHtml = '<div style="' + _Cs + 'line-height:1.3;">' + (a.name || '—') + '</div>'
         + (bm ? '<div style="font-size:11px;color:#94a3b8;margin-top:2px;">' + bm + '</div>' : '');
 
-      return '<tr style="background:' + rowBg + ';" '
+      return '<tr style="background:' + rowBg + ';cursor:pointer;" '
+        + 'onclick="showAssetForm(\'' + a.id + '\')" '
         + 'onmouseover="this.style.background=\'' + hoverBg + '\'" '
         + 'onmouseout="this.style.background=\'' + rowBg + '\'">'
         + chkCell
