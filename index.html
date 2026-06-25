@@ -2827,7 +2827,7 @@
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"><i class="bi bi-x-lg me-1"></i>ยกเลิก</button>
-      <button type="button" class="btn btn-primary btn-sm" onclick="sendNotifyEmail()"><i class="bi bi-envelope me-1"></i>ส่งอีเมล (เปิด Email Client)</button>
+      <button type="button" id="notifySendBtn" class="btn btn-primary btn-sm" onclick="sendNotifyEmail()"><i class="bi bi-envelope me-1"></i>ส่งอีเมล</button>
     </div>
   </div></div>
 </div>
@@ -8912,7 +8912,7 @@ async function _openNotifyModal(branchIds) {
   new bootstrap.Modal(document.getElementById('modalNotifyBranch')).show();
 }
 
-function sendNotifyEmail() {
+async function sendNotifyEmail() {
   var recipients = App._notifyRecipients || [];
   if (!recipients.length) {
     showToast('ไม่พบอีเมลผู้รับ กรุณาเพิ่มอีเมลในหน้า Admin → จัดการสาขา', 'warning');
@@ -8921,19 +8921,29 @@ function sendNotifyEmail() {
   var subject = document.getElementById('notifySubject').value;
   var body = document.getElementById('notifyBody').value;
   var to = recipients.map(function(r) { return r.email; }).join(',');
-  var link = 'mailto:' + encodeURIComponent(to)
-    + '?subject=' + encodeURIComponent(subject)
-    + '&body=' + encodeURIComponent(body);
-  window.open(link, '_blank');
-  // Log notifications
-  if (App.currentInspectionId) {
-    var rows = recipients.map(function(r) {
-      return { inspection_id: App.currentInspectionId, branch_id: r.bId, method: 'email', notified_by: App.user ? App.user.id : null, subject: subject };
+
+  var btn = document.getElementById('notifySendBtn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>กำลังส่ง...'; }
+
+  try {
+    await fetch('https://script.google.com/macros/s/AKfycbwNBPJsMFzHeWPskgewwI7AXKc98ltbTElAXp_ROQjesx_5rJdnQkEou3I1_aIBtowZ7w/exec', {
+      method: 'POST',
+      body: JSON.stringify({ to: to, subject: subject, body: body })
     });
-    sb.from('inspection_notifications').insert(rows).then(function() {});
+    // Log notifications
+    if (App.currentInspectionId) {
+      var rows = recipients.map(function(r) {
+        return { inspection_id: App.currentInspectionId, branch_id: r.bId, method: 'email', notified_by: App.user ? App.user.id : null, subject: subject };
+      });
+      sb.from('inspection_notifications').insert(rows).then(function() {});
+    }
+    bootstrap.Modal.getInstance(document.getElementById('modalNotifyBranch')).hide();
+    showToast('ส่งอีเมลเรียบร้อย ' + recipients.length + ' ผู้รับ', 'success');
+  } catch (err) {
+    showToast('ส่งอีเมลไม่สำเร็จ: ' + err.message, 'danger');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-envelope me-1"></i>ส่งอีเมล'; }
   }
-  bootstrap.Modal.getInstance(document.getElementById('modalNotifyBranch')).hide();
-  showToast('เปิด Email Client เรียบร้อย', 'success');
 }
 
 async function _showAllUnsurveyed(bId) {
