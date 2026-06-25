@@ -2839,10 +2839,14 @@
       <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
     <div class="modal-body">
       <input type="hidden" id="editUserId">
-      <!-- fields เฉพาะ create mode -->
+      <!-- อีเมล — แสดงทั้ง create และ edit mode -->
+      <div class="mb-3" id="uEmailDiv">
+        <label class="form-label fw-semibold" id="uEmailLabel">อีเมล <span id="uEmailReq" class="text-danger">*</span></label>
+        <input id="uEmail" type="email" class="form-control" placeholder="example@mail.com">
+        <div id="uEmailHint" style="display:none;font-size:11px;color:#64748b;margin-top:3px;">ใช้รับการแจ้งเตือนตรวจสอบครุภัณฑ์</div>
+      </div>
+      <!-- รหัสผ่าน — เฉพาะ create mode -->
       <div id="uCreateFields" style="display:none;">
-        <div class="mb-3"><label class="form-label fw-semibold">อีเมล <span class="text-danger">*</span></label>
-          <input id="uEmail" type="email" class="form-control" placeholder="example@mail.com"></div>
         <div class="mb-3"><label class="form-label fw-semibold">รหัสผ่าน <span class="text-danger">*</span></label>
           <input id="uPassword" type="password" class="form-control" placeholder="อย่างน้อย 6 ตัวอักษร"></div>
         <hr>
@@ -8843,19 +8847,35 @@ function notifyBranch(bId) {
   _openNotifyModal([bId]);
 }
 
-function _openNotifyModal(branchIds) {
+async function _openNotifyModal(branchIds) {
   var insp = App.currentInsp || {};
   var inspName = insp.name || 'รอบตรวจสอบครุภัณฑ์';
   var endDate = insp.end_date ? fmtDate(insp.end_date) : '—';
   var branches = App.branches || [];
 
+  // ดึง profiles.email ของ users ในสาขาที่เลือก
+  var profRes = await sb.from('profiles').select('branch_id,full_name,email').in('branch_id', branchIds).eq('active', true).not('email', 'is', null);
+  var profEmails = {};  // branchId → [{name, email}]
+  (profRes.data || []).forEach(function(p) {
+    if (!p.email) return;
+    if (!profEmails[p.branch_id]) profEmails[p.branch_id] = [];
+    profEmails[p.branch_id].push({ name: p.full_name || p.email, email: p.email });
+  });
+
   var recipients = [];
   var noEmail = [];
+  var seen = {};
   branchIds.forEach(function(bId) {
     var b = branches.find(function(x) { return x.id === bId; });
     if (!b) return;
-    if (b.email) recipients.push({ bId: b.id, name: b.name, email: b.email });
-    else noEmail.push(b.name);
+    var hasAny = false;
+    // เพิ่มจาก profiles users ก่อน
+    (profEmails[bId] || []).forEach(function(p) {
+      if (!seen[p.email]) { seen[p.email] = true; recipients.push({ bId: bId, name: b.name + ' — ' + p.name, email: p.email }); hasAny = true; }
+    });
+    // fallback: branch email
+    if (b.email && !seen[b.email]) { seen[b.email] = true; recipients.push({ bId: b.id, name: b.name, email: b.email }); hasAny = true; }
+    if (!hasAny) noEmail.push(b.name);
   });
 
   // แสดง recipients
@@ -9292,6 +9312,8 @@ function showNewUser() {
   document.getElementById('uRole').value = 'branch';
   document.getElementById('uActive').value = 'true';
   document.getElementById('uCreateFields').style.display = '';
+  document.getElementById('uEmailReq').style.display = '';
+  document.getElementById('uEmailHint').style.display = 'none';
   document.getElementById('userModalTitle').textContent = 'สร้างผู้ใช้ใหม่';
   _populateBranchSelects();
   toggleBranchSelect();
@@ -9301,19 +9323,19 @@ function showNewUser() {
 
 function showEditUser(u) {
   document.getElementById('editUserId').value = u.id;
+  document.getElementById('uEmail').value = u.email || '';
   document.getElementById('uFullName').value = u.full_name || '';
   document.getElementById('uRole').value = u.role || 'branch';
   document.getElementById('uBranch').value = u.branch_id || '';
   document.getElementById('uActive').value = u.active ? 'true' : 'false';
   document.getElementById('uCreateFields').style.display = 'none';
+  document.getElementById('uEmailReq').style.display = 'none';
+  document.getElementById('uEmailHint').style.display = '';
   toggleBranchSelect();
   document.getElementById('userModalTitle').textContent = 'แก้ไขผู้ใช้: ' + (u.username||u.id);
   _populateBranchSelects();
-  setTimeout(function() {
-    document.getElementById('uBranch').value = u.branch_id || '';
-  }, 100);
-  var m = new bootstrap.Modal(document.getElementById('modalUser'));
-  m.show();
+  setTimeout(function() { document.getElementById('uBranch').value = u.branch_id || ''; }, 100);
+  new bootstrap.Modal(document.getElementById('modalUser')).show();
 }
 
 function toggleBranchSelect() {
@@ -9355,13 +9377,14 @@ async function saveUser() {
 
     if (!newUserId) { showToast('สร้างผู้ใช้สำเร็จ — รอยืนยันอีเมลก่อนล็อกอินได้', 'warning'); bootstrap.Modal.getInstance(document.getElementById('modalUser')).hide(); _loadUserTable(); return; }
 
-    // upsert profile
-    await sb.from('profiles').upsert({ id: newUserId, full_name: fullName, role: role, branch_id: branchId, active: active });
+    // upsert profile + บันทึก email
+    await sb.from('profiles').upsert({ id: newUserId, full_name: fullName, role: role, branch_id: branchId, active: active, email: email });
     showToast('สร้างผู้ใช้เรียบร้อย', 'success');
     logTx('create_user', { email: email, role: role, branch_id: branchId });
   } else {
     // ══ EDIT MODE ══
-    var res = await sb.from('profiles').update({ full_name: fullName, role: role, branch_id: branchId, active: active }).eq('id', id);
+    var editEmail = document.getElementById('uEmail').value.trim() || null;
+    var res = await sb.from('profiles').update({ full_name: fullName, role: role, branch_id: branchId, active: active, email: editEmail }).eq('id', id);
     if (res.error) { showToast(res.error.message, 'danger'); return; }
     showToast('บันทึกเรียบร้อย', 'success');
   }
