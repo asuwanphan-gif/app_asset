@@ -8265,6 +8265,14 @@ async function _loadInspOverview() {
     if (i.inspected_by) doneByBranch[i.inspected_by] = (doneByBranch[i.inspected_by]||0) + 1;
   });
 
+  // Load notification history — แสดง badge "แจ้งแล้ว" บน card
+  var notifRes = await sb.from('inspection_notifications').select('branch_id, created_at').eq('inspection_id', App.currentInspectionId).order('created_at', { ascending: false });
+  var notifiedMap = {};
+  (notifRes.data || []).forEach(function(n) {
+    if (n.branch_id && !notifiedMap[n.branch_id]) notifiedMap[n.branch_id] = n.created_at || true;
+  });
+  App._notifiedBranchMap = notifiedMap;
+
   // Group by branch
   var byBranch = {};
   assets.forEach(function(a) {
@@ -8375,6 +8383,12 @@ function _renderInspOverview(totalAssets, totalDone, totalPct) {
       ? '<div style="margin-top:8px;font-size:11px;color:#059669;"><i class="bi bi-check-circle-fill me-1"></i>สำรวจครบทุกรายการแล้ว</div>'
       : '';
 
+    var notifiedAt = App._notifiedBranchMap && App._notifiedBranchMap[item.bId];
+    var notifiedHtml = notifiedAt
+      ? '<div style="margin-top:5px;font-size:11px;color:#0369a1;"><i class="bi bi-envelope-check me-1"></i>แจ้งแล้ว' +
+        (typeof notifiedAt === 'string' ? ' · ' + fmtDate(notifiedAt) : '') + '</div>'
+      : '';
+
     // ปุ่มขวาบน
     var rightBtns = '';
     if (selMode) {
@@ -8407,6 +8421,7 @@ function _renderInspOverview(totalAssets, totalDone, totalPct) {
         '<span style="font-size:14px;font-weight:800;color:' + color + ';min-width:42px;text-align:right;">' + bp + '%</span>' +
       '</div>' +
       '<div style="font-size:11px;color:#64748b;">ตรวจแล้ว <strong>' + item.done + '</strong> / ' + item.total + ' รายการ</div>' +
+      notifiedHtml +
       previewHtml +
     '</div>';
   });
