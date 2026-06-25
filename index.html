@@ -5055,9 +5055,8 @@ function renderAssetTable() {
         : '<span style="' + _Gs + '">—</span>';
 
       // checkbox
-      var hasNoBranch = !a.branch_id;
       var chkCell = '<td class="no-print" onclick="event.stopPropagation();" style="padding:8px 10px 8px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;">'
-        + (hasNoBranch ? '<input type="checkbox" class="form-check-input asset-chk" ' + (isChecked?'checked':'') + ' onchange="toggleAssetCheck(\'' + a.id + '\',this.checked)">' : '')
+        + '<input type="checkbox" class="form-check-input asset-chk" ' + (isChecked?'checked':'') + ' onchange="toggleAssetCheck(\'' + a.id + '\',this.checked)">'
         + '</td>';
 
       // ชื่อ + ยี่ห้อ/รุ่น ในคอลัมน์เดียว
@@ -8849,7 +8848,7 @@ function _openNotifyModal(branchIds) {
     '  2. เลือกเมนู "ตรวจสอบครุภัณฑ์"\n' +
     '  3. กดปุ่ม "กรอกผล" แล้วดำเนินการตรวจสอบและบันทึกผล\n\n' +
     'หากมีข้อสงสัยหรือปัญหาการใช้งาน กรุณาติดต่อฝ่ายพัสดุ\n\n' +
-    'ขอแสดงความนับถือ\nฝ่ายพัสดุ คณะศิลปศาสตร์และวิทยาศาสตร์';
+    'ขอแสดงความนับถือ\nฝ่ายพัสดุ คณะศิลปศาสตร์และวิทยาศาสตร์\nอีเมล: mananya.n@sskru.ac.th';
 
   App._notifyRecipients = recipients;
   new bootstrap.Modal(document.getElementById('modalNotifyBranch')).show();
