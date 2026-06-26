@@ -9012,13 +9012,19 @@ async function sendNotifyEmail() {
       });
       sb.from('inspection_notifications').insert(rows).then(function() {});
     }
-    // อัปเดต badge "แจ้งแล้ว" บน card ทันที ไม่ต้อง reload
+    // อัปเดต badge map + ออกจาก select mode
     if (!App._notifiedBranchMap) App._notifiedBranchMap = {};
     var nowIso = new Date().toISOString();
-    recipients.forEach(function(r) { if (!App._notifiedBranchMap[r.bId]) App._notifiedBranchMap[r.bId] = nowIso; });
-    var _t = App._inspOverviewTotals || {};
-    _renderInspOverview(_t.totalAssets || 0, _t.totalDone || 0, _t.totalPct || 0);
-    bootstrap.Modal.getInstance(document.getElementById('modalNotifyBranch')).hide();
+    recipients.forEach(function(r) { if (r.bId && !App._notifiedBranchMap[r.bId]) App._notifiedBranchMap[r.bId] = nowIso; });
+    App._notifySelectMode = false;
+    App._notifySelectedBranches = {};
+    // render หลัง modal ปิดสนิท (animation 300ms)
+    var _modalEl = document.getElementById('modalNotifyBranch');
+    _modalEl.addEventListener('hidden.bs.modal', function() {
+      var _t = App._inspOverviewTotals || {};
+      _renderInspOverview(_t.totalAssets || 0, _t.totalDone || 0, _t.totalPct || 0);
+    }, { once: true });
+    bootstrap.Modal.getInstance(_modalEl).hide();
     showToast('ส่งอีเมลเรียบร้อย ' + recipients.length + ' ผู้รับ', 'success');
   } catch (err) {
     showToast('ส่งอีเมลไม่สำเร็จ: ' + err.message, 'danger');
