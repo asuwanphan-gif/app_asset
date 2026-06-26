@@ -8266,10 +8266,12 @@ async function _loadInspOverview() {
   });
 
   // Load notification history — แสดง badge "แจ้งแล้ว" บน card
-  var notifRes = await sb.from('inspection_notifications').select('branch_id, created_at').eq('inspection_id', App.currentInspectionId).order('created_at', { ascending: false });
+  var notifRes = await sb.from('inspection_notifications').select('*').eq('inspection_id', App.currentInspectionId);
   var notifiedMap = {};
   (notifRes.data || []).forEach(function(n) {
-    if (n.branch_id && !notifiedMap[n.branch_id]) notifiedMap[n.branch_id] = n.created_at || true;
+    if (n.branch_id && !notifiedMap[n.branch_id]) {
+      notifiedMap[n.branch_id] = n.created_at || n.notified_at || true;
+    }
   });
   App._notifiedBranchMap = notifiedMap;
 
