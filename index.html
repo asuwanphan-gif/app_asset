@@ -9021,10 +9021,6 @@ async function sendNotifyEmail() {
     // render หลัง modal ปิดสนิท (animation 300ms)
     var _modalEl = document.getElementById('modalNotifyBranch');
     _modalEl.addEventListener('hidden.bs.modal', function() {
-      var mapKeys = App._notifiedBranchMap ? Object.keys(App._notifiedBranchMap) : [];
-      var dataLen = App._inspOverviewData ? App._inspOverviewData.length : -1;
-      showToast('[DEBUG] map=' + mapKeys.length + ' data=' + dataLen + ' keys=' + mapKeys.slice(0,2).join(',').substring(0,30), 'info');
-      if (!dataLen || dataLen < 0) return;
       var _t = App._inspOverviewTotals || {};
       _renderInspOverview(_t.totalAssets || 0, _t.totalDone || 0, _t.totalPct || 0);
     }, { once: true });
