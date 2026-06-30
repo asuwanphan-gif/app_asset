@@ -624,7 +624,9 @@
     #main{margin:0!important}
     #content{padding:0!important}
     #pd2Table input,#pd2Table select,#pd2Table textarea{border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;box-shadow:none!important;}
-    #pd2Table{border:1.5px solid #000!important;min-width:0!important;}
+    #pd2Table{border:1.5px solid #000!important;min-width:0!important;table-layout:auto!important;}
+    #pd2RepairCell{display:none!important;}
+    .pd2-repair-col{visibility:collapse!important;}
     @page{size:A4 portrait;margin:10mm;}
   }
 
@@ -6982,18 +6984,34 @@ async function printTKFromForm(type) {
   _doPrintCard(attachBranchInfo(r.data), type);
 }
 
-async function printPD2() {
-  // ซ่อนส่วนซ่อมออกจากหน้า 1 ผ่าน JS (CSS display:none บน <td> ไม่ reliable ทุก browser)
-  var repairCell = document.getElementById('pd2RepairCell');
-  var repairCols = document.querySelectorAll('.pd2-repair-col');
-  var savedColWidths = [];
-  if (repairCell) repairCell.style.display = 'none';
-  repairCols.forEach(function(col) {
-    savedColWidths.push(col.style.width);
-    col.style.width = '0';
-    col.style.minWidth = '0';
+// beforeprint: ซ่อนส่วนซ่อม + switch auto layout (visibility:collapse บน fixed table ไม่ reliable)
+// afterprint: restore ทุกอย่าง + ซ่อน back page / photo area
+(function() {
+  window.addEventListener('beforeprint', function() {
+    var t = document.getElementById('pd2Table');
+    if (t) t.style.tableLayout = 'auto';
+    var rc = document.getElementById('pd2RepairCell');
+    if (rc) rc.style.display = 'none';
+    document.querySelectorAll('.pd2-repair-col').forEach(function(c) {
+      c.style.visibility = 'collapse';
+    });
   });
+  window.addEventListener('afterprint', function() {
+    var t = document.getElementById('pd2Table');
+    if (t) t.style.tableLayout = '';
+    var rc = document.getElementById('pd2RepairCell');
+    if (rc) rc.style.display = '';
+    document.querySelectorAll('.pd2-repair-col').forEach(function(c) {
+      c.style.visibility = '';
+    });
+    var bp = document.getElementById('pd2BackPage');
+    if (bp) bp.style.display = 'none';
+    var pa = document.getElementById('photoPrintArea');
+    if (pa) pa.style.display = 'none';
+  });
+})();
 
+async function printPD2() {
   // Populate back page (หน้าหลัง) from repair inputs แล้วแสดง
   var bp = document.getElementById('pd2BackPage');
   if (bp) {
@@ -7051,16 +7069,8 @@ async function printPD2() {
     }
   }
 
+  // beforeprint event จะซ่อน repair section อัตโนมัติ, afterprint จะ restore ทุกอย่าง
   window.print();
-
-  // Restore หลังพิมพ์
-  if (repairCell) repairCell.style.display = '';
-  repairCols.forEach(function(col, idx) {
-    col.style.width = savedColWidths[idx] || '';
-    col.style.minWidth = '';
-  });
-  if (pa) pa.style.display = 'none';
-  if (bp) bp.style.display = 'none';
 }
 
 // พิมพ์จากฟอร์มแก้ไข — ถ้ามีการเปลี่ยนแปลงจะบันทึกก่อนพิมพ์
