@@ -620,7 +620,7 @@
 
   /* ── PRINT ─────────────────────── */
   @media print{
-    #sidebar,#topbar,#bottomnav,.no-print{display:none!important}
+    #sidebar,#topbar,#bottomnav,.no-print,.toast-container{display:none!important}
     #main{margin:0!important}
     #content{padding:0!important}
     #pd2Table input,#pd2Table select,#pd2Table textarea{border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;box-shadow:none!important;}
@@ -1927,10 +1927,12 @@
 
             <!-- ROW 2b: ประเภท (c1-c6) | เลขรหัสพัสดุ (c7-c10) | ว่าง (c11-c16) — ไม่ผสานเซลล์ -->
             <tr>
-              <td colspan="6" style="border:1px solid #000;padding:2px 4px;font-size:11px;background:#fffde7;">
+              <td colspan="6" style="border:1px solid #000;padding:2px 4px;font-size:11px;background:#fffde7;position:relative;">
+                <span style="position:absolute;top:1px;left:2px;color:#888;font-size:8px;line-height:1;">๑</span>
                 ประเภท&nbsp;<input id="fCategory" readonly style="border:none;background:transparent;width:70%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;font-weight:bold;color:#1a1a1a;padding:1px 0;cursor:default;">
               </td>
-              <td colspan="4" style="border:1px solid #000;padding:2px 6px;font-size:11px;background:#f0f0f0;overflow:hidden;">
+              <td colspan="4" style="border:1px solid #000;padding:2px 6px;font-size:11px;background:#f0f0f0;overflow:hidden;position:relative;">
+                <span style="position:absolute;top:1px;left:3px;color:#888;font-size:8px;line-height:1;">๒</span>
                 <span style="color:#666;font-size:10px;white-space:nowrap;">เลขรหัสพัสดุ :</span>
                 &nbsp;<span id="pd2CodeHeader" style="font-weight:bold;color:#cc0000;font-size:11px;white-space:nowrap;">—</span><span id="pd2OldCodeHeader" style="display:none;"></span>
               </td>
@@ -2189,7 +2191,7 @@
 
             <!-- ROW 5: ชื่อพัสดุ+ซื้อ/จ้าง | ชื่อผู้ใช้-ดูแล header | repair 2 -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๑</span> ชื่อพัสดุ&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;position:relative;"><span style="position:absolute;top:1px;right:2px;color:#888;font-size:8.5px;line-height:1;">๓</span>ชื่อพัสดุ&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fName" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;line-height:16px;padding:2px 0;" placeholder="ชื่อครุภัณฑ์">
               </td>
@@ -2272,7 +2274,7 @@
 
             <!-- ROW 6: ซื้อ/จ้าง + blank c7-c10 + repair 3 -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๒</span> ใบส่งของที่&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;position:relative;"><span style="position:absolute;top:1px;right:2px;color:#888;font-size:8.5px;line-height:1;">๔</span>ใบส่งของที่&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fReceipt" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;line-height:16px;padding:2px 0;" placeholder="เลขที่ใบเสร็จ">
               </td>
@@ -2285,7 +2287,7 @@
 
             <!-- ROW 7: ยี่ห้อผู้ผลิต + ราคา/งบ + repair 4 -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;"><span style="color:#888;font-size:9px;">๓</span> ชื่อ/ยี่ห้อผู้ทำหรือผลิต&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;position:relative;"><span style="position:absolute;top:1px;right:2px;color:#888;font-size:8.5px;line-height:1;">๕</span>ชื่อ/ยี่ห้อผู้ทำหรือผลิต&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fBrand" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:2px 0;" placeholder="ยี่ห้อ">
               </td>
@@ -2318,13 +2320,13 @@
             
             <!-- ROW 11-16: แบบ/ชนิด + ค่าเสื่อมราคา (c4-c6) + (photo spanned) + repair 8 -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๔</span> แบบ/ชนิด/ลักษณะ&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;position:relative;"><span style="position:absolute;top:1px;right:2px;color:#888;font-size:8.5px;line-height:1;">๖</span>แบบ/ชนิด/ลักษณะ&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fModel" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="รุ่น/แบบ"></td>
               <td colspan="3" style="border:1px solid #000;background:#f0f0f0;text-align:center;font-weight:bold;font-size:11px;padding:2px 4px;">ค่าเสื่อมราคา</td>
             </tr>
             <!-- ROW 12: หมายเลขลำดับ + ปีที่ ๑ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๕</span> หมายเลขลำดับ&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;position:relative;"><span style="position:absolute;top:1px;right:2px;color:#888;font-size:8.5px;line-height:1;">๗</span>หมายเลขลำดับ&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fOrderNum" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="ลำดับ"></td>
               <td colspan="3" style="border:1px solid #000;padding:0;">
                 <div style="display:flex;align-items:stretch;">
@@ -2336,7 +2338,7 @@
             </tr>
             <!-- ROW 13: หมายเลขเครื่อง + ปีที่ ๒ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๖</span> หมายเลขเครื่อง (ถ้ามี)&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;position:relative;"><span style="position:absolute;top:1px;right:2px;color:#888;font-size:8.5px;line-height:1;">๘</span>หมายเลขเครื่อง (ถ้ามี)&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fSerial" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="S/N"></td>
               <td colspan="3" style="border:1px solid #000;padding:0;">
                 <div style="display:flex;align-items:stretch;">
@@ -2348,7 +2350,7 @@
             </tr>
             <!-- ROW 14: หมายเลขกรอบ + ปีที่ ๓ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๗</span> หมายเลขกรอบ (ถ้ามี)&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;position:relative;"><span style="position:absolute;top:1px;right:2px;color:#888;font-size:8.5px;line-height:1;">๙</span>หมายเลขกรอบ (ถ้ามี)&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fRegNum" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="กรอบ"></td>
               <td colspan="3" style="border:1px solid #000;padding:0;">
                 <div style="display:flex;align-items:stretch;">
@@ -2360,7 +2362,7 @@
             </tr>
             <!-- ROW 15: หมายเลขจดทะเบียน + ปีที่ ๔ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๘</span> หมายเลขจดทะเบียน (ถ้ามี)&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;position:relative;"><span style="position:absolute;top:1px;right:2px;color:#888;font-size:8.5px;line-height:1;">๑๐</span>หมายเลขจดทะเบียน (ถ้ามี)&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fRegNum2" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="ทะเบียน"></td>
               <td colspan="3" style="border:1px solid #000;padding:0;">
                 <div style="display:flex;align-items:stretch;">
@@ -2372,7 +2374,7 @@
             </tr>
             <!-- ROW 16: สีของพัสดุ + ปีที่ ๕ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๙</span> สีของพัสดุ&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;position:relative;"><span style="position:absolute;top:1px;right:2px;color:#888;font-size:8.5px;line-height:1;">๑๑</span>สีของพัสดุ&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fColor" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="สี"></td>
               <td colspan="3" style="border:1px solid #000;padding:0;">
                 <div style="display:flex;align-items:stretch;">
@@ -2390,7 +2392,7 @@
             
             <!-- ROW 19: อื่นๆ + การจำหน่าย HEADER -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;"><span style="color:#888;font-size:9px;">๑๐</span> อื่นๆ (ถ้ามีระบุ)&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;position:relative;"><span style="position:absolute;top:1px;right:2px;color:#888;font-size:8.5px;line-height:1;">๑๒</span>อื่นๆ (ถ้ามีระบุ)&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fOther" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="ระบุ (ถ้ามี)">
                 <input type="hidden" id="fQty" value="1">
@@ -2415,7 +2417,7 @@
 
             <!-- ROW 26: รับประกันถึง + วิธีจำหน่าย + repair ๒๓ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;"><span style="color:#888;font-size:9px;">๑๑</span> พัสดุรับประกันถึงวันที่&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;position:relative;"><span style="position:absolute;top:1px;right:2px;color:#888;font-size:8.5px;line-height:1;">๑๓</span>พัสดุรับประกันถึงวันที่&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fWarrantyExpiry" type="date" class="pd2-date" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;">
               </td>
@@ -2428,7 +2430,7 @@
 
             <!-- ROW 27: บริษัทประกัน + เลขหนังสืออนุมัติ + repair ๒๔ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;"><span style="color:#888;font-size:9px;">๑๒</span> พัสดุประกันไว้ที่บริษัท&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;position:relative;"><span style="position:absolute;top:1px;right:2px;color:#888;font-size:8.5px;line-height:1;">๑๔</span>พัสดุประกันไว้ที่บริษัท&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fWarrantyCompany" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="บริษัทประกัน">
               </td>
@@ -2441,7 +2443,7 @@
 
             <!-- ROW 28: ราคาจำหน่าย + กำไร/ขาดทุน + repair ๒๕ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;"><span style="color:#888;font-size:9px;">๑๓</span> วันที่ประกันพัสดุ&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;position:relative;"><span style="position:absolute;top:1px;right:2px;color:#888;font-size:8.5px;line-height:1;">๑๕</span>วันที่ประกันพัสดุ&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fWarrantyDate" type="date" class="pd2-date" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;">
               </td>
