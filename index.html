@@ -625,9 +625,6 @@
     #content{padding:0!important}
     #pd2Table input,#pd2Table select,#pd2Table textarea{border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;box-shadow:none!important;}
     #pd2Table{border:1.5px solid #000!important;min-width:0!important;}
-    #pd2RepairCell{display:none!important;}
-    .pd2-repair-col{width:0!important;min-width:0!important;max-width:0!important;}
-    #pd2BackPage{display:block!important;page-break-before:always;font-family:'Sarabun',Arial,sans-serif;}
     @page{size:A4 portrait;margin:10mm;}
   }
 
@@ -2568,7 +2565,7 @@
           </div>
 
           <!-- หน้า 2: บันทึกการซ่อม (print only) -->
-          <div id="pd2BackPage" style="display:none;font-family:'Sarabun',Arial,sans-serif;font-size:10px;">
+          <div id="pd2BackPage" style="display:none;page-break-before:always;font-family:'Sarabun',Arial,sans-serif;font-size:10px;">
             <div style="text-align:center;font-weight:bold;font-size:13px;padding:5px 8px;border:1.5px solid #000;background:#fffde7;position:relative;">
               <span style="position:absolute;top:3px;right:6px;font-size:9px;font-weight:600;color:#555;letter-spacing:.5px;">50-10-05</span>
               บันทึกการซ่อม/ปรับปรุงแก้ไขพัสดุ
@@ -6986,7 +6983,18 @@ async function printTKFromForm(type) {
 }
 
 async function printPD2() {
-  // Populate back page (หน้าหลัง) from repair inputs
+  // ซ่อนส่วนซ่อมออกจากหน้า 1 ผ่าน JS (CSS display:none บน <td> ไม่ reliable ทุก browser)
+  var repairCell = document.getElementById('pd2RepairCell');
+  var repairCols = document.querySelectorAll('.pd2-repair-col');
+  var savedColWidths = [];
+  if (repairCell) repairCell.style.display = 'none';
+  repairCols.forEach(function(col) {
+    savedColWidths.push(col.style.width);
+    col.style.width = '0';
+    col.style.minWidth = '0';
+  });
+
+  // Populate back page (หน้าหลัง) from repair inputs แล้วแสดง
   var bp = document.getElementById('pd2BackPage');
   if (bp) {
     var nameEl = document.getElementById('fName');
@@ -7044,6 +7052,13 @@ async function printPD2() {
   }
 
   window.print();
+
+  // Restore หลังพิมพ์
+  if (repairCell) repairCell.style.display = '';
+  repairCols.forEach(function(col, idx) {
+    col.style.width = savedColWidths[idx] || '';
+    col.style.minWidth = '';
+  });
   if (pa) pa.style.display = 'none';
   if (bp) bp.style.display = 'none';
 }
