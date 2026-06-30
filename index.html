@@ -626,7 +626,7 @@
     #pd2Table input,#pd2Table select,#pd2Table textarea{border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;box-shadow:none!important;}
     #pd2Table{border:1.5px solid #000!important;min-width:0!important;table-layout:auto!important;}
     #pd2RepairCell{display:none!important;}
-    .pd2-repair-col{visibility:collapse!important;}
+    .pd2-repair-col{visibility:collapse!important;width:0!important;min-width:0!important;max-width:0!important;}
     @page{size:A4 portrait;margin:10mm;}
   }
 
@@ -6984,15 +6984,21 @@ async function printTKFromForm(type) {
   _doPrintCard(attachBranchInfo(r.data), type);
 }
 
-// beforeprint: ซ่อนส่วนซ่อม + switch auto layout (visibility:collapse บน fixed table ไม่ reliable)
-// afterprint: restore ทุกอย่าง + ซ่อน back page / photo area
+// beforeprint/afterprint: ซ่อนส่วนซ่อม + collapse cols ก่อน render print preview
+// visibility:collapse บน <col> ไม่ reliable ใน Chrome → ต้อง set width:0 ใน auto layout ด้วย
 (function() {
+  var savedColWidths = [];
   window.addEventListener('beforeprint', function() {
     var t = document.getElementById('pd2Table');
     if (t) t.style.tableLayout = 'auto';
     var rc = document.getElementById('pd2RepairCell');
     if (rc) rc.style.display = 'none';
+    savedColWidths = [];
     document.querySelectorAll('.pd2-repair-col').forEach(function(c) {
+      savedColWidths.push(c.style.width);
+      c.style.width = '0';
+      c.style.minWidth = '0';
+      c.style.maxWidth = '0';
       c.style.visibility = 'collapse';
     });
   });
@@ -7001,9 +7007,13 @@ async function printTKFromForm(type) {
     if (t) t.style.tableLayout = '';
     var rc = document.getElementById('pd2RepairCell');
     if (rc) rc.style.display = '';
-    document.querySelectorAll('.pd2-repair-col').forEach(function(c) {
+    document.querySelectorAll('.pd2-repair-col').forEach(function(c, i) {
+      c.style.width = savedColWidths[i] || '';
+      c.style.minWidth = '';
+      c.style.maxWidth = '';
       c.style.visibility = '';
     });
+    savedColWidths = [];
     var bp = document.getElementById('pd2BackPage');
     if (bp) bp.style.display = 'none';
     var pa = document.getElementById('photoPrintArea');
