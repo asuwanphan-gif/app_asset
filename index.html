@@ -624,7 +624,11 @@
     #main{margin:0!important}
     #content{padding:0!important}
     #pd2Table input,#pd2Table select,#pd2Table textarea{border:none!important;background:transparent!important;-webkit-appearance:none;appearance:none;box-shadow:none!important;}
-    #pd2Table{border:1.5px solid #000!important;}
+    #pd2Table{border:1.5px solid #000!important;min-width:0!important;}
+    #pd2RepairCell{display:none!important;}
+    .pd2-repair-col{width:0!important;min-width:0!important;max-width:0!important;}
+    #pd2BackPage{display:block!important;page-break-before:always;font-family:'Sarabun',Arial,sans-serif;}
+    @page{size:A4 portrait;margin:10mm;}
   }
 
   /* ── UNDER CONSTRUCTION ─────────────────────── */
@@ -1903,24 +1907,22 @@
               <col style="width:8%"> <!-- c8 -->
               <col style="width:7%"> <!-- c9 -->
               <col style="width:6%"> <!-- c10 -->
-              <col style="width:3%"> <!-- c11 -->
-              <col style="width:5%"> <!-- c12 -->
-              <col style="width:4%"> <!-- c13 -->
-              <col style="width:8%"> <!-- c14 -->
-              <col style="width:6%"> <!-- c15 -->
-              <col style="width:4%"> <!-- c16 -->
+              <col class="pd2-repair-col" style="width:3%"> <!-- c11 -->
+              <col class="pd2-repair-col" style="width:5%"> <!-- c12 -->
+              <col class="pd2-repair-col" style="width:4%"> <!-- c13 -->
+              <col class="pd2-repair-col" style="width:8%"> <!-- c14 -->
+              <col class="pd2-repair-col" style="width:6%"> <!-- c15 -->
+              <col class="pd2-repair-col" style="width:4%"> <!-- c16 -->
             </colgroup>
 
             <!-- ROW 1: PRE-HEADER (removed — org name shown in ROW 2 title area) -->
 
-            <!-- ROW 2: TITLE (colspan=10) + REPAIR TITLE -->
+            <!-- ROW 2: TITLE (colspan=16) -->
             <tr>
-              <td colspan="10" style="border:1.5px solid #000;text-align:center;padding:6px 8px;font-weight:bold;font-size:14px;background:#fffde7;vertical-align:middle;line-height:1.5;">
+              <td colspan="16" style="border:1.5px solid #000;text-align:center;padding:6px 8px;font-weight:bold;font-size:14px;background:#fffde7;vertical-align:middle;line-height:1.5;position:relative;">
+                <span style="position:absolute;top:3px;right:6px;font-size:9px;font-weight:600;color:#555;letter-spacing:.5px;">50-10-05</span>
                 ทะเบียนพัสดุครุภัณฑ์ ปศุสัตว์และสัตว์พาหนะ<br>
                 <span style="font-size:11px;font-weight:normal;color:#555;">มหาวิทยาลัยราชภัฏศรีสะเกษ อำเภอเมืองศรีสะเกษ จังหวัดศรีสะเกษ</span>
-              </td>
-              <td colspan="6" style="border:1.5px solid #000;text-align:center;padding:4px 6px;font-weight:bold;font-size:12px;background:#fffde7;">
-                บันทึกการซ่อม/ปรับปรุงแก้ไขพัสดุ
               </td>
             </tr>
 
@@ -1933,7 +1935,7 @@
                 <span style="color:#666;font-size:10px;white-space:nowrap;">เลขรหัสพัสดุ :</span>
                 &nbsp;<span id="pd2CodeHeader" style="font-weight:bold;color:#cc0000;font-size:11px;white-space:nowrap;">—</span><span id="pd2OldCodeHeader" style="display:none;"></span>
               </td>
-              <td colspan="6" rowspan="27" style="border:1px solid #000;padding:0;vertical-align:top;height:1px;">
+              <td id="pd2RepairCell" colspan="6" rowspan="27" style="border:1px solid #000;padding:0;vertical-align:top;height:1px;">
                 <table style="width:100%;height:100%;border-collapse:collapse;table-layout:fixed;">
                   <colgroup>
                     <col style="width:7%">
@@ -2188,7 +2190,7 @@
 
             <!-- ROW 5: ชื่อพัสดุ+ซื้อ/จ้าง | ชื่อผู้ใช้-ดูแล header | repair 2 -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">ชื่อพัสดุ&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๑</span> ชื่อพัสดุ&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fName" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;line-height:16px;padding:2px 0;" placeholder="ชื่อครุภัณฑ์">
               </td>
@@ -2271,7 +2273,7 @@
 
             <!-- ROW 6: ซื้อ/จ้าง + blank c7-c10 + repair 3 -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">ใบส่งของที่&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๒</span> ใบส่งของที่&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fReceipt" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;line-height:16px;padding:2px 0;" placeholder="เลขที่ใบเสร็จ">
               </td>
@@ -2284,7 +2286,7 @@
 
             <!-- ROW 7: ยี่ห้อผู้ผลิต + ราคา/งบ + repair 4 -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;">ชื่อ/ยี่ห้อผู้ทำหรือผลิต&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;"><span style="color:#888;font-size:9px;">๓</span> ชื่อ/ยี่ห้อผู้ทำหรือผลิต&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fBrand" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:2px 0;" placeholder="ยี่ห้อ">
               </td>
@@ -2317,13 +2319,13 @@
             
             <!-- ROW 11-16: แบบ/ชนิด + ค่าเสื่อมราคา (c4-c6) + (photo spanned) + repair 8 -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">แบบ/ชนิด/ลักษณะ&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๔</span> แบบ/ชนิด/ลักษณะ&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fModel" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="รุ่น/แบบ"></td>
               <td colspan="3" style="border:1px solid #000;background:#f0f0f0;text-align:center;font-weight:bold;font-size:11px;padding:2px 4px;">ค่าเสื่อมราคา</td>
             </tr>
             <!-- ROW 12: หมายเลขลำดับ + ปีที่ ๑ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">หมายเลขลำดับ&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๕</span> หมายเลขลำดับ&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fOrderNum" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="ลำดับ"></td>
               <td colspan="3" style="border:1px solid #000;padding:0;">
                 <div style="display:flex;align-items:stretch;">
@@ -2335,7 +2337,7 @@
             </tr>
             <!-- ROW 13: หมายเลขเครื่อง + ปีที่ ๒ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">หมายเลขเครื่อง (ถ้ามี)&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๖</span> หมายเลขเครื่อง (ถ้ามี)&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fSerial" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="S/N"></td>
               <td colspan="3" style="border:1px solid #000;padding:0;">
                 <div style="display:flex;align-items:stretch;">
@@ -2347,7 +2349,7 @@
             </tr>
             <!-- ROW 14: หมายเลขกรอบ + ปีที่ ๓ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">หมายเลขกรอบ (ถ้ามี)&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๗</span> หมายเลขกรอบ (ถ้ามี)&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fRegNum" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="กรอบ"></td>
               <td colspan="3" style="border:1px solid #000;padding:0;">
                 <div style="display:flex;align-items:stretch;">
@@ -2359,7 +2361,7 @@
             </tr>
             <!-- ROW 15: หมายเลขจดทะเบียน + ปีที่ ๔ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">หมายเลขจดทะเบียน (ถ้ามี)&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๘</span> หมายเลขจดทะเบียน (ถ้ามี)&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fRegNum2" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="ทะเบียน"></td>
               <td colspan="3" style="border:1px solid #000;padding:0;">
                 <div style="display:flex;align-items:stretch;">
@@ -2371,7 +2373,7 @@
             </tr>
             <!-- ROW 16: สีของพัสดุ + ปีที่ ๕ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">สีของพัสดุ&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;"><span style="color:#888;font-size:9px;">๙</span> สีของพัสดุ&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;"><input id="fColor" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;padding:1px 0;" placeholder="สี"></td>
               <td colspan="3" style="border:1px solid #000;padding:0;">
                 <div style="display:flex;align-items:stretch;">
@@ -2389,7 +2391,7 @@
             
             <!-- ROW 19: อื่นๆ + การจำหน่าย HEADER -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;">อื่นๆ (ถ้ามีระบุ)&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;"><span style="color:#888;font-size:9px;">๑๐</span> อื่นๆ (ถ้ามีระบุ)&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fOther" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="ระบุ (ถ้ามี)">
                 <input type="hidden" id="fQty" value="1">
@@ -2414,7 +2416,7 @@
 
             <!-- ROW 26: รับประกันถึง + วิธีจำหน่าย + repair ๒๓ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;">พัสดุรับประกันถึงวันที่&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;"><span style="color:#888;font-size:9px;">๑๑</span> พัสดุรับประกันถึงวันที่&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fWarrantyExpiry" type="date" class="pd2-date" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;">
               </td>
@@ -2427,7 +2429,7 @@
 
             <!-- ROW 27: บริษัทประกัน + เลขหนังสืออนุมัติ + repair ๒๔ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;">พัสดุประกันไว้ที่บริษัท&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;"><span style="color:#888;font-size:9px;">๑๒</span> พัสดุประกันไว้ที่บริษัท&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fWarrantyCompany" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;" placeholder="บริษัทประกัน">
               </td>
@@ -2440,7 +2442,7 @@
 
             <!-- ROW 28: ราคาจำหน่าย + กำไร/ขาดทุน + repair ๒๕ -->
             <tr>
-              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;">วันที่ประกันพัสดุ&nbsp;:</td>
+              <td style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;"><span style="color:#888;font-size:9px;">๑๓</span> วันที่ประกันพัสดุ&nbsp;:</td>
               <td colspan="2" style="border:1px solid #000;padding:1px 5px;">
                 <input id="fWarrantyDate" type="date" class="pd2-date" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:12px;padding:2px 0;">
               </td>
@@ -2557,7 +2559,65 @@
               <td style="border:1px solid #000;padding:0;"><input id="pd2bAmt2_9" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:1px;text-align:right;"></td>
             </tr>
 
+            <!-- แถว 50-10-05 ล่างขวา -->
+            <tr>
+              <td colspan="16" style="border-top:1.5px solid #000;text-align:right;padding:2px 6px;font-size:9px;color:#555;font-weight:600;letter-spacing:.5px;">50-10-05</td>
+            </tr>
+
           </table>
+          </div>
+
+          <!-- หน้า 2: บันทึกการซ่อม (print only) -->
+          <div id="pd2BackPage" style="display:none;font-family:'Sarabun',Arial,sans-serif;font-size:10px;">
+            <div style="text-align:center;font-weight:bold;font-size:13px;padding:5px 8px;border:1.5px solid #000;background:#fffde7;position:relative;">
+              <span style="position:absolute;top:3px;right:6px;font-size:9px;font-weight:600;color:#555;letter-spacing:.5px;">50-10-05</span>
+              บันทึกการซ่อม/ปรับปรุงแก้ไขพัสดุ
+            </div>
+            <div style="border:1px solid #000;border-top:none;padding:3px 6px;font-size:10px;margin-bottom:4px;">
+              ชื่อพัสดุ : <span id="bpAssetName" style="font-weight:bold;"></span>&emsp; รหัสพัสดุ : <span id="bpAssetCode" style="font-weight:bold;color:#cc0000;"></span>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:10px;table-layout:fixed;">
+              <colgroup><col style="width:7%"><col style="width:13%"><col style="width:11%"><col style="width:32%"><col style="width:11%"><col style="width:14%"><col style="width:12%"></colgroup>
+              <tr>
+                <td rowspan="2" style="border:1px solid #000;padding:2px;text-align:center;font-weight:bold;background:#f0f0f0;vertical-align:middle;">ครั้งที่</td>
+                <td colspan="2" style="border:1px solid #000;padding:2px;text-align:center;font-weight:bold;background:#f0f0f0;">หนังสืออนุมัติ</td>
+                <td rowspan="2" style="border:1px solid #000;padding:2px;text-align:center;font-weight:bold;background:#f0f0f0;vertical-align:middle;line-height:1.3;">รายการซ่อม/ปรับปรุงแก้ไข</td>
+                <td colspan="2" style="border:1px solid #000;padding:2px;text-align:center;font-weight:bold;background:#f0f0f0;">ชื่อบุคคล - บริษัท</td>
+                <td rowspan="2" style="border:1px solid #000;padding:2px;text-align:center;font-weight:bold;background:#f0f0f0;vertical-align:middle;">หมายเหตุ</td>
+              </tr>
+              <tr>
+                <td style="border:1px solid #000;padding:2px;text-align:center;background:#f0f0f0;">เลขที่หนังสือ</td>
+                <td style="border:1px solid #000;padding:2px;text-align:center;background:#f0f0f0;">ลงวันที่</td>
+                <td style="border:1px solid #000;padding:2px;text-align:center;background:#f0f0f0;">จำนวนเงิน (บาท)</td>
+                <td style="border:1px solid #000;padding:2px;text-align:center;background:#f0f0f0;">ผู้ซ่อม/ปรับปรุง</td>
+              </tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๑</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_1"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_1"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_1"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_1"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_1"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๒</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_2"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_2"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_2"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_2"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_2"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๓</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_3"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_3"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_3"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_3"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_3"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๔</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_4"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_4"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_4"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_4"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_4"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๕</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_5"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_5"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_5"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_5"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_5"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๖</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_6"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_6"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_6"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_6"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_6"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๗</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_7"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_7"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_7"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_7"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_7"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๘</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_8"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_8"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_8"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_8"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_8"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๙</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_9"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_9"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_9"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_9"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_9"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๑๐</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_10"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_10"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_10"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_10"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_10"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๑๑</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_11"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_11"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_11"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_11"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_11"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๑๒</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_12"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_12"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_12"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_12"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_12"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๑๓</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_13"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_13"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_13"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_13"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_13"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๑๔</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_14"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_14"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_14"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_14"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_14"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๑๕</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_15"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_15"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_15"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_15"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_15"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๑๖</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_16"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_16"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_16"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_16"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_16"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๑๗</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_17"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_17"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_17"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_17"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_17"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๑๘</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_18"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_18"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_18"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_18"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_18"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๑๙</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_19"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_19"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_19"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_19"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_19"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๒๐</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_20"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_20"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_20"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_20"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_20"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๒๑</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_21"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_21"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_21"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_21"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_21"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๒๒</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_22"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_22"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_22"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_22"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_22"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๒๓</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_23"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_23"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_23"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_23"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_23"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๒๔</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_24"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_24"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_24"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_24"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_24"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+              <tr style="height:22px;"><td style="border:1px solid #000;padding:1px;text-align:center;">๒๕</td><td style="border:1px solid #000;padding:1px;"><span id="bpRef_25"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDate_25"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpDetail_25"></span></td><td style="border:1px solid #000;padding:1px;text-align:right;"><span id="bpAmt_25"></span></td><td style="border:1px solid #000;padding:1px;"><span id="bpVendor_25"></span></td><td style="border:1px solid #000;padding:1px;"></td></tr>
+            </table>
+            <div style="text-align:right;font-size:9px;color:#555;margin-top:5px;font-weight:600;letter-spacing:.5px;">50-10-05</div>
           </div>
 
           <!-- Save/Cancel/Print buttons (hidden on print) -->
@@ -6925,8 +6985,41 @@ async function printTKFromForm(type) {
   _doPrintCard(attachBranchInfo(r.data), type);
 }
 
-function printPD2() {
-  // Show photo print area if photos exist
+async function printPD2() {
+  // Populate back page (หน้าหลัง) from repair inputs
+  var bp = document.getElementById('pd2BackPage');
+  if (bp) {
+    var nameEl = document.getElementById('fName');
+    var codeEl = document.getElementById('pd2CodeHeader');
+    var bpName = document.getElementById('bpAssetName');
+    var bpCode = document.getElementById('bpAssetCode');
+    if (bpName && nameEl) bpName.textContent = nameEl.value || '';
+    if (bpCode && codeEl) bpCode.textContent = codeEl.textContent || '';
+    for (var i = 1; i <= 25; i++) {
+      var src = {
+        ref: document.getElementById('pd2rRef_' + i),
+        date: document.getElementById('pd2rDate_' + i),
+        detail: document.getElementById('pd2rDetail_' + i),
+        amt: document.getElementById('pd2rAmt_' + i),
+        vendor: document.getElementById('pd2rVendor_' + i)
+      };
+      var dst = {
+        ref: document.getElementById('bpRef_' + i),
+        date: document.getElementById('bpDate_' + i),
+        detail: document.getElementById('bpDetail_' + i),
+        amt: document.getElementById('bpAmt_' + i),
+        vendor: document.getElementById('bpVendor_' + i)
+      };
+      if (dst.ref) dst.ref.textContent = src.ref ? src.ref.value : '';
+      if (dst.date) dst.date.textContent = src.date ? src.date.textContent : '';
+      if (dst.detail) dst.detail.textContent = src.detail ? src.detail.value : '';
+      if (dst.amt) dst.amt.textContent = src.amt && src.amt.value ? src.amt.value : '';
+      if (dst.vendor) dst.vendor.textContent = src.vendor ? src.vendor.value : '';
+    }
+    bp.style.display = '';
+  }
+
+  // Wait for photos to load before printing
   var p1 = document.getElementById('photo1Preview');
   var p2 = document.getElementById('photo2Preview');
   var pa = document.getElementById('photoPrintArea');
@@ -6935,14 +7028,24 @@ function printPD2() {
     var imgs2 = p2 ? p2.querySelectorAll('img') : [];
     var pr1 = document.getElementById('photo1Print');
     var pr2 = document.getElementById('photo2Print');
-    if (imgs1.length && pr1) pr1.src = imgs1[0].src;
-    if (imgs2.length && pr2) pr2.src = imgs2[0].src;
-    if ((imgs1.length || imgs2.length)) {
+    var loadPromises = [];
+    if (imgs1.length && pr1) {
+      pr1.src = imgs1[0].src;
+      if (!pr1.complete) loadPromises.push(new Promise(function(res) { pr1.onload = res; pr1.onerror = res; }));
+    }
+    if (imgs2.length && pr2) {
+      pr2.src = imgs2[0].src;
+      if (!pr2.complete) loadPromises.push(new Promise(function(res) { pr2.onload = res; pr2.onerror = res; }));
+    }
+    if (imgs1.length || imgs2.length) {
       pa.style.display = '';
+      if (loadPromises.length) await Promise.all(loadPromises);
     }
   }
+
   window.print();
   if (pa) pa.style.display = 'none';
+  if (bp) bp.style.display = 'none';
 }
 
 // พิมพ์จากฟอร์มแก้ไข — ถ้ามีการเปลี่ยนแปลงจะบันทึกก่อนพิมพ์
