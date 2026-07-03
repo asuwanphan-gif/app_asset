@@ -2179,10 +2179,17 @@
                 <input id="fName" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;line-height:16px;padding:2px 0;" placeholder="ชื่อครุภัณฑ์">
                 <span style="position:absolute;top:50%;right:2px;transform:translateY(-50%);color:#888;font-size:8.5px;line-height:1;">๓</span>
               </td>
-              <td colspan="2" style="border:1px solid #000;padding:2px 5px;font-size:11px;background:#f0f0f0;white-space:nowrap;">ซื้อ/จ้าง/ได้มา จาก&nbsp;:</td>
-              <td colspan="1" style="border:1px solid #000;padding:1px 5px;position:relative;">
-                <input id="fVendor" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;line-height:16px;padding:2px 0;" placeholder="ร้าน/บริษัท">
-                <input type="hidden" id="fMethod">
+              <td style="border:1px solid #000;padding:2px 5px;font-size:10px;background:#f0f0f0;line-height:1.15;">ซื้อ/จ้าง/ได้มา จาก&nbsp;:</td>
+              <td colspan="2" style="border:1px solid #000;padding:1px 5px;position:relative;">
+                <span style="display:flex;gap:4px;width:100%;">
+                  <input id="fMethod" list="methodList" style="border:none;border-right:1px solid #ccc;background:transparent;flex:1;min-width:0;font-family:'Sarabun',Arial,sans-serif;font-size:11px;line-height:16px;padding:2px 4px 2px 0;" placeholder="วิธีการได้มา">
+                  <input id="fVendor" style="border:none;background:transparent;flex:1;min-width:0;font-family:'Sarabun',Arial,sans-serif;font-size:11px;line-height:16px;padding:2px 0;" placeholder="ร้าน/บริษัท">
+                </span>
+                <datalist id="methodList">
+                  <option value="วิธีเฉพาะเจาะจง">
+                  <option value="วิธีประกาศเชิญชวนทั่วไป (e-bidding)">
+                  <option value="วิธีคัดเลือก">
+                </datalist>
                 <input type="hidden" id="fAssetCode"><input type="hidden" id="fOldCode">
                 <span style="position:absolute;top:50%;right:2px;transform:translateY(-50%);color:#888;font-size:8.5px;line-height:1;">๑๔</span>
               </td>
@@ -2299,14 +2306,14 @@
               <td colspan="1" style="border:1px solid #000;padding:1px 3px;position:relative;">
                 <span style="display:inline-flex;align-items:center;gap:2px;width:100%;">
                   <span style="font-size:8.5px;color:#666;white-space:nowrap;flex-shrink:0;">งบ:</span>
-                  <select id="fBudget" style="border:none;background:transparent;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:0;flex:1;min-width:0;">
-                    <option value="">-- เลือก --</option>
-                    <option>งบแผ่นดิน</option>
-                    <option>เงินรายได้</option>
-                    <option>เงินบริจาค</option>
-                    <option>โอนมาจาก</option>
-                    <option>อื่นๆ</option>
-                  </select>
+                  <input id="fBudget" list="budgetList" style="border:none;background:transparent;font-family:'Sarabun',Arial,sans-serif;font-size:10px;padding:0;flex:1;min-width:0;" placeholder="-- เลือก --">
+                  <datalist id="budgetList">
+                    <option value="งบแผ่นดิน">
+                    <option value="เงินรายได้">
+                    <option value="เงินบริจาค">
+                    <option value="โอนมาจาก">
+                    <option value="อื่นๆ">
+                  </datalist>
                 </span>
                 <span style="position:absolute;top:50%;right:2px;transform:translateY(-50%);color:#888;font-size:8.5px;line-height:1;">๑๖</span>
               </td>
@@ -6777,6 +6784,10 @@ async function doImportModal() {
           serial_number: serial || null,
           location:      loc || null,
           custodian:     cust || null,
+          budget_type:         String(r['งบ'] || r['งบประมาณ'] || r.budget_type || '').trim() || null,
+          acquisition_method:  String(r['วิธีการได้มา'] || r['วิธีการ'] || r.acquisition_method || '').trim() || null,
+          vendor:              String(r['ร้านค้า/บริษัท/หจก.'] || r['ร้านค้า/บริษัท หจก.'] || r['ร้านค้า'] || r.vendor || '').trim() || null,
+          receipt_number:      String(r['เลขที่ใบส่งของ/ใบเสร็จ'] || r['เลขที่ใบเสร็จ'] || r.receipt_number || '').trim() || null,
           notes:         String(r['หมายเหตุ'] || r.notes || '').trim() || null,
           status: (function() {
             // ถ้า Excel มีคอลัมน์ผลตรวจสอบ (พบ/ไม่พบ/ชำรุด...) ให้ใช้ค่านั้น
