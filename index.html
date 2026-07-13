@@ -2263,8 +2263,8 @@
                       </div>
                       <div id="photoPrintArea" style="display:none;">
                         <div style="display:flex;gap:4px;">
-                          <img id="photo1Print" src="" style="flex:1;max-width:48%;max-height:120px;border:1px solid #ccc;object-fit:cover;">
-                          <img id="photo2Print" src="" style="flex:1;max-width:48%;max-height:120px;border:1px solid #ccc;object-fit:cover;">
+                          <img id="photo1Print" src="" style="flex:1;max-width:48%;max-height:260px;border:1px solid #ccc;object-fit:cover;">
+                          <img id="photo2Print" src="" style="flex:1;max-width:48%;max-height:260px;border:1px solid #ccc;object-fit:cover;">
                         </div>
                       </div>
                       <div class="photo-placeholder-box" style="display:none;border:1px solid #ccc;min-height:100px;"></div>
@@ -6988,6 +6988,9 @@ async function printTKFromForm(type) {
 // visibility:collapse บน <col> ไม่ reliable ใน Chrome → ต้อง set width:0 ใน auto layout ด้วย
 (function() {
   var savedColWidths = [];
+  var savedFNameFontSize = '';
+  var savedPrice = { type: '', value: '' };
+  var savedDate = { type: '', value: '' };
   window.addEventListener('beforeprint', function() {
     var t = document.getElementById('pd2Table');
     if (t) t.style.tableLayout = 'auto';
@@ -7001,6 +7004,37 @@ async function printTKFromForm(type) {
       c.style.maxWidth = '0';
       c.style.visibility = 'collapse';
     });
+    // ชื่อพัสดุยาว → ลดขนาดตัวอักษรเฉพาะช่องนี้ให้พอดี 1 บรรทัด
+    var fName = document.getElementById('fName');
+    if (fName) {
+      savedFNameFontSize = fName.style.fontSize;
+      var len = (fName.value || '').length;
+      fName.style.fontSize = len > 55 ? '8px' : len > 40 ? '9px' : len > 28 ? '10px' : '11px';
+    }
+    // ราคา → ใส่ , คั่นหลักพันตอนพิมพ์ (number input ใส่ , ไม่ได้ ต้องสลับเป็น text ชั่วคราว)
+    var fPrice = document.getElementById('fPrice');
+    if (fPrice) {
+      savedPrice.type = fPrice.type;
+      savedPrice.value = fPrice.value;
+      var priceNum = parseFloat(fPrice.value);
+      fPrice.type = 'text';
+      fPrice.value = isNaN(priceNum) ? '' : priceNum.toLocaleString('th-TH', { maximumFractionDigits: 2 });
+    }
+    // ซื้อ/จ้าง/ได้มา วันที่ → แปลงเป็นวันเดือนปีไทยแบบย่อ เช่น 7 เม.ย. 69
+    // ช่องนี้ใช้ flatpickr(altInput:true) → ตัวที่มองเห็น/พิมพ์จริงคือ altInput ไม่ใช่ fAcquiredDate เดิม (ถูกซ่อน)
+    var fDate = document.getElementById('fAcquiredDate');
+    if (fDate && fDate._flatpickr && fDate._flatpickr.altInput) {
+      var altInput = fDate._flatpickr.altInput;
+      savedDate.el = altInput;
+      savedDate.value = altInput.value;
+      altInput.value = _thDateShort(fDate.value);
+    } else if (fDate) {
+      savedDate.el = fDate;
+      savedDate.type = fDate.type;
+      savedDate.value = fDate.value;
+      fDate.type = 'text';
+      fDate.value = _thDateShort(fDate.value);
+    }
     // setup photo print area — ใช้ cache URL แทนการ query DOM ใน no-print
     var pa = document.getElementById('photoPrintArea');
     var pb = document.querySelector('.photo-placeholder-box');
@@ -7026,6 +7060,15 @@ async function printTKFromForm(type) {
       c.style.visibility = '';
     });
     savedColWidths = [];
+    var fName = document.getElementById('fName');
+    if (fName) fName.style.fontSize = savedFNameFontSize;
+    var fPrice = document.getElementById('fPrice');
+    if (fPrice && savedPrice.type) { fPrice.type = savedPrice.type; fPrice.value = savedPrice.value; }
+    if (savedDate.el) {
+      if (savedDate.type) savedDate.el.type = savedDate.type;
+      savedDate.el.value = savedDate.value;
+    }
+    savedDate = {};
     var bp = document.getElementById('pd2BackPage');
     if (bp) bp.style.display = 'none';
     var pa = document.getElementById('photoPrintArea');
@@ -10096,6 +10139,15 @@ function _thDatePrint(s) {
 function _thMoneyPrint(n) {
   if (!n && n !== 0) return '—';
   return Number(n).toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+var _THAI_MONTHS_SHORT = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+function _thDateShort(s) {
+  if (!s) return '';
+  var d = new Date(s);
+  if (isNaN(d)) return '';
+  var yy = String((d.getFullYear() + 543) % 100);
+  if (yy.length < 2) yy = '0' + yy;
+  return d.getDate() + ' ' + _THAI_MONTHS_SHORT[d.getMonth()] + ' ' + yy;
 }
 function _thYearPrint(s) {
   if (!s) return 0;
