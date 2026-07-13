@@ -2216,7 +2216,7 @@
                     <td style="border:1px solid #000;padding:0 2px;text-align:center;vertical-align:middle;font-size:11px;"><span id="pd2CustYear" style="font-weight:bold;color:#cc0000;"></span></td>
                     <td style="border:1px solid #000;padding:0 3px;vertical-align:middle;font-size:11px;"><span id="pd2CustDept" style="color:#cc0000;"></span></td>
                     <td style="border:1px solid #000;padding:0;vertical-align:middle;font-size:11px;"><input id="pd2CustName" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;color:#cc0000;padding:0 3px;height:16px;"></td>
-                    <td style="border:1px solid #000;padding:0 3px;vertical-align:middle;font-size:11px;"><input id="fBossName" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:11px;color:#cc0000;padding:0;height:16px;" placeholder=""></td>
+                    <td style="border:1px solid #000;padding:0 3px;vertical-align:middle;font-size:11px;"><input id="fBossName" style="border:none;background:transparent;width:100%;font-family:'Sarabun',Arial,sans-serif;font-size:9px;color:#cc0000;padding:0;height:16px;" placeholder=""></td>
                   </tr>
                   <tr style="height:16px;"><td style="border:1px solid #000;padding:0;"></td><td style="border:1px solid #000;padding:0;"></td><td style="border:1px solid #000;padding:0;"></td><td style="border:1px solid #000;padding:0;"></td></tr>
                   <tr style="height:16px;"><td style="border:1px solid #000;padding:0;"></td><td style="border:1px solid #000;padding:0;"></td><td style="border:1px solid #000;padding:0;"></td><td style="border:1px solid #000;padding:0;"></td></tr>
@@ -7004,12 +7004,18 @@ async function printTKFromForm(type) {
       c.style.maxWidth = '0';
       c.style.visibility = 'collapse';
     });
-    // ชื่อพัสดุยาว → ลดขนาดตัวอักษรเฉพาะช่องนี้ให้พอดี 1 บรรทัด
+    // ชื่อพัสดุยาว → วัดความกว้างจริงแล้วคำนวณ font-size ให้พอดี 1 บรรทัดเป๊ะๆ (ไม่เดา threshold)
     var fName = document.getElementById('fName');
     if (fName) {
       savedFNameFontSize = fName.style.fontSize;
-      var len = (fName.value || '').length;
-      fName.style.fontSize = len > 55 ? '8px' : len > 40 ? '9px' : len > 28 ? '10px' : '11px';
+      var baseSize = 11;
+      fName.style.fontSize = baseSize + 'px';
+      var avail = fName.clientWidth;
+      var needed = fName.scrollWidth;
+      if (needed > avail && avail > 0) {
+        var fit = Math.floor(baseSize * (avail / needed) * 10) / 10;
+        fName.style.fontSize = Math.max(6, Math.min(baseSize, fit)) + 'px';
+      }
     }
     // ราคา → ใส่ , คั่นหลักพันตอนพิมพ์ (number input ใส่ , ไม่ได้ ต้องสลับเป็น text ชั่วคราว)
     var fPrice = document.getElementById('fPrice');
