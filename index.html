@@ -885,14 +885,6 @@
       <span>ระบบทะเบียนครุภัณฑ์</span>
     </div>
     <div class="sb-org">คณะศิลปศาสตร์และวิทยาศาสตร์<br>มหาวิทยาลัยราชภัฏศรีสะเกษ</div>
-    <div class="sb-fs-row">
-      <span class="sb-fs-label"><i class="bi bi-type" style="margin-right:5px;"></i>ขนาดตัวอักษร</span>
-      <div class="sb-fs-group" id="sbFsGroup">
-        <button class="sb-fs-btn" data-fs="1" onclick="setAppFontSize(1)">ก</button>
-        <button class="sb-fs-btn" data-fs="2" onclick="setAppFontSize(2)">ก</button>
-        <button class="sb-fs-btn" data-fs="3" onclick="setAppFontSize(3)">ก</button>
-      </div>
-    </div>
     <div class="sb-user" id="sbUserCard" onclick="_sbTogglePopover(event)" style="position:relative;">
       <div class="sb-user-avatar" id="sbAvatar"><i class="bi bi-person-fill"></i></div>
       <div class="sb-user-name" id="sbUserName">-</div>
@@ -928,6 +920,14 @@
     <div class="nav-link" id="menuAdminUsers" onclick="showPage('admin-users')"><i class="bi bi-people-fill"></i>จัดการผู้ใช้</div>
   </div>
   <div style="padding:0 12px 10px;">
+    <div class="sb-fs-row" style="margin:0 2px 10px;">
+      <span class="sb-fs-label"><i class="bi bi-type" style="margin-right:5px;"></i>ขนาดตัวอักษร</span>
+      <div class="sb-fs-group" id="sbFsGroup">
+        <button class="sb-fs-btn" data-fs="1" onclick="setAppFontSize(1)">ก</button>
+        <button class="sb-fs-btn" data-fs="2" onclick="setAppFontSize(2)">ก</button>
+        <button class="sb-fs-btn" data-fs="3" onclick="setAppFontSize(3)">ก</button>
+      </div>
+    </div>
     <button onclick="doLogout()" style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:9px;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.08);color:#fca5a5;font-size:13px;font-weight:600;font-family:Anuphan;cursor:pointer;transition:all .17s;" onmouseover="this.style.background='rgba(239,68,68,.2)'" onmouseout="this.style.background='rgba(239,68,68,.08)'">
       <i class="bi bi-box-arrow-left" style="font-size:16px;"></i>ออกจากระบบ
     </button>
