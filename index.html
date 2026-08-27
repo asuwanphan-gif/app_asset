@@ -216,6 +216,19 @@
   .sb-pop-btn:hover{background:rgba(255,255,255,.08);color:#fff;}
   .sb-pop-danger{color:#fca5a5!important;font-weight:600;}
   .sb-pop-danger:hover{background:rgba(239,68,68,.18)!important;color:#fecaca!important;}
+  .sb-fs-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px 6px;}
+  .sb-fs-label{font-size:11.5px;color:rgba(255,255,255,.45);font-family:'Anuphan',sans-serif;white-space:nowrap;}
+  .sb-fs-group{display:flex;gap:3px;background:rgba(255,255,255,.06);border-radius:7px;padding:2px;}
+  .sb-fs-btn{
+    border:none;background:none;color:rgba(255,255,255,.6);cursor:pointer;
+    border-radius:5px;padding:3px 8px;font-family:'Anuphan',sans-serif;font-weight:700;
+    transition:all .15s;line-height:1.5;
+  }
+  .sb-fs-btn:nth-child(1){font-size:11px;}
+  .sb-fs-btn:nth-child(2){font-size:13px;}
+  .sb-fs-btn:nth-child(3){font-size:15px;}
+  .sb-fs-btn:hover{color:#fff;}
+  .sb-fs-btn.active{background:rgba(59,130,246,.28);color:#93c5fd;}
 
 
   /* ── MAIN ─────────────────────── */
@@ -595,7 +608,7 @@
 
   /* ── PRINT ─────────────────────── */
   @media print{
-    html,body{background:#fff!important}
+    html,body{background:#fff!important;zoom:1!important}
     #sidebar,#topbar,#bottomnav,.no-print,.toast-container{display:none!important}
     #main{margin:0!important;background:#fff!important}
     #content{padding:0!important;background:#fff!important}
@@ -879,6 +892,15 @@
       <div class="sb-popover" id="sbPopover" style="display:none;" onclick="event.stopPropagation()">
         <button class="sb-pop-btn" onclick="showHelp();_sbClosePopover()"><i class="bi bi-question-circle"></i>วิธีใช้งาน</button>
         <button class="sb-pop-btn" onclick="openChangePassword();_sbClosePopover()"><i class="bi bi-key"></i>เปลี่ยนรหัสผ่าน</button>
+        <div style="border-top:1px solid rgba(255,255,255,.08);margin:4px 2px;"></div>
+        <div class="sb-fs-row">
+          <span class="sb-fs-label"><i class="bi bi-type" style="margin-right:5px;"></i>ขนาดตัวอักษร</span>
+          <div class="sb-fs-group" id="sbFsGroup">
+            <button class="sb-fs-btn" data-fs="1" onclick="setAppFontSize(1)">ก</button>
+            <button class="sb-fs-btn" data-fs="2" onclick="setAppFontSize(2)">ก</button>
+            <button class="sb-fs-btn" data-fs="3" onclick="setAppFontSize(3)">ก</button>
+          </div>
+        </div>
         <div style="border-top:1px solid rgba(255,255,255,.08);margin:4px 2px;"></div>
         <button class="sb-pop-btn sb-pop-danger" onclick="doLogout()"><i class="bi bi-box-arrow-left"></i>ออกจากระบบ</button>
       </div>
@@ -3659,6 +3681,21 @@ document.addEventListener('click', function(e) {
   var card = document.getElementById('sbUserCard');
   if (card && !card.contains(e.target)) _sbClosePopover();
 });
+
+// ── ปรับขนาดตัวอักษรทั้งแอป (3 ระดับ) — จำค่าไว้ใน localStorage ──
+function setAppFontSize(level) {
+  var zoomMap = { 1: '100%', 2: '115%', 3: '130%' };
+  document.documentElement.style.zoom = zoomMap[level] || '100%';
+  try { localStorage.setItem('pd_fontsize', String(level)); } catch (_) {}
+  document.querySelectorAll('.sb-fs-btn').forEach(function (b) {
+    b.classList.toggle('active', b.getAttribute('data-fs') === String(level));
+  });
+}
+(function _applySavedFontSize() {
+  var saved = 1;
+  try { saved = parseInt(localStorage.getItem('pd_fontsize'), 10) || 1; } catch (_) {}
+  setAppFontSize(saved);
+})();
 
 function openChangePassword() {
   var overlay = document.createElement('div');
