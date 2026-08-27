@@ -647,7 +647,11 @@
   border:1px solid #ccc;border-radius:4px;padding:4mm;
   display:flex;flex-direction:column;align-items:center;gap:2mm;
   font-family:'Anuphan',sans-serif;page-break-inside:avoid;
+  min-width:0;
 }
+.qr-sticker-item img,.qr-sticker-item>div[id^="qrstk_"]{max-width:100%;height:auto;}
+@media screen and (max-width:768px){.qr-sticker-grid{grid-template-columns:repeat(2,1fr);}}
+@media screen and (max-width:480px){.qr-sticker-grid{grid-template-columns:1fr;}}
 .qr-sticker-org{font-size:7.5pt;color:#374151;text-align:center;font-weight:600;line-height:1.3;}
 .qr-sticker-org:first-child{font-size:6.5pt;color:#6b7280;font-weight:400;letter-spacing:.5px;text-transform:uppercase;}
 .qr-sticker-name{font-size:8pt;color:#111827;text-align:center;font-weight:700;line-height:1.3;max-width:100%;word-break:break-word;}
@@ -806,7 +810,7 @@
       <button id="fbAdminReportBtn" onclick="Feedback.close();Feedback.openReport()" style="display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:7px;font-size:12px;padding:4px 10px;cursor:pointer;font-family:Anuphan;white-space:nowrap;"><i class="bi bi-bar-chart-fill me-1"></i>ดูรายงาน</button>
       <button class="modal-hdr-close" onclick="Feedback.close()">&#x2715;</button>
     </div>
-    <div class="modal-bdy">
+    <div class="modal-bdy" style="max-height:65vh;overflow-y:auto;">
       <div style="margin-bottom:18px;text-align:center;">
         <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">ความพึงพอใจโดยรวม <span style="color:#ef4444;">*</span></div>
         <div id="fbStars" style="font-size:38px;letter-spacing:6px;line-height:1;"></div>
@@ -1303,11 +1307,12 @@
                 </tbody>
               </table>
             </div>
+            <div id="qrPagerBox"></div>
           </div>
         </div>
       </div>
       <!-- Sticker preview/print area -->
-      <div id="qrStickerOutput" style="margin-top:16px;"></div>
+      <div id="qrStickerOutput" style="margin-top:16px;overflow-x:auto;"></div>
     </div>
 
     <!-- Modal: QR Code -->
@@ -3177,7 +3182,7 @@
             <label for="impFile" style="cursor:pointer;background:#1e40af;color:#fff;padding:7px 18px;border-radius:8px;font-family:Anuphan;font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0;">
               <i class="bi bi-folder2-open me-1"></i>เลือกไฟล์
             </label>
-            <span id="impFileName" style="font-family:Anuphan;font-size:13px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">ยังไม่ได้เลือกไฟล์</span>
+            <span id="impFileName" style="font-family:Anuphan;font-size:13px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">ยังไม่ได้เลือกไฟล์</span>
             <input id="impFile" type="file" accept=".xlsx,.xls" style="display:none;" onchange="previewImport(); document.getElementById('impFileName').textContent = this.files[0] ? this.files[0].name : 'ยังไม่ได้เลือกไฟล์';">
           </div>
         </div>
@@ -3460,7 +3465,7 @@ function showConfirm(title, message, opts) {
     var overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:10000;display:flex;align-items:center;justify-content:center;animation:fadeIn .15s;';
     overlay.innerHTML =
-      '<div style="background:#fff;border-radius:16px;padding:28px 28px 22px;min-width:320px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:Anuphan;animation:slideUp .18s;">' +
+      '<div style="background:#fff;border-radius:16px;padding:28px 28px 22px;min-width:320px;max-width:420px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:Anuphan;animation:slideUp .18s;">' +
         '<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:18px;">' +
           '<div style="flex-shrink:0;width:42px;height:42px;border-radius:50%;background:' + (opts.iconBg || '#eff6ff') + ';display:flex;align-items:center;justify-content:center;">' +
             '<i class="bi ' + icon + '" style="font-size:20px;color:' + iconColor + ';"></i>' +
@@ -3494,7 +3499,7 @@ function showDangerConfirm(opts) {
     var overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:10000;display:flex;align-items:center;justify-content:center;animation:fadeIn .15s;';
     overlay.innerHTML =
-      '<div style="background:#fff;border-radius:16px;padding:26px 26px 20px;min-width:320px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);font-family:Anuphan;animation:slideUp .18s;">' +
+      '<div style="background:#fff;border-radius:16px;padding:26px 26px 20px;min-width:320px;max-width:440px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);font-family:Anuphan;animation:slideUp .18s;">' +
         '<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;">' +
           '<div style="flex-shrink:0;width:42px;height:42px;border-radius:50%;background:#fef2f2;display:flex;align-items:center;justify-content:center;">' +
             '<i class="bi bi-exclamation-triangle-fill" style="font-size:20px;color:#dc2626;"></i>' +
@@ -8336,7 +8341,7 @@ async function _loadBranchInspDashboard(insp, showAll) {
   var barColor  = pct===100?'#22c55e':pct>=50?'#f59e0b':'#3b82f6';
 
   var statsHtml =
-    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">' +
+    '<div class="stat-grid" style="margin-bottom:16px;">' +
     _ovStatCard(total,    'รวมทั้งหมด',    '#2563eb',  'bi-archive-fill',       'goFillInspection()') +
     _ovStatCard(done,     'ตรวจแล้ว',      '#22c55e',  'bi-check-circle-fill',  '_goInspFilter(\'done\')') +
     _ovStatCard(remaining,'ยังไม่ตรวจ',    '#f59e0b',  'bi-hourglass-split',    '_goInspFilter(\'pending\')') +
@@ -8543,7 +8548,7 @@ function _renderInspOverview(totalAssets, totalDone, totalPct) {
 
   // Summary stats box
   var statsBox =
-    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">' +
+    '<div class="stat-grid" style="margin-bottom:14px;">' +
       _ovStatCard(totalAssets, 'รวมทั้งหมด', '#2563eb', 'bi-archive-fill', '_goInspFilter(\'\')') +
       _ovStatCard(totalDone, 'ตรวจแล้ว', '#22c55e', 'bi-check-circle-fill', '_goInspFilter(\'done\')') +
       _ovStatCard(totalAssets - totalDone, 'ยังไม่ตรวจ', '#f59e0b', 'bi-hourglass-split', '_goInspFilter(\'pending\')') +
@@ -12351,9 +12356,9 @@ async function _loadScanProgress() {
     var barColor = pct >= 100 ? '#059669' : pct >= 50 ? '#2563eb' : '#f59e0b';
     card.style.display = '';
     card.innerHTML =
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-family:Anuphan;">'
-      + '<div style="font-size:13px;font-weight:700;color:#0f172a;"><i class="bi bi-clipboard2-pulse me-1" style="color:#2563eb;"></i>' + inspName + '</div>'
-      + '<div style="font-size:12px;color:#64748b;">' + done + ' / ' + total + ' ชิ้น</div>'
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-family:Anuphan;gap:8px;">'
+      + '<div style="min-width:0;font-size:13px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + inspName + '"><i class="bi bi-clipboard2-pulse me-1" style="color:#2563eb;"></i>' + inspName + '</div>'
+      + '<div style="flex-shrink:0;font-size:12px;color:#64748b;">' + done + ' / ' + total + ' ชิ้น</div>'
       + '</div>'
       + '<div style="background:#e2e8f0;border-radius:99px;height:8px;overflow:hidden;">'
       + '<div style="background:' + barColor + ';height:100%;width:' + pct + '%;border-radius:99px;transition:width .5s;"></div>'
@@ -12505,6 +12510,8 @@ async function loadQRStickerPage() {
   }
   _qrAllAssets = assets;
   _qrFilteredAssets = assets;
+  Pager.bind('qrAssets', function(){ _renderQRTable(_qrFilteredAssets); }, { sizes: [10,25,50,100], defaultSize: 25 });
+  Pager.reset('qrAssets');
 
   // Populate year filter
   var years = {};
@@ -12543,6 +12550,7 @@ function filterQRAssets() {
     return mS && mY && mB && mSt;
   });
   _qrFilteredAssets = filtered;
+  Pager.reset('qrAssets');
   _renderQRTable(filtered);
 }
 
@@ -12555,20 +12563,25 @@ function clearQRFilter() {
 
 function _renderQRTable(assets) {
   var tbody = document.getElementById('qrAssetTableBody');
+  var pagerBox = document.getElementById('qrPagerBox');
   if (!tbody) return;
   if (!assets.length) {
     tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-muted">ไม่พบรายการ</td></tr>';
+    if (pagerBox) pagerBox.innerHTML = '';
     return;
   }
-  tbody.innerHTML = assets.map(function(a) {
+  var pageRows = Pager.slice('qrAssets', assets);
+  var _ellipsis = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+  tbody.innerHTML = pageRows.map(function(a) {
     var chk = _qrSelected.has(a.id) ? 'checked' : '';
     return '<tr>'
       + '<td style="padding:8px 10px;"><input type="checkbox" class="form-check-input qr-asset-chk" ' + chk + ' onchange="qrToggleAsset(\'' + a.id + '\',this.checked)"></td>'
-      + '<td style="padding:8px 10px;font-family:Anuphan;font-size:13px;"><div style="font-weight:600;">' + (a.name||'—') + '</div><div style="font-size:11px;color:#94a3b8;">' + (a.asset_code||'—') + '</div></td>'
-      + '<td style="padding:8px 10px;font-family:Anuphan;font-size:13px;color:#64748b;">' + (a.location||'—') + '</td>'
+      + '<td style="padding:8px 10px;font-family:Anuphan;font-size:13px;max-width:220px;"><div style="font-weight:600;' + _ellipsis + '" title="' + (a.name||'') + '">' + (a.name||'—') + '</div><div style="font-size:11px;color:#94a3b8;">' + (a.asset_code||'—') + '</div></td>'
+      + '<td style="padding:8px 10px;font-family:Anuphan;font-size:13px;color:#64748b;max-width:160px;' + _ellipsis + '" title="' + (a.location||'') + '">' + (a.location||'—') + '</td>'
       + '<td style="padding:8px 10px;">' + badgeHtml(a.status) + '</td>'
       + '</tr>';
   }).join('');
+  if (pagerBox) pagerBox.innerHTML = Pager.html('qrAssets', assets.length);
 }
 
 function qrToggleAll(checked) {
