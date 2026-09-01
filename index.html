@@ -1108,7 +1108,10 @@
               </div>
               <div style="font-weight:700;font-size:14px;margin-bottom:4px;">ประวัติรอบตรวจนับ</div>
               <div style="font-size:12px;color:#64748b;">ดูผลตรวจแต่ละรอบที่ผ่านมา แยกตามสาขา</div>
-              <div style="margin-top:12px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+              <select id="inspHistBranchSel" class="form-select form-select-sm" style="margin-top:10px;font-family:Anuphan;font-size:12px;">
+                <option value="">-- ทุกสาขา --</option>
+              </select>
+              <div style="margin-top:10px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
                 <span onclick="printInspectionReport()" style="background:#dbeafe;color:#1e40af;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;cursor:pointer;"><i class="bi bi-printer me-1"></i>พิมพ์</span>
               </div>
             </div>
@@ -4254,7 +4257,7 @@ function _populateBranchSelects() {
   var _bw = document.getElementById('dashBranchWrap');
   if (_bw) _bw.style.display = isBranchRole ? 'none' : '';
 
-  var selects = ['dashBranch', 'filterBranch', 'fBranch', 'inspFilterBranch', 'inspPendingBranch', 'inspDoneBranch', 'uBranch', 'trMFromBranch', 'trMTarget'];
+  var selects = ['dashBranch', 'filterBranch', 'fBranch', 'inspFilterBranch', 'inspPendingBranch', 'inspDoneBranch', 'uBranch', 'trMFromBranch', 'trMTarget', 'inspHistBranchSel'];
   selects.forEach(function(id) {
     var sel = document.getElementById(id);
     if (!sel) return;
@@ -10711,15 +10714,17 @@ async function exportDisposalDocx() {
 // รายงานผลการตรวจนับครุภัณฑ์
 // ══════════════════════════════════════════════════════════════
 async function printInspectionReport() {
+  var branchSel = document.getElementById('inspHistBranchSel');
+  var branchId = branchSel ? branchSel.value : '';
   var res = await sb.from('inspections').select('*').order('created_at', {ascending:false}).limit(10);
   var rounds = res.data || [];
   if (!rounds.length) {
     // ไม่มีรอบตรวจ — พิมพ์รายงานสถานะปัจจุบัน
     var curYear = (new Date().getFullYear() + 543).toString();
-    await _doPrintInspReport({ id: '__none__', name: 'รายงานสถานะครุภัณฑ์ปัจจุบัน', fiscal_year: curYear, start_date: null, end_date: null });
+    await _doPrintInspReport({ id: '__none__', name: 'รายงานสถานะครุภัณฑ์ปัจจุบัน', fiscal_year: curYear, start_date: null, end_date: null }, branchId);
     return;
   }
-  if (rounds.length === 1) { await _doPrintInspReport(rounds[0]); return; }
+  if (rounds.length === 1) { await _doPrintInspReport(rounds[0], branchId); return; }
   _printAssetList = rounds.map(function(r) {
     return {
       id: r.id, asset_code: r.fiscal_year||'',
@@ -10729,7 +10734,7 @@ async function printInspectionReport() {
       model: '', branches: null, _round: r
     };
   });
-  _printCallback = async function(item) { await _doPrintInspReport(item._round); };
+  _printCallback = async function(item) { await _doPrintInspReport(item._round, branchId); };
   document.getElementById('printSelectTitle').textContent = 'เลือกรอบตรวจนับที่ต้องการพิมพ์';
   document.getElementById('printSelectSearch').style.display = '';
   document.getElementById('printSelectSearch').value = '';
@@ -10737,12 +10742,13 @@ async function printInspectionReport() {
   new bootstrap.Modal(document.getElementById('modalPrintSelect')).show();
 }
 
-async function _doPrintInspReport(insp) {
+async function _doPrintInspReport(insp, branchId) {
   var isBranch = App.profile && App.profile.role === 'branch';
   var assQ = sb.from('assets')
     .select('id,asset_code,name,branch_id')
     .neq('status','disposed').order('asset_code').limit(10000);
   if (isBranch && App.profile.branch_id) assQ = assQ.eq('branch_id', App.profile.branch_id);
+  else if (branchId) assQ = assQ.eq('branch_id', branchId);
   var assRes = await assQ;
   var assets = attachBranchInfo(assRes.data || []);
 
@@ -10763,9 +10769,17 @@ async function _doPrintInspReport(insp) {
     if (isDone) byBranch[bName].done++;
   });
 
-  var totalA = assets.length, totalD = Object.keys(doneMap).length;
+  var totalA = assets.length;
+  var totalD = Object.keys(byBranch).reduce(function(sum, k){ return sum + byBranch[k].done; }, 0);
   var totalPct = totalA ? Math.round(totalD/totalA*100) : 0;
   var today = new Date().toLocaleDateString('th-TH', {year:'numeric', month:'long', day:'numeric'});
+  var branchLabel = '';
+  if (!isBranch && branchId && App.branchMap && App.branchMap[branchId]) {
+    var _bm = App.branchMap[branchId];
+    branchLabel = (_bm.code!=null?_bm.code+' – ':'') + _bm.name;
+  } else if (isBranch && App.profile.branch_id && App.branchMap && App.branchMap[App.profile.branch_id]) {
+    branchLabel = App.branchMap[App.profile.branch_id].name;
+  }
 
   var rows = '', seq = 0;
   Object.keys(byBranch).sort().forEach(function(bName) {
@@ -10795,7 +10809,7 @@ async function _doPrintInspReport(insp) {
   var html = _printHead()
     + '<div style="text-align:center;margin-bottom:10px;">'
     + '<h1>รายงานผลการตรวจนับครุภัณฑ์</h1>'
-    + '<h2>' + (insp.name||'') + '</h2>'
+    + '<h2>' + (insp.name||'') + (branchLabel ? ' — สาขา: ' + branchLabel : '') + '</h2>'
     + '<div style="font-size:10pt;color:#555;">'
     + 'ปีงบประมาณ ' + (insp.fiscal_year||'') + '&nbsp;&nbsp;|&nbsp;&nbsp;'
     + (insp.start_date ? _thDatePrint(insp.start_date) + ' – ' + _thDatePrint(insp.end_date) : '')
