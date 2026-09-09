@@ -10918,6 +10918,11 @@ async function printAssetSubmissionReport() {
 
   branchOrder.forEach(function(bName) {
     var items = byBranch[bName];
+    items.sort(function(a, b) {
+      var ta = a.acquired_date ? new Date(a.acquired_date).getTime() : Infinity;
+      var tb = b.acquired_date ? new Date(b.acquired_date).getTime() : Infinity;
+      return ta - tb;
+    });
     rows += '<tr class="branch-hdr"><td colspan="37">สาขา: ' + bName + '</td></tr>';
     var bSeq = 0, bTotal = 0, bFound = 0, bNotFound = 0, bFixable = 0, bUnfixable = 0, bTransferred = 0, bDisposed = 0;
 
@@ -11217,6 +11222,11 @@ async function exportAssetSubmissionExcel(fiscalYearParam) {
 
     branchOrder.forEach(function(bName) {
       var items = byBranch[bName];
+      items.sort(function(a, b) {
+        var ta = a.acquired_date ? new Date(a.acquired_date).getTime() : Infinity;
+        var tb = b.acquired_date ? new Date(b.acquired_date).getTime() : Infinity;
+        return ta - tb;
+      });
 
       var bHdr = []; for(var ci=0;ci<37;ci++) bHdr.push(ci===0?'สาขา : '+bName:'');
       _push(bHdr, 'branch');
