@@ -8940,8 +8940,16 @@ function openInspStatusPicker(idx) {
   }).join('');
   overlay.innerHTML =
     '<div style="background:#fff;border-radius:18px;padding:22px;min-width:300px;max-width:360px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:Anuphan;animation:slideUp .18s;">'
-    + '<div style="font-size:12px;color:#94a3b8;margin-bottom:2px;">' + (a.asset_code || '') + '</div>'
-    + '<div style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:16px;">' + (a.name || '') + '</div>'
+    + '<div style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:14px;">' + (a.name || '') + '</div>'
+    + '<div style="background:#f8fafc;border-radius:12px;padding:12px;margin-bottom:16px;">'
+    + '  <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">รหัสครุภัณฑ์</label>'
+    + '  <input type="text" id="_inspEditCode" value="' + (a.asset_code || '').replace(/"/g, '&quot;') + '" placeholder="ยังไม่มีรหัส — พิมพ์เพื่อเพิ่ม" '
+    + '    style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:Anuphan;font-size:13px;margin-bottom:10px;box-sizing:border-box;">'
+    + '  <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">ใช้ประจำที่</label>'
+    + '  <input type="text" id="_inspEditLoc" value="' + (a.location || '').replace(/"/g, '&quot;') + '" placeholder="ระบุอาคาร/ชั้น/ห้อง" '
+    + '    style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:Anuphan;font-size:13px;box-sizing:border-box;">'
+    + '  <button type="button" onclick="_saveInspAssetInfo(' + idx + ')" style="width:100%;margin-top:10px;padding:8px;border-radius:8px;border:1.5px solid #bfdbfe;background:#eff6ff;color:#1e40af;font-family:Anuphan;font-size:12.5px;font-weight:700;cursor:pointer;"><i class="bi bi-check2 me-1"></i>บันทึกรหัส/ที่อยู่นี้</button>'
+    + '</div>'
     + '<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:10px;">เลือกผลการตรวจ</div>'
     + optsHtml
     + (row._status
@@ -8961,6 +8969,40 @@ function _pickInspStatus(idx, status) {
   if (!App.inspFiltered[idx]) return;
   App.inspFiltered[idx]._status = status;
   _autoSaveInspRow(idx, null);
+}
+async function _saveInspAssetInfo(idx) {
+  var row = App.inspFiltered[idx];
+  if (!row) return;
+  var codeInp = document.getElementById('_inspEditCode');
+  var locInp  = document.getElementById('_inspEditLoc');
+  var newCode = codeInp ? codeInp.value.trim() : row.asset.asset_code;
+  var newLoc  = locInp  ? locInp.value.trim()  : row.asset.location;
+  var btn = document.querySelector('#_inspPickOverlay button[onclick="_saveInspAssetInfo(' + idx + ')"]');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
+
+  var upd = await sb.from('assets')
+    .update({ asset_code: newCode || null, location: newLoc || null, updated_at: new Date().toISOString() })
+    .eq('id', row.asset.id)
+    .select('id');
+  if (upd.error) {
+    showToast('บันทึกรหัส/ที่อยู่ไม่สำเร็จ: ' + upd.error.message, 'danger');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2 me-1"></i>บันทึกรหัส/ที่อยู่นี้'; }
+    return;
+  }
+  if (!(upd.data || []).length) {
+    showToast('บันทึกไม่สำเร็จ — ไม่มีสิทธิ์แก้ไขรายการนี้ (RLS)', 'danger');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2 me-1"></i>บันทึกรหัส/ที่อยู่นี้'; }
+    return;
+  }
+  logTx('inspection_edit_asset_info', { asset_code: newCode, location: newLoc }, row.asset.id);
+  row.asset.asset_code = newCode;
+  row.asset.location = newLoc;
+  showToast('บันทึกรหัส/ที่อยู่แล้ว: ' + (newCode || '—') + ' · ' + (newLoc || '—'), 'success');
+  _closeInspStatusPicker();
+  filterInspItems();
+  if (App._onBranchDashboard && App.currentInsp) {
+    setTimeout(function(){ _loadBranchInspDashboard(App.currentInsp); }, 300);
+  }
 }
 function setInspNote(inp) {
   var idx = parseInt(inp.getAttribute('data-note-idx'));
