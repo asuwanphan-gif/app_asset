@@ -9036,6 +9036,9 @@ async function _autoSaveInspRow(idx, triggerEl) {
       await sb.from('assets').update({ status: row._status }).eq('id', row.asset.id);
       row.asset.status = row._status;
     }
+    // แจ้งชัดเจนว่าบันทึกอะไรไป ก่อนแถวจะถูกย้าย/หายไปจากรายการ "ยังไม่ตรวจ"
+    var savedLabel = row._status ? ((INSP_STATUS[row._status]||{}).label || row._status) : 'ยังไม่ตรวจ (ล้างแล้ว)';
+    showToast('บันทึกผลตรวจแล้ว: ' + savedLabel + ' — ' + (row.asset.asset_code || row.asset.name || ''), 'success');
     // รีเฟรชตาราง — ให้แถวเปลี่ยนสี/ย้ายเข้ากลุ่ม "ตรวจแล้ว" ทันที (เดิมอัปเดตแค่ summary bar เฉยๆ ทำให้แถวไม่ขยับ)
     filterInspItems();
   } else {
@@ -9044,8 +9047,9 @@ async function _autoSaveInspRow(idx, triggerEl) {
   }
 
   // Refresh branch dashboard หลัง save สำเร็จ → ขึ้น item ถัดไปทันที
+  // หน่วงไว้สักครู่ (เดิม 300ms) ให้ผู้ใช้ทันเห็น toast ยืนยันสถานะก่อนแถวจะหายไปจากรายการ
   if (!res.error && App._onBranchDashboard && App.currentInsp) {
-    setTimeout(function(){ _loadBranchInspDashboard(App.currentInsp); }, 300);
+    setTimeout(function(){ _loadBranchInspDashboard(App.currentInsp); }, 900);
   }
 }
 
