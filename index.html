@@ -1213,8 +1213,8 @@
             <table id="assetsMainTable" style="width:100%;table-layout:fixed;border-collapse:collapse;font-family:Anuphan;">
               <colgroup>
                 <col class="no-print" style="width:2%"><!-- checkbox -->
-                <col style="width:13%"><!-- รหัส/ปีงบ -->
-                <col style="width:25%"><!-- ชื่อ + ยี่ห้อ/รุ่น -->
+                <col style="width:19%"><!-- รหัส/ปีงบ -->
+                <col style="width:19%"><!-- ชื่อ + ยี่ห้อ/รุ่น -->
                 <col id="colBranch" style="width:12%"><!-- สาขา -->
                 <col style="width:18%"><!-- ใช้ประจำที่ -->
                 <col style="width:6%"> <!-- อายุ -->
@@ -5160,13 +5160,13 @@ function renderAssetTable() {
         var _dce = toDateCE(a.acquired_date);
         if (_dce) {
           var fyBE = toThaiYear(_dce);
-          codeHtml = '<div style="' + _Cs + _ellipsis + 'line-height:1.3;" title="' + (a.asset_code || '') + '">' + (a.asset_code || '—') + '</div>'
+          codeHtml = '<div style="' + _Cs + 'word-break:break-all;line-height:1.3;" title="' + (a.asset_code || '') + '">' + (a.asset_code || '—') + '</div>'
             + '<div style="font-family:Anuphan;font-size:11px;color:#94a3b8;margin-top:2px;">ปีงบ ' + fyBE + '</div>';
         } else {
-          codeHtml = '<div style="' + _Cs + _ellipsis + '" title="' + (a.asset_code || '') + '">' + (a.asset_code || '—') + '</div>';
+          codeHtml = '<div style="' + _Cs + 'word-break:break-all;" title="' + (a.asset_code || '') + '">' + (a.asset_code || '—') + '</div>';
         }
       } else {
-        codeHtml = '<div style="' + _Cs + _ellipsis + '" title="' + (a.asset_code || '') + '">' + (a.asset_code || '—') + '</div>';
+        codeHtml = '<div style="' + _Cs + 'word-break:break-all;" title="' + (a.asset_code || '') + '">' + (a.asset_code || '—') + '</div>';
       }
 
       // ชื่อครุภัณฑ์
