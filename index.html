@@ -8451,7 +8451,7 @@ function _renderBranchInspCard(statsHtml) {
         +'<td style="'+tdNowrap+'color:#475569;">'+(a.asset_code||'<span style="color:#f59e0b;">ไม่มีรหัส</span>')+'</td>'
         +'<td style="'+tdNowrap+'" title="'+(a.name||'')+'">'+(a.name||'—')+'</td>'
         +(function(){var _bn=(a.branches&&a.branches.name)||'';var _lc=a.location?_fmtLoc(_bn,a.location):'';var _locText=_lc?_lc:(_bn||'<span style="color:#f59e0b;">ไม่ระบุ</span>');return '<td style="'+tdNowrap+'color:#475569;" title="'+(_lc||_bn||'')+'">'+_locText+'</td>';})()
-        +'<td style="'+tdStyle+'"><select class="form-select form-select-sm" style="'+_inspSelStyle(row._status)+'" data-insp-idx="'+gi+'" onchange="setInspStatus(this)">'+selOpts+'</select></td>'
+        +'<td style="'+tdStyle+'"><select class="form-select form-select-sm" style="'+_inspSelStyle(row._status)+'" data-insp-idx="'+gi+'" onchange="setInspStatus(this)" onblur="setInspStatus(this)">'+selOpts+'</select></td>'
         +'<td style="'+tdStyle+'color:#475569;white-space:nowrap;">'+inspDate+'</td>'
         +'<td style="'+tdStyle+'"><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Anuphan;" value="'+(row._note||'')+'" data-note-idx="'+gi+'" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>'
         +'<td style="'+tdStyle+'text-align:center;"><button onclick="showAssetForm(\''+a.id+'\')" class="btn btn-sm" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;color:#2563eb;" title="ดูรายละเอียด"><i class="bi bi-eye"></i></button></td>'
@@ -8895,7 +8895,7 @@ function _renderInspTable() {
           ? '<div title="' + a.location + '">' + a.location + '</div>'
             + (a.custodian ? '<div style="font-size:11px;color:#2563eb;margin-top:2px;"><i class="bi bi-person-fill me-1"></i>' + a.custodian + '</div>' : '')
           : ('<span style="color:#94a3b8;">—</span>')) + '</td>' +
-      '<td><select class="form-select form-select-sm" style="' + _inspSelStyle(row._status) + '" data-insp-idx="' + globalIdx + '" onchange="setInspStatus(this)">' + statusOpts.replace('value="' + row._status + '"', 'value="' + row._status + '" selected') + '</select></td>' +
+      '<td><select class="form-select form-select-sm" style="' + _inspSelStyle(row._status) + '" data-insp-idx="' + globalIdx + '" onchange="setInspStatus(this)" onblur="setInspStatus(this)">' + statusOpts.replace('value="' + row._status + '"', 'value="' + row._status + '" selected') + '</select></td>' +
       '<td style="font-size:13px;font-weight:400;color:#475569;white-space:nowrap;">' + inspDate + '</td>' +
       '<td><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Anuphan;" value="' + (row._note||'') + '" data-note-idx="' + globalIdx + '" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>' +
       '<td class="text-center" style="white-space:nowrap;">' +
