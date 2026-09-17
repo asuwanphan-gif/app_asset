@@ -8415,9 +8415,6 @@ function _renderBranchInspCard(statsHtml) {
   var remaining = unsurveyed.length;
   Pager.bind('branchInsp', function(){ _renderBranchInspCard(statsHtml); }, { sizes: [10,25,50], defaultSize: 25 });
   var preview = Pager.slice('branchInsp', unsurveyed);
-  var statusOpts = Object.entries(INSP_STATUS).map(function(e){
-    return '<option value="'+e[0]+'">'+e[1].label+'</option>';
-  }).join('');
 
   var cardHtml = '<div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08);">';
   cardHtml += '<div style="padding:14px 18px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">';
@@ -8443,7 +8440,6 @@ function _renderBranchInspCard(statsHtml) {
     preview.forEach(function(row) {
       var a = row.asset;
       var gi = App.inspItems.indexOf(row);
-      var selOpts = statusOpts.replace('value="'+row._status+'"','value="'+row._status+'" selected');
       var inspDate = (row.item && (row.item.inspected_at || row.item.created_at))
         ? fmtDate(row.item.inspected_at || row.item.created_at)
         : '<span style="color:#cbd5e1;">—</span>';
@@ -8451,7 +8447,7 @@ function _renderBranchInspCard(statsHtml) {
         +'<td style="'+tdNowrap+'color:#475569;">'+(a.asset_code||'<span style="color:#f59e0b;">ไม่มีรหัส</span>')+'</td>'
         +'<td style="'+tdNowrap+'" title="'+(a.name||'')+'">'+(a.name||'—')+'</td>'
         +(function(){var _bn=(a.branches&&a.branches.name)||'';var _lc=a.location?_fmtLoc(_bn,a.location):'';var _locText=_lc?_lc:(_bn||'<span style="color:#f59e0b;">ไม่ระบุ</span>');return '<td style="'+tdNowrap+'color:#475569;" title="'+(_lc||_bn||'')+'">'+_locText+'</td>';})()
-        +'<td style="'+tdStyle+'"><select class="form-select form-select-sm" style="'+_inspSelStyle(row._status)+'" data-insp-idx="'+gi+'" onchange="setInspStatus(this)" onblur="setInspStatus(this)">'+selOpts+'</select></td>'
+        +'<td style="'+tdStyle+'">'+_inspStatTriggerHtml(gi, row._status)+'</td>'
         +'<td style="'+tdStyle+'color:#475569;white-space:nowrap;">'+inspDate+'</td>'
         +'<td style="'+tdStyle+'"><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Anuphan;" value="'+(row._note||'')+'" data-note-idx="'+gi+'" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>'
         +'<td style="'+tdStyle+'text-align:center;"><button onclick="showAssetForm(\''+a.id+'\')" class="btn btn-sm" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;color:#2563eb;" title="ดูรายละเอียด"><i class="bi bi-eye"></i></button></td>'
@@ -8867,11 +8863,6 @@ function _renderInspTable() {
       '</div>';
   }
 
-  var statusOpts = '<option value="" style="color:#94a3b8;">— ยังไม่ตรวจ —</option>'
-    + Object.entries(INSP_STATUS).map(function(e) {
-        return '<option value="' + e[0] + '">' + e[1].label + '</option>';
-      }).join('');
-
   tbody.innerHTML = slice.map(function(row, idx) {
     var a = row.asset;
     var isDone = !!row._status;
@@ -8895,7 +8886,7 @@ function _renderInspTable() {
           ? '<div title="' + a.location + '">' + a.location + '</div>'
             + (a.custodian ? '<div style="font-size:11px;color:#2563eb;margin-top:2px;"><i class="bi bi-person-fill me-1"></i>' + a.custodian + '</div>' : '')
           : ('<span style="color:#94a3b8;">—</span>')) + '</td>' +
-      '<td><select class="form-select form-select-sm" style="' + _inspSelStyle(row._status) + '" data-insp-idx="' + globalIdx + '" onchange="setInspStatus(this)" onblur="setInspStatus(this)">' + statusOpts.replace('value="' + row._status + '"', 'value="' + row._status + '" selected') + '</select></td>' +
+      '<td>' + _inspStatTriggerHtml(globalIdx, row._status) + '</td>' +
       '<td style="font-size:13px;font-weight:400;color:#475569;white-space:nowrap;">' + inspDate + '</td>' +
       '<td><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Anuphan;" value="' + (row._note||'') + '" data-note-idx="' + globalIdx + '" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>' +
       '<td class="text-center" style="white-space:nowrap;">' +
@@ -8913,22 +8904,63 @@ function _fmtLoc(brName, loc) {
   if (brName && s.indexOf(brName) === 0) s = s.slice(brName.length).replace(/^[\s·-]+/, '').trim();
   return s;
 }
-function _inspSelStyle(status) {
-  var m = {
-    active:            'background:#dcfce7;color:#15803d;border-color:#86efac;',
-    not_found:         'background:#fee2e2;color:#b91c1c;border-color:#fca5a5;',
-    damaged_fixable:   'background:#fef3c7;color:#92400e;border-color:#fde68a;',
-    damaged_unfixable: 'background:#fce7f3;color:#9d174d;border-color:#f9a8d4;',
-    disposal_pending:  'background:#f3e8ff;color:#6b21a8;border-color:#d8b4fe;'
-  };
-  return (m[status] || 'background:#f8fafc;color:#64748b;border-color:#e2e8f0;') + 'font-size:13px;font-family:Anuphan;font-weight:600;';
+// เลือกผลการตรวจผ่าน popup (แทน <select> เดิม) — ต้องกดเปิด popup แล้วกดเลือกจริงเสมอ
+// จึงไม่มีปัญหา "เลือกค่าเดิมซ้ำไม่ทำงาน" แบบ <select onchange> และไม่มีปัญหา Tab ผ่านแล้วยิงบันทึกแบบ onblur
+var INSP_BTN_COLORS = {
+  active:            { bg:'#dcfce7', fg:'#15803d', bd:'#86efac' },
+  not_found:         { bg:'#fee2e2', fg:'#b91c1c', bd:'#fca5a5' },
+  damaged_fixable:   { bg:'#fef3c7', fg:'#92400e', bd:'#fde68a' },
+  damaged_unfixable: { bg:'#fce7f3', fg:'#9d174d', bd:'#f9a8d4' }
+};
+function _inspStatTriggerHtml(idx, currentStatus) {
+  var c = INSP_BTN_COLORS[currentStatus] || { bg:'#f1f5f9', fg:'#64748b', bd:'#e2e8f0' };
+  var label = currentStatus ? (INSP_STATUS[currentStatus] || {}).label : 'ยังไม่ตรวจ';
+  return '<button type="button" onclick="openInspStatusPicker(' + idx + ')" '
+    + 'style="display:inline-flex;align-items:center;gap:5px;background:' + c.bg + ';color:' + c.fg + ';'
+    + 'border:1.5px solid ' + c.bd + ';border-radius:20px;padding:5px 12px;font-family:Anuphan;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;">'
+    + label + '<i class="bi bi-chevron-down" style="font-size:10px;"></i></button>';
 }
-function setInspStatus(sel) {
-  var idx = parseInt(sel.getAttribute('data-insp-idx'));
+function openInspStatusPicker(idx) {
+  var row = App.inspFiltered[idx];
+  if (!row) return;
+  var a = row.asset;
+  var overlay = document.createElement('div');
+  overlay.id = '_inspPickOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:10000;display:flex;align-items:center;justify-content:center;animation:fadeIn .15s;';
+  var optsHtml = Object.keys(INSP_STATUS).map(function(key) {
+    var c = INSP_BTN_COLORS[key];
+    var isSel = key === row._status;
+    return '<button type="button" onclick="_pickInspStatus(' + idx + ',\'' + key + '\')" '
+      + 'style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:13px 16px;margin-bottom:8px;border-radius:12px;'
+      + 'border:1.5px solid ' + (isSel ? c.bd : '#e2e8f0') + ';background:' + (isSel ? c.bg : '#fff') + ';color:' + c.fg + ';'
+      + 'font-family:Anuphan;font-size:14px;font-weight:700;cursor:pointer;text-align:left;">'
+      + '<span>' + INSP_STATUS[key].label + '</span>'
+      + (isSel ? '<i class="bi bi-check-circle-fill" style="font-size:16px;"></i>' : '')
+      + '</button>';
+  }).join('');
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:18px;padding:22px;min-width:300px;max-width:360px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:Anuphan;animation:slideUp .18s;">'
+    + '<div style="font-size:12px;color:#94a3b8;margin-bottom:2px;">' + (a.asset_code || '') + '</div>'
+    + '<div style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:16px;">' + (a.name || '') + '</div>'
+    + '<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:10px;">เลือกผลการตรวจ</div>'
+    + optsHtml
+    + (row._status
+        ? '<button type="button" onclick="_pickInspStatus(' + idx + ',\'\')" style="width:100%;padding:11px;margin-top:4px;border-radius:12px;border:1.5px dashed #e2e8f0;background:#fff;color:#94a3b8;font-family:Anuphan;font-size:13px;cursor:pointer;"><i class="bi bi-arrow-counterclockwise me-1"></i>ล้าง (ยังไม่ตรวจ)</button>'
+        : '')
+    + '<button type="button" onclick="_closeInspStatusPicker()" style="width:100%;padding:11px;margin-top:8px;border-radius:12px;border:none;background:#f1f5f9;color:#64748b;font-family:Anuphan;font-size:13px;font-weight:600;cursor:pointer;">ยกเลิก</button>'
+    + '</div>';
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) _closeInspStatusPicker(); });
+  document.body.appendChild(overlay);
+}
+function _closeInspStatusPicker() {
+  var el = document.getElementById('_inspPickOverlay');
+  if (el) document.body.removeChild(el);
+}
+function _pickInspStatus(idx, status) {
+  _closeInspStatusPicker();
   if (!App.inspFiltered[idx]) return;
-  App.inspFiltered[idx]._status = sel.value;
-  sel.style.cssText = _inspSelStyle(sel.value);
-  _autoSaveInspRow(idx, sel);
+  App.inspFiltered[idx]._status = status;
+  _autoSaveInspRow(idx, null);
 }
 function setInspNote(inp) {
   var idx = parseInt(inp.getAttribute('data-note-idx'));
