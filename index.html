@@ -8813,7 +8813,7 @@ async function goFillInspection() {
   }
 }
 
-function filterInspItems() {
+function _applyInspFilter() {
   var search = (document.getElementById('inspSearch').value||'').toLowerCase();
   var branchFilter = document.getElementById('inspFilterBranch').value || '';
   var doneFilter = document.getElementById('inspFilterDone').value || '';
@@ -8824,7 +8824,17 @@ function filterInspItems() {
     var matchD = !doneFilter || (doneFilter === 'done' ? !!row._status : !row._status);
     return matchS && matchB && matchD;
   });
+}
+// ใช้ตอนผู้ใช้เปลี่ยนเงื่อนไขค้นหา/ตัวกรองเอง — รีหน้ากลับไปหน้า 1 เพราะรายการเปลี่ยนไปทั้งชุด
+function filterInspItems() {
+  _applyInspFilter();
   Pager.reset('insp');
+  _renderInspTable();
+}
+// ใช้ตอนข้อมูลเปลี่ยน (บันทึกผลตรวจ/แก้ข้อมูล) แต่เงื่อนไขกรองเดิม — ไม่รีเซ็ตหน้า
+// (Pager.slice จะ clamp หน้าปัจจุบันให้เองถ้ารายการหดจนหน้าที่อยู่เกินขอบเขต)
+function _refreshInspTableKeepPage() {
+  _applyInspFilter();
   _renderInspTable();
 }
 
@@ -8999,7 +9009,7 @@ async function _saveInspAssetInfo(idx) {
   row.asset.location = newLoc;
   showToast('บันทึกรหัส/ที่อยู่แล้ว: ' + (newCode || '—') + ' · ' + (newLoc || '—'), 'success');
   _closeInspStatusPicker();
-  filterInspItems();
+  _refreshInspTableKeepPage();
   if (App._onBranchDashboard && App.currentInsp) {
     setTimeout(function(){ _loadBranchInspDashboard(App.currentInsp); }, 300);
   }
@@ -9027,7 +9037,7 @@ async function resetInspRecord(idx, btn) {
   row.asset.status = 'active';
   _updateInspSummaryBar();
   showToast('รีเซ็ตสำเร็จ — คืนเป็นยังไม่ตรวจแล้ว', 'success');
-  filterInspItems();
+  _refreshInspTableKeepPage();
 }
 
 async function _autoSaveInspRow(idx, triggerEl) {
@@ -9081,8 +9091,9 @@ async function _autoSaveInspRow(idx, triggerEl) {
     // แจ้งชัดเจนว่าบันทึกอะไรไป ก่อนแถวจะถูกย้าย/หายไปจากรายการ "ยังไม่ตรวจ"
     var savedLabel = row._status ? ((INSP_STATUS[row._status]||{}).label || row._status) : 'ยังไม่ตรวจ (ล้างแล้ว)';
     showToast('บันทึกผลตรวจแล้ว: ' + savedLabel + ' — ' + (row.asset.asset_code || row.asset.name || ''), 'success');
-    // รีเฟรชตาราง — ให้แถวเปลี่ยนสี/ย้ายเข้ากลุ่ม "ตรวจแล้ว" ทันที (เดิมอัปเดตแค่ summary bar เฉยๆ ทำให้แถวไม่ขยับ)
-    filterInspItems();
+    // รีเฟรชตาราง — ให้แถวเปลี่ยนสี/ย้ายเข้ากลุ่ม "ตรวจแล้ว" ทันที โดยไม่กระโดดกลับไปหน้า 1
+    // (เดิมใช้ filterInspItems() ซึ่ง reset หน้ากลับไปหน้า 1 ทุกครั้ง ทำให้ตรวจของในหน้า 3 แล้วเด้งกลับหน้า 1)
+    _refreshInspTableKeepPage();
   } else {
     showToast('บันทึกไม่สำเร็จ: ' + res.error.message, 'danger');
     if (badgeCell) badgeCell.innerHTML = '<span class="badge" style="background:#fee2e2;color:#991b1b;font-size:10px;border:1px solid #fca5a5;">บันทึกไม่สำเร็จ</span>';
