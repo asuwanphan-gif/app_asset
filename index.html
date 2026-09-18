@@ -8373,7 +8373,7 @@ async function _loadBranchInspDashboard(insp, showAll) {
   // Load assets + inspection items
   var assRes = await sb.from('assets')
     .select('id,asset_code,name,brand,branch_id,price,location,status')
-    .eq('branch_id', branchId).not('status','in','("disposed","overaged")').order('asset_code');
+    .eq('branch_id', branchId).not('status','in','("disposed","overaged","damaged_unfixable")').order('asset_code');
   var assets = attachBranchInfo(assRes.data || []);
   var itemsRes = await sb.from('inspection_items').select('*').eq('inspection_id', insp.id);
   var itemsMap = {};
@@ -8515,11 +8515,12 @@ async function _loadInspOverview() {
   if (!App.currentInspectionId) { container.innerHTML = '<div class="text-muted text-center py-3">ไม่มีรอบตรวจ</div>'; return; }
   container.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังโหลด...</div>';
 
-  // Load assets (exclude disposed + overaged), and inspection items
-  // ครุภัณฑ์แทงจำหน่ายแล้ว (overaged) ไม่ต้องตรวจนับ
+  // Load assets (exclude disposed + overaged + ชำรุด ซ่อมไม่ได้), และ inspection items
+  // ครุภัณฑ์เกินอายุ (overaged) และชำรุดซ่อมไม่ได้ (damaged_unfixable) ไม่ต้องตรวจนับซ้ำทุกปี
+  // แต่ยังคงอยู่ในรายงานทุกปีจนกว่าจะถูกแทงจำหน่ายจริง (ดู printAssetSubmissionReport ฯลฯ)
   var assetsQ = sb.from('assets')
     .select('id, asset_code, name, branch_id, status')
-    .not('status', 'in', '("disposed","overaged")')
+    .not('status', 'in', '("disposed","overaged","damaged_unfixable")')
     .limit(10000);
   if (App.profile && App.profile.role === 'branch') assetsQ = assetsQ.eq('branch_id', App.profile.branch_id);
   var assRes = await assetsQ;
@@ -8783,7 +8784,8 @@ async function goFillInspection() {
 
   if (!App.currentInspectionId) { showToast('ไม่มีรอบตรวจที่ active', 'warning'); return; }
 
-  var q = sb.from('assets').select('id, asset_code, name, brand, branch_id, price, location, status').order('asset_code', { ascending: true });
+  // ชำรุดซ่อมไม่ได้ (damaged_unfixable) ไม่ต้องตรวจนับซ้ำทุกปี (เหมือน overaged) — ยังอยู่ในรายงานจนกว่าจะแทงจำหน่าย
+  var q = sb.from('assets').select('id, asset_code, name, brand, branch_id, price, location, status').neq('status', 'damaged_unfixable').order('asset_code', { ascending: true });
   if (App.profile && App.profile.role === 'branch') q = q.eq('branch_id', App.profile.branch_id);
   var assRes = await q;
   var assets = attachBranchInfo(assRes.data || []);
@@ -9410,7 +9412,7 @@ async function loadInspMonitor() {
   m.show();
   document.getElementById('monitorBranchList').innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>';
   // Re-use overview logic
-  var assRes = await sb.from('assets').select('id, branch_id').not('status','in','("disposed","overaged")').limit(10000);
+  var assRes = await sb.from('assets').select('id, branch_id').not('status','in','("disposed","overaged","damaged_unfixable")').limit(10000);
   var assets = attachBranchInfo(assRes.data || []);
   var itemsRes = await sb.from('inspection_items').select('asset_id').eq('inspection_id', App.currentInspectionId);
   var doneIds = {};
