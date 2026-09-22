@@ -8439,7 +8439,6 @@ function _renderBranchInspCard(statsHtml) {
       +'</tr></thead><tbody>';
     preview.forEach(function(row) {
       var a = row.asset;
-      var gi = App.inspItems.indexOf(row);
       var inspDate = (row.item && (row.item.inspected_at || row.item.created_at))
         ? fmtDate(row.item.inspected_at || row.item.created_at)
         : '<span style="color:#cbd5e1;">—</span>';
@@ -8447,9 +8446,9 @@ function _renderBranchInspCard(statsHtml) {
         +'<td style="'+tdNowrap+'color:#475569;">'+(a.asset_code||'<span style="color:#f59e0b;">ไม่มีรหัส</span>')+'</td>'
         +'<td style="'+tdNowrap+'" title="'+(a.name||'')+'">'+(a.name||'—')+'</td>'
         +(function(){var _bn=(a.branches&&a.branches.name)||'';var _lc=a.location?_fmtLoc(_bn,a.location):'';var _locText=_lc?_lc:(_bn||'<span style="color:#f59e0b;">ไม่ระบุ</span>');return '<td style="'+tdNowrap+'color:#475569;" title="'+(_lc||_bn||'')+'">'+_locText+'</td>';})()
-        +'<td style="'+tdStyle+'">'+_inspStatTriggerHtml(gi, row._status)+'</td>'
+        +'<td style="'+tdStyle+'">'+_inspStatTriggerHtml(a.id, row._status)+'</td>'
         +'<td style="'+tdStyle+'color:#475569;white-space:nowrap;">'+inspDate+'</td>'
-        +'<td style="'+tdStyle+'"><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Anuphan;" value="'+(row._note||'')+'" data-note-idx="'+gi+'" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>'
+        +'<td style="'+tdStyle+'"><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Anuphan;" value="'+(row._note||'')+'" data-asset-id="'+a.id+'" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>'
         +'<td style="'+tdStyle+'text-align:center;"><button onclick="showAssetForm(\''+a.id+'\')" class="btn btn-sm" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;color:#2563eb;" title="ดูรายละเอียด"><i class="bi bi-eye"></i></button></td>'
         +'</tr>';
     });
@@ -8458,6 +8457,26 @@ function _renderBranchInspCard(statsHtml) {
   }
   cardHtml += '</div>';
   container.innerHTML = statsHtml + cardHtml;
+}
+
+// ใช้ตอนบันทึกผลตรวจ/แก้รหัส-ที่อยู่จาก popup แล้วรีเฟรชการ์ดหน่วยงาน — ไม่ reload จาก DB ใหม่
+// (row.asset/row._status ถูกแก้ใน memory ไปแล้วตอน save จึงคำนวณ stats ใหม่ + re-render ได้เลย
+// โดยไม่ต้องเรียก _loadBranchInspDashboard() ซึ่งจะ Pager.reset('branchInsp') ทำหน้ากระโดดกลับหน้า 1)
+function _refreshBranchInspKeepPage() {
+  if (!document.getElementById('inspOverviewBody') || !App.inspItems) return;
+  var total     = App.inspItems.length;
+  var done      = App.inspItems.filter(function(r){ return !!r._status; }).length;
+  var remaining = total - done;
+  var pct       = total ? Math.round(done/total*100) : 0;
+  var barColor  = pct===100?'#22c55e':pct>=50?'#f59e0b':'#3b82f6';
+  var statsHtml =
+    '<div class="stat-grid" style="margin-bottom:16px;">' +
+    _ovStatCard(total,    'รวมทั้งหมด',    '#2563eb',  'bi-archive-fill',       'goFillInspection()') +
+    _ovStatCard(done,     'ตรวจแล้ว',      '#22c55e',  'bi-check-circle-fill',  '_goInspFilter(\'done\')') +
+    _ovStatCard(remaining,'ยังไม่ตรวจ',    '#f59e0b',  'bi-hourglass-split',    '_goInspFilter(\'pending\')') +
+    _ovStatCard(pct+'%',  'ความคืบหน้า',   barColor,   'bi-speedometer2') +
+    '</div>';
+  _renderBranchInspCard(statsHtml);
 }
 
 async function _loadRoundList() {
@@ -8875,7 +8894,7 @@ function _renderInspTable() {
       '</div>';
   }
 
-  tbody.innerHTML = slice.map(function(row, idx) {
+  tbody.innerHTML = slice.map(function(row) {
     var a = row.asset;
     var isDone = !!row._status;
     var hasOrphan = !!row.item && !row._status;
@@ -8887,7 +8906,6 @@ function _renderInspTable() {
     var inspDate = (row._status && row.item && (row.item.inspected_at || row.item.created_at))
       ? fmtDate(row.item.inspected_at || row.item.created_at)
       : '<span style="color:#cbd5e1;">—</span>';
-    var globalIdx = Pager.startIndex('insp') + idx;
     var td = 'style="font-size:13px;font-weight:400;color:#0f172a;font-family:Anuphan;"';
     var tdNowrap = 'style="font-size:12px;font-weight:400;color:#475569;font-family:Anuphan;white-space:nowrap;"';
     return '<tr style="' + rowStyle + '">' +
@@ -8898,12 +8916,12 @@ function _renderInspTable() {
           ? '<div title="' + a.location + '">' + a.location + '</div>'
             + (a.custodian ? '<div style="font-size:11px;color:#2563eb;margin-top:2px;"><i class="bi bi-person-fill me-1"></i>' + a.custodian + '</div>' : '')
           : ('<span style="color:#94a3b8;">—</span>')) + '</td>' +
-      '<td>' + _inspStatTriggerHtml(globalIdx, row._status) + '</td>' +
+      '<td>' + _inspStatTriggerHtml(a.id, row._status) + '</td>' +
       '<td style="font-size:13px;font-weight:400;color:#475569;white-space:nowrap;">' + inspDate + '</td>' +
-      '<td><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Anuphan;" value="' + (row._note||'') + '" data-note-idx="' + globalIdx + '" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>' +
+      '<td><input type="text" class="form-control form-control-sm" style="font-size:13px;font-family:Anuphan;" value="' + (row._note||'') + '" data-asset-id="' + a.id + '" onblur="autoSaveInspNote(this)" placeholder="หมายเหตุ..."></td>' +
       '<td class="text-center" style="white-space:nowrap;">' +
         '<button onclick="showAssetForm(\'' + a.id + '\')" class="btn btn-sm" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;color:#2563eb;" title="ดูรายละเอียด"><i class="bi bi-eye"></i></button>' +
-        (hasOrphan ? ' <button onclick="resetInspRecord(' + globalIdx + ',this)" class="btn btn-sm" style="background:none;border:1px solid #fca5a5;border-radius:6px;padding:3px 8px;color:#dc2626;" title="ลบ record นี้ออก (คืนเป็นยังไม่ตรวจ)"><i class="bi bi-trash3"></i></button>' : '') +
+        (hasOrphan ? ' <button onclick="resetInspRecord(\'' + a.id + '\',this)" class="btn btn-sm" style="background:none;border:1px solid #fca5a5;border-radius:6px;padding:3px 8px;color:#dc2626;" title="ลบ record นี้ออก (คืนเป็นยังไม่ตรวจ)"><i class="bi bi-trash3"></i></button>' : '') +
       '</td>' +
     '</tr>';
   }).join('');
@@ -8924,25 +8942,34 @@ var INSP_BTN_COLORS = {
   damaged_fixable:   { bg:'#fef3c7', fg:'#92400e', bd:'#fde68a' },
   damaged_unfixable: { bg:'#fce7f3', fg:'#9d174d', bd:'#f9a8d4' }
 };
-function _inspStatTriggerHtml(idx, currentStatus) {
+// หา row ด้วย asset.id (คงที่) แทน array index — กัน race condition ตอนมีการบันทึกหลายแถวใกล้ ๆ กัน
+// ซึ่ง index จะขยับทุกครั้งที่ array ถูกกรอง/ตัดรายการที่ตรวจแล้วออก (ดู _applyInspFilter)
+function _findInspRow(assetId) {
+  return (App.inspItems || []).find(function(r) { return r.asset && r.asset.id === assetId; });
+}
+function _inspStatTriggerHtml(assetId, currentStatus) {
   var c = INSP_BTN_COLORS[currentStatus] || { bg:'#f1f5f9', fg:'#64748b', bd:'#e2e8f0' };
   var label = currentStatus ? (INSP_STATUS[currentStatus] || {}).label : 'ยังไม่ตรวจ';
-  return '<button type="button" onclick="openInspStatusPicker(' + idx + ')" '
+  return '<button type="button" onclick="openInspStatusPicker(\'' + assetId + '\')" '
     + 'style="display:inline-flex;align-items:center;gap:5px;background:' + c.bg + ';color:' + c.fg + ';'
     + 'border:1.5px solid ' + c.bd + ';border-radius:20px;padding:5px 12px;font-family:Anuphan;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;">'
     + label + '<i class="bi bi-chevron-down" style="font-size:10px;"></i></button>';
 }
-function openInspStatusPicker(idx) {
-  var row = App.inspFiltered[idx];
+function openInspStatusPicker(assetId) {
+  var row = _findInspRow(assetId);
   if (!row) return;
   var a = row.asset;
+  // รายชื่อ "ใช้ประจำที่" ที่มีอยู่แล้ว (unique) — ใช้ทำ suggestion กันพิมพ์ผิด/สร้างชื่อซ้ำซ้อนโดยไม่ตั้งใจ
+  var _locSet = {};
+  (App.inspItems||[]).forEach(function(r){ if (r.asset && r.asset.location) _locSet[r.asset.location] = true; });
+  App._inspLocOptions = Object.keys(_locSet).sort();
   var overlay = document.createElement('div');
   overlay.id = '_inspPickOverlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:10000;display:flex;align-items:center;justify-content:center;animation:fadeIn .15s;';
   var optsHtml = Object.keys(INSP_STATUS).map(function(key) {
     var c = INSP_BTN_COLORS[key];
     var isSel = key === row._status;
-    return '<button type="button" onclick="_pickInspStatus(' + idx + ',\'' + key + '\')" '
+    return '<button type="button" onclick="_pickInspStatus(\'' + assetId + '\',\'' + key + '\')" '
       + 'style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:13px 16px;margin-bottom:8px;border-radius:12px;'
       + 'border:1.5px solid ' + (isSel ? c.bd : '#e2e8f0') + ';background:' + (isSel ? c.bg : '#fff') + ';color:' + c.fg + ';'
       + 'font-family:Anuphan;font-size:14px;font-weight:700;cursor:pointer;text-align:left;">'
@@ -8958,14 +8985,16 @@ function openInspStatusPicker(idx) {
     + '  <input type="text" id="_inspEditCode" value="' + (a.asset_code || '').replace(/"/g, '&quot;') + '" placeholder="ยังไม่มีรหัส — พิมพ์เพื่อเพิ่ม" '
     + '    style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:Anuphan;font-size:13px;margin-bottom:10px;box-sizing:border-box;">'
     + '  <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">ใช้ประจำที่</label>'
-    + '  <input type="text" id="_inspEditLoc" value="' + (a.location || '').replace(/"/g, '&quot;') + '" placeholder="ระบุอาคาร/ชั้น/ห้อง" '
+    + '  <input type="text" id="_inspEditLoc" value="' + (a.location || '').replace(/"/g, '&quot;') + '" placeholder="พิมพ์ค้นหาที่ตั้งเดิม หรือระบุที่ตั้งใหม่" autocomplete="off" '
+    + '    oninput="_showInspLocSuggest(this)" onfocus="_showInspLocSuggest(this)" onblur="setTimeout(function(){var b=document.getElementById(\'_inspLocSuggest\');if(b)b.style.display=\'none\';},150)" '
     + '    style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:Anuphan;font-size:13px;box-sizing:border-box;">'
-    + '  <button type="button" onclick="_saveInspAssetInfo(' + idx + ')" style="width:100%;margin-top:10px;padding:8px;border-radius:8px;border:1.5px solid #bfdbfe;background:#eff6ff;color:#1e40af;font-family:Anuphan;font-size:12.5px;font-weight:700;cursor:pointer;"><i class="bi bi-check2 me-1"></i>บันทึกรหัส/ที่อยู่นี้</button>'
+    + '  <div id="_inspLocSuggest" style="display:none;margin-top:4px;max-height:140px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;background:#fff;"></div>'
+    + '  <button type="button" onclick="_saveInspAssetInfo(\'' + assetId + '\')" style="width:100%;margin-top:10px;padding:8px;border-radius:8px;border:1.5px solid #bfdbfe;background:#eff6ff;color:#1e40af;font-family:Anuphan;font-size:12.5px;font-weight:700;cursor:pointer;"><i class="bi bi-check2 me-1"></i>บันทึกรหัส/ที่อยู่นี้</button>'
     + '</div>'
     + '<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:10px;">เลือกผลการตรวจ</div>'
     + optsHtml
     + (row._status
-        ? '<button type="button" onclick="_pickInspStatus(' + idx + ',\'\')" style="width:100%;padding:11px;margin-top:4px;border-radius:12px;border:1.5px dashed #e2e8f0;background:#fff;color:#94a3b8;font-family:Anuphan;font-size:13px;cursor:pointer;"><i class="bi bi-arrow-counterclockwise me-1"></i>ล้าง (ยังไม่ตรวจ)</button>'
+        ? '<button type="button" onclick="_pickInspStatus(\'' + assetId + '\',\'\')" style="width:100%;padding:11px;margin-top:4px;border-radius:12px;border:1.5px dashed #e2e8f0;background:#fff;color:#94a3b8;font-family:Anuphan;font-size:13px;cursor:pointer;"><i class="bi bi-arrow-counterclockwise me-1"></i>ล้าง (ยังไม่ตรวจ)</button>'
         : '')
     + '<button type="button" onclick="_closeInspStatusPicker()" style="width:100%;padding:11px;margin-top:8px;border-radius:12px;border:none;background:#f1f5f9;color:#64748b;font-family:Anuphan;font-size:13px;font-weight:600;cursor:pointer;">ยกเลิก</button>'
     + '</div>';
@@ -8976,20 +9005,41 @@ function _closeInspStatusPicker() {
   var el = document.getElementById('_inspPickOverlay');
   if (el) document.body.removeChild(el);
 }
-function _pickInspStatus(idx, status) {
-  _closeInspStatusPicker();
-  if (!App.inspFiltered[idx]) return;
-  App.inspFiltered[idx]._status = status;
-  _autoSaveInspRow(idx, null);
+// suggestion list ให้ช่อง "ใช้ประจำที่" — เลือกจากที่ตั้งเดิมได้ (กันพิมพ์ผิด/สร้างชื่อซ้ำ) แต่ยังพิมพ์ที่ตั้งใหม่ได้ตามปกติ
+function _showInspLocSuggest(inp) {
+  var box = document.getElementById('_inspLocSuggest');
+  if (!box) return;
+  var q = (inp.value || '').trim().toLowerCase();
+  var opts = App._inspLocOptions || [];
+  var matches = (q ? opts.filter(function(o){ return o.toLowerCase().indexOf(q) > -1; }) : opts).slice(0, 8);
+  if (!matches.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.innerHTML = matches.map(function(o) {
+    return '<div onclick="_pickInspLocSuggest(this.dataset.loc)" data-loc="' + o.replace(/"/g, '&quot;') + '" '
+      + 'style="padding:8px 10px;font-size:12.5px;font-family:Anuphan;cursor:pointer;border-bottom:1px solid #f1f5f9;">' + o + '</div>';
+  }).join('');
+  box.style.display = 'block';
 }
-async function _saveInspAssetInfo(idx) {
-  var row = App.inspFiltered[idx];
+function _pickInspLocSuggest(loc) {
+  var inp = document.getElementById('_inspEditLoc');
+  if (inp) inp.value = loc;
+  var box = document.getElementById('_inspLocSuggest');
+  if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+}
+function _pickInspStatus(assetId, status) {
+  _closeInspStatusPicker();
+  var row = _findInspRow(assetId);
+  if (!row) return;
+  row._status = status;
+  _autoSaveInspRow(assetId, null);
+}
+async function _saveInspAssetInfo(assetId) {
+  var row = _findInspRow(assetId);
   if (!row) return;
   var codeInp = document.getElementById('_inspEditCode');
   var locInp  = document.getElementById('_inspEditLoc');
   var newCode = codeInp ? codeInp.value.trim() : row.asset.asset_code;
   var newLoc  = locInp  ? locInp.value.trim()  : row.asset.location;
-  var btn = document.querySelector('#_inspPickOverlay button[onclick="_saveInspAssetInfo(' + idx + ')"]');
+  var btn = document.querySelector('#_inspPickOverlay button[onclick="_saveInspAssetInfo(\'' + assetId + '\')"]');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
 
   var upd = await sb.from('assets')
@@ -9013,22 +9063,23 @@ async function _saveInspAssetInfo(idx) {
   _closeInspStatusPicker();
   _refreshInspTableKeepPage();
   if (App._onBranchDashboard && App.currentInsp) {
-    setTimeout(function(){ _loadBranchInspDashboard(App.currentInsp); }, 300);
+    setTimeout(function(){ _refreshBranchInspKeepPage(); }, 300);
   }
 }
 function setInspNote(inp) {
-  var idx = parseInt(inp.getAttribute('data-note-idx'));
-  if (App.inspFiltered[idx]) App.inspFiltered[idx]._note = inp.value;
+  var row = _findInspRow(inp.getAttribute('data-asset-id'));
+  if (row) row._note = inp.value;
 }
 function autoSaveInspNote(inp) {
-  var idx = parseInt(inp.getAttribute('data-note-idx'));
-  if (!App.inspFiltered[idx]) return;
-  App.inspFiltered[idx]._note = inp.value;
-  _autoSaveInspRow(idx, null);
+  var assetId = inp.getAttribute('data-asset-id');
+  var row = _findInspRow(assetId);
+  if (!row) return;
+  row._note = inp.value;
+  _autoSaveInspRow(assetId, null);
 }
 
-async function resetInspRecord(idx, btn) {
-  var row = App.inspFiltered[idx];
+async function resetInspRecord(assetId, btn) {
+  var row = _findInspRow(assetId);
   if (!row || !row.item) return;
   if (btn) btn.disabled = true;
   var res = await sb.from('inspection_items').delete().eq('id', row.item.id);
@@ -9042,12 +9093,12 @@ async function resetInspRecord(idx, btn) {
   _refreshInspTableKeepPage();
 }
 
-async function _autoSaveInspRow(idx, triggerEl) {
-  var row = App.inspFiltered[idx];
+async function _autoSaveInspRow(assetId, triggerEl) {
+  var row = _findInspRow(assetId);
   if (!row || !App.currentInspectionId) return;
 
   // แสดง spinner บน badge
-  var badgeCell = document.querySelector('[data-badge-idx="' + idx + '"]');
+  var badgeCell = document.querySelector('[data-badge-idx="' + assetId + '"]');
   if (badgeCell) badgeCell.innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
   if (triggerEl) triggerEl.disabled = true;
 
@@ -9103,8 +9154,9 @@ async function _autoSaveInspRow(idx, triggerEl) {
 
   // Refresh branch dashboard หลัง save สำเร็จ → ขึ้น item ถัดไปทันที
   // หน่วงไว้สักครู่ (เดิม 300ms) ให้ผู้ใช้ทันเห็น toast ยืนยันสถานะก่อนแถวจะหายไปจากรายการ
+  // ใช้ _refreshBranchInspKeepPage() (ไม่ reload จาก DB) แทน _loadBranchInspDashboard() เพื่อไม่ให้หน้ากระโดดกลับหน้า 1
   if (!res.error && App._onBranchDashboard && App.currentInsp) {
-    setTimeout(function(){ _loadBranchInspDashboard(App.currentInsp); }, 900);
+    setTimeout(function(){ _refreshBranchInspKeepPage(); }, 900);
   }
 }
 
