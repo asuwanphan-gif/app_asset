@@ -4943,11 +4943,18 @@ async function deleteAsset(id) {
   var a = res.data;
   var ok = await showDangerConfirm({
     title: 'ลบครุภัณฑ์ออกจากระบบ',
-    msg: '<strong>' + (a.name || '(ไม่มีชื่อ)') + '</strong><br>รหัส: ' + (a.asset_code || '—') + '<br><span style="color:#dc2626;">การลบจะไม่สามารถกู้คืนได้</span>',
+    msg: '<strong>' + (a.name || '(ไม่มีชื่อ)') + '</strong><br>รหัส: ' + (a.asset_code || '—')
+      + '<br><span style="color:#dc2626;">การลบจะไม่สามารถกู้คืนได้ และจะลบประวัติการตรวจนับ/ซ่อมของครุภัณฑ์นี้ทั้งหมดไปด้วย</span>',
     keyword: 'ลบ',
     confirmLabel: 'ลบถาวร'
   });
   if (!ok) return;
+  // ลบ record ที่ผูกด้วย foreign key กับครุภัณฑ์นี้ก่อน (inspection_items, asset_repairs)
+  // มิฉะนั้น DB จะปฏิเสธการลบด้วย "violates foreign key constraint" ถ้าครุภัณฑ์นี้เคยถูกตรวจนับ/ซ่อมมาก่อน
+  var r1 = await sb.from('inspection_items').delete().eq('asset_id', id);
+  if (r1.error) { showToast('ลบไม่สำเร็จ (ประวัติตรวจนับ): ' + r1.error.message, 'error'); return; }
+  var r2 = await sb.from('asset_repairs').delete().eq('asset_id', id);
+  if (r2.error) { showToast('ลบไม่สำเร็จ (ประวัติซ่อม): ' + r2.error.message, 'error'); return; }
   var delRes = await sb.from('assets').delete().eq('id', id);
   if (delRes.error) { showToast('เกิดข้อผิดพลาด: ' + delRes.error.message, 'error'); return; }
   logTx('asset_delete', { asset_code: a.asset_code, name: a.name });
@@ -6981,6 +6988,9 @@ async function _deleteSuspectAsset(id, btn) {
   );
   if (!ok) return;
   btn.disabled = true;
+  // ลบ record ที่ผูกด้วย foreign key ก่อน มิฉะนั้น DB จะปฏิเสธถ้าครุภัณฑ์นี้เคยถูกตรวจนับ/ซ่อมมาก่อน
+  await sb.from('inspection_items').delete().eq('asset_id', id);
+  await sb.from('asset_repairs').delete().eq('asset_id', id);
   var res = await sb.from('assets').delete().eq('id', id);
   if (res.error) { showToast('ลบไม่สำเร็จ: ' + res.error.message, 'danger'); btn.disabled = false; return; }
   logTx('asset_delete', { id: id }, id);
@@ -7020,6 +7030,9 @@ async function _deleteAllSuspects() {
   try {
     for (var i = 0; i < ids.length; i += chunkSize) {
       var chunk = ids.slice(i, i + chunkSize);
+      // ลบ record ที่ผูกด้วย foreign key ก่อน (เหมือน _deleteSuspectAsset/deleteAsset)
+      await sb.from('inspection_items').delete().in('asset_id', chunk);
+      await sb.from('asset_repairs').delete().in('asset_id', chunk);
       var res = await sb.from('assets').delete().in('id', chunk);
       if (res.error) throw res.error;
       deleted += chunk.length;
