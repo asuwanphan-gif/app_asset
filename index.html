@@ -8500,6 +8500,7 @@ async function _loadRoundList() {
         '<td style="font-size:12px;color:#64748b;">' + fmtDate(r.start_date) + ' – ' + fmtDate(r.end_date) + '</td>' +
         '<td><span class="badge ' + (r.status==='active'?'bg-success':'bg-secondary') + '">' + (r.status==='active'?'กำลังดำเนินการ':'ปิดแล้ว') + '</span></td>' +
         '<td style="white-space:nowrap;text-align:center;">' +
+          '<button class="btn btn-sm btn-outline-primary py-0 px-2 me-1" onclick="openEditRoundDates(\'' + r.id + '\',\'' + (r.start_date||'') + '\',\'' + (r.end_date||'') + '\')" title="แก้ไขวันที่รอบตรวจ"><i class="bi bi-calendar-event"></i></button>' +
           (r.status==='active'
             ? '<button class="btn btn-sm btn-outline-danger py-0 px-2 me-1" onclick="closeRound(\'' + r.id + '\')">ปิดรอบ</button>'
             : '<button class="btn btn-sm btn-outline-secondary py-0 px-2 me-1" onclick="reopenRound(\'' + r.id + '\')">เปิดใหม่</button>') +
@@ -9315,6 +9316,56 @@ async function reopenRound(id) {
   logTx('inspection_reopen', { id: id });
   showToast('เปิดรอบตรวจใหม่เรียบร้อย', 'success');
   loadInspectionPage();
+}
+
+// แก้ไขวันที่เริ่ม/สิ้นสุดของรอบตรวจ (เช่น ขยายเวลาออกตรวจ) — ไม่ต้องปิดรอบแล้วสร้างใหม่
+// (ห้ามสร้างรอบใหม่ซ้อนรอบเดิมเด็ดขาด เคยเกิดปัญหาข้อมูลตรวจซ้อนกันมาแล้ว)
+function openEditRoundDates(id, curStart, curEnd) {
+  var overlay = document.createElement('div');
+  overlay.id = '_editRoundOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:10000;display:flex;align-items:center;justify-content:center;animation:fadeIn .15s;';
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:16px;padding:26px 26px 20px;min-width:300px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:Anuphan;animation:slideUp .18s;">' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">' +
+        '<div style="width:42px;height:42px;border-radius:50%;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;">' +
+          '<i class="bi bi-calendar-event-fill" style="font-size:19px;color:#2563eb;"></i></div>' +
+        '<div style="font-weight:700;font-size:15px;color:#0f172a;">แก้ไขวันที่รอบตรวจ</div>' +
+      '</div>' +
+      '<div style="margin-bottom:10px;">' +
+        '<div style="font-size:12px;color:#64748b;margin-bottom:5px;">วันที่เริ่ม</div>' +
+        '<input id="_editRoundStart" type="date" value="' + (curStart||'') + '" style="width:100%;border:1.5px solid #e2e8f0;border-radius:9px;padding:8px 12px;font-size:14px;outline:none;box-sizing:border-box;font-family:Anuphan;">' +
+      '</div>' +
+      '<div style="margin-bottom:18px;">' +
+        '<div style="font-size:12px;color:#64748b;margin-bottom:5px;">วันที่สิ้นสุด</div>' +
+        '<input id="_editRoundEnd" type="date" value="' + (curEnd||'') + '" style="width:100%;border:1.5px solid #e2e8f0;border-radius:9px;padding:8px 12px;font-size:14px;outline:none;box-sizing:border-box;font-family:Anuphan;">' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<button onclick="_closeEditRoundDates()" style="flex:1;padding:10px;border-radius:9px;border:none;background:#f1f5f9;color:#64748b;font-family:Anuphan;font-size:13px;font-weight:600;cursor:pointer;">ยกเลิก</button>' +
+        '<button onclick="_saveEditRoundDates(\'' + id + '\')" style="flex:1;padding:10px;border-radius:9px;border:none;background:#2563eb;color:#fff;font-family:Anuphan;font-size:13px;font-weight:700;cursor:pointer;">บันทึก</button>' +
+      '</div>' +
+    '</div>';
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) _closeEditRoundDates(); });
+  document.body.appendChild(overlay);
+}
+function _closeEditRoundDates() {
+  var el = document.getElementById('_editRoundOverlay');
+  if (el) document.body.removeChild(el);
+}
+async function _saveEditRoundDates(id) {
+  var startInp = document.getElementById('_editRoundStart');
+  var endInp   = document.getElementById('_editRoundEnd');
+  var newStart = startInp ? startInp.value : '';
+  var newEnd   = endInp ? endInp.value : '';
+  if (!newStart || !newEnd) { showToast('กรุณาระบุวันที่ให้ครบทั้งสองช่อง', 'warning'); return; }
+  if (newEnd < newStart) { showToast('วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม', 'warning'); return; }
+  var res = await sb.from('inspections').update({ start_date: newStart, end_date: newEnd }).eq('id', id).select('id');
+  if (res.error) { showToast('บันทึกไม่สำเร็จ: ' + res.error.message, 'danger'); return; }
+  if (!(res.data || []).length) { showToast('บันทึกไม่สำเร็จ — ไม่มีสิทธิ์แก้ไขรอบตรวจนี้', 'danger'); return; }
+  logTx('inspection_edit_dates', { start_date: newStart, end_date: newEnd }, id);
+  _closeEditRoundDates();
+  showToast('แก้ไขวันที่รอบตรวจแล้ว', 'success');
+  _loadRoundList();
+  if (App.currentInspectionId === id) loadInspectionPage();
 }
 
 async function deleteRound(id, name) {
