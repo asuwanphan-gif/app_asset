@@ -9025,11 +9025,39 @@ function _pickInspLocSuggest(loc) {
   var box = document.getElementById('_inspLocSuggest');
   if (box) { box.style.display = 'none'; box.innerHTML = ''; }
 }
-function _pickInspStatus(assetId, status) {
-  _closeInspStatusPicker();
+// บันทึกรหัส/ที่อยู่ลง DB จริง — แยกจาก UI (ปุ่ม/spinner) เพื่อให้เรียกซ้ำได้ทั้งจากปุ่ม "บันทึกรหัส/ที่อยู่นี้"
+// และตอนกดเลือกสถานะตรงๆ (เผื่อผู้ใช้พิมพ์แก้ไว้แล้วกดเลือกสถานะเลยโดยไม่ได้กดปุ่มบันทึกแยก ข้อมูลจะได้ไม่หาย)
+async function _persistInspAssetInfo(assetId, newCode, newLoc) {
   var row = _findInspRow(assetId);
-  if (!row) return;
+  if (!row) return { ok: false };
+  var upd = await sb.from('assets')
+    .update({ asset_code: newCode || null, location: newLoc || null, updated_at: new Date().toISOString() })
+    .eq('id', row.asset.id)
+    .select('id');
+  if (upd.error) return { ok: false, message: 'บันทึกรหัส/ที่อยู่ไม่สำเร็จ: ' + upd.error.message };
+  if (!(upd.data || []).length) return { ok: false, message: 'บันทึกรหัส/ที่อยู่ไม่สำเร็จ — ไม่มีสิทธิ์แก้ไขรายการนี้ (RLS)' };
+  logTx('inspection_edit_asset_info', { asset_code: newCode, location: newLoc }, row.asset.id);
+  row.asset.asset_code = newCode;
+  row.asset.location = newLoc;
+  return { ok: true };
+}
+function _pickInspStatus(assetId, status) {
+  var row = _findInspRow(assetId);
+  if (!row) { _closeInspStatusPicker(); return; }
+  // เก็บค่ารหัส/ที่อยู่ที่พิมพ์ค้างไว้ในช่อง (ถ้ามี) ก่อนปิด popup — เผื่อผู้ใช้แก้แล้วกดเลือกสถานะเลย
+  var codeInp = document.getElementById('_inspEditCode');
+  var locInp  = document.getElementById('_inspEditLoc');
+  var pendingCode = codeInp ? codeInp.value.trim() : null;
+  var pendingLoc  = locInp  ? locInp.value.trim()  : null;
+  var infoChanged = (pendingCode !== null && pendingCode !== (row.asset.asset_code || '')) ||
+                     (pendingLoc  !== null && pendingLoc  !== (row.asset.location || ''));
+  _closeInspStatusPicker();
   row._status = status;
+  if (infoChanged) {
+    _persistInspAssetInfo(assetId, pendingCode, pendingLoc).then(function(res) {
+      if (!res.ok) showToast(res.message, 'danger');
+    });
+  }
   _autoSaveInspRow(assetId, null);
 }
 async function _saveInspAssetInfo(assetId) {
@@ -9042,23 +9070,12 @@ async function _saveInspAssetInfo(assetId) {
   var btn = document.querySelector('#_inspPickOverlay button[onclick="_saveInspAssetInfo(\'' + assetId + '\')"]');
   if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
 
-  var upd = await sb.from('assets')
-    .update({ asset_code: newCode || null, location: newLoc || null, updated_at: new Date().toISOString() })
-    .eq('id', row.asset.id)
-    .select('id');
-  if (upd.error) {
-    showToast('บันทึกรหัส/ที่อยู่ไม่สำเร็จ: ' + upd.error.message, 'danger');
+  var res = await _persistInspAssetInfo(assetId, newCode, newLoc);
+  if (!res.ok) {
+    showToast(res.message, 'danger');
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2 me-1"></i>บันทึกรหัส/ที่อยู่นี้'; }
     return;
   }
-  if (!(upd.data || []).length) {
-    showToast('บันทึกไม่สำเร็จ — ไม่มีสิทธิ์แก้ไขรายการนี้ (RLS)', 'danger');
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2 me-1"></i>บันทึกรหัส/ที่อยู่นี้'; }
-    return;
-  }
-  logTx('inspection_edit_asset_info', { asset_code: newCode, location: newLoc }, row.asset.id);
-  row.asset.asset_code = newCode;
-  row.asset.location = newLoc;
   showToast('บันทึกรหัส/ที่อยู่แล้ว: ' + (newCode || '—') + ' · ' + (newLoc || '—'), 'success');
   _closeInspStatusPicker();
   _refreshInspTableKeepPage();
