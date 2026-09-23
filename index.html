@@ -8985,10 +8985,11 @@ function openInspStatusPicker(assetId) {
     + '  <input type="text" id="_inspEditCode" value="' + (a.asset_code || '').replace(/"/g, '&quot;') + '" placeholder="ยังไม่มีรหัส — พิมพ์เพื่อเพิ่ม" '
     + '    style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:Anuphan;font-size:13px;margin-bottom:10px;box-sizing:border-box;">'
     + '  <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:4px;">ใช้ประจำที่</label>'
-    + '  <input type="text" id="_inspEditLoc" value="' + (a.location || '').replace(/"/g, '&quot;') + '" placeholder="พิมพ์ค้นหาที่ตั้งเดิม หรือระบุที่ตั้งใหม่" autocomplete="off" '
+    + '  <input type="text" id="_inspEditLoc" data-asset-id="' + assetId + '" value="' + (a.location || '').replace(/"/g, '&quot;') + '" placeholder="พิมพ์ค้นหาที่ตั้งเดิม หรือระบุที่ตั้งใหม่" autocomplete="off" '
     + '    oninput="_showInspLocSuggest(this)" onfocus="_showInspLocSuggest(this)" onblur="setTimeout(function(){var b=document.getElementById(\'_inspLocSuggest\');if(b)b.style.display=\'none\';},150)" '
     + '    style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-family:Anuphan;font-size:13px;box-sizing:border-box;">'
     + '  <div id="_inspLocSuggest" style="display:none;margin-top:4px;max-height:140px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;background:#fff;"></div>'
+    + '  <div id="_inspLocBranchWarn" style="display:none;margin-top:8px;padding:8px 10px;border-radius:8px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:11.5px;line-height:1.5;"></div>'
     + '  <button type="button" onclick="_saveInspAssetInfo(\'' + assetId + '\')" style="width:100%;margin-top:10px;padding:8px;border-radius:8px;border:1.5px solid #bfdbfe;background:#eff6ff;color:#1e40af;font-family:Anuphan;font-size:12.5px;font-weight:700;cursor:pointer;"><i class="bi bi-check2 me-1"></i>บันทึกรหัส/ที่อยู่นี้</button>'
     + '</div>'
     + '<div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:10px;">เลือกผลการตรวจ</div>'
@@ -9000,6 +9001,7 @@ function openInspStatusPicker(assetId) {
     + '</div>';
   overlay.addEventListener('click', function(e) { if (e.target === overlay) _closeInspStatusPicker(); });
   document.body.appendChild(overlay);
+  _checkInspLocBranchWarn(document.getElementById('_inspEditLoc'));
 }
 function _closeInspStatusPicker() {
   var el = document.getElementById('_inspPickOverlay');
@@ -9008,16 +9010,36 @@ function _closeInspStatusPicker() {
 // suggestion list ให้ช่อง "ใช้ประจำที่" — เลือกจากที่ตั้งเดิมได้ (กันพิมพ์ผิด/สร้างชื่อซ้ำ) แต่ยังพิมพ์ที่ตั้งใหม่ได้ตามปกติ
 function _showInspLocSuggest(inp) {
   var box = document.getElementById('_inspLocSuggest');
-  if (!box) return;
-  var q = (inp.value || '').trim().toLowerCase();
-  var opts = App._inspLocOptions || [];
-  var matches = (q ? opts.filter(function(o){ return o.toLowerCase().indexOf(q) > -1; }) : opts).slice(0, 8);
-  if (!matches.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
-  box.innerHTML = matches.map(function(o) {
-    return '<div onclick="_pickInspLocSuggest(this.dataset.loc)" data-loc="' + o.replace(/"/g, '&quot;') + '" '
-      + 'style="padding:8px 10px;font-size:12.5px;font-family:Anuphan;cursor:pointer;border-bottom:1px solid #f1f5f9;">' + o + '</div>';
-  }).join('');
-  box.style.display = 'block';
+  if (box) {
+    var q = (inp.value || '').trim().toLowerCase();
+    var opts = App._inspLocOptions || [];
+    var matches = (q ? opts.filter(function(o){ return o.toLowerCase().indexOf(q) > -1; }) : opts).slice(0, 8);
+    if (!matches.length) { box.style.display = 'none'; box.innerHTML = ''; }
+    else {
+      box.innerHTML = matches.map(function(o) {
+        return '<div onclick="_pickInspLocSuggest(this.dataset.loc)" data-loc="' + o.replace(/"/g, '&quot;') + '" '
+          + 'style="padding:8px 10px;font-size:12.5px;font-family:Anuphan;cursor:pointer;border-bottom:1px solid #f1f5f9;">' + o + '</div>';
+      }).join('');
+      box.style.display = 'block';
+    }
+  }
+  _checkInspLocBranchWarn(inp);
+}
+// เตือนถ้าที่อยู่ที่พิมพ์ขึ้นต้นด้วยเลขสาขาอื่น (ตามธรรมเนียมตั้งชื่อที่อยู่ในระบบ เช่น "6 ห้องปฏิบัติการ...")
+// เพราะช่องนี้แก้ได้แค่ข้อความที่อยู่ ไม่ได้ย้าย branch_id ให้จริง — ผู้ตรวจบางคนเข้าใจผิดว่าแก้ตรงนี้แล้วจะย้ายสาขาให้
+function _checkInspLocBranchWarn(inp) {
+  var warnEl = document.getElementById('_inspLocBranchWarn');
+  if (!warnEl || !inp) return;
+  var row = _findInspRow(inp.getAttribute('data-asset-id'));
+  var m = (inp.value || '').trim().match(/^(\d+)\b/);
+  var curBranch = row && App.branchMap ? App.branchMap[row.asset.branch_id] : null;
+  var target = (m && curBranch && m[1] !== curBranch.code && App.branchMap)
+    ? Object.keys(App.branchMap).map(function(k){ return App.branchMap[k]; }).find(function(b){ return b.code === m[1]; })
+    : null;
+  if (!target) { warnEl.style.display = 'none'; warnEl.innerHTML = ''; return; }
+  warnEl.style.display = 'block';
+  warnEl.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>ที่อยู่นี้ขึ้นต้นด้วยเลข ' + m[1] + ' (สาขา' + target.name + ') แต่ครุภัณฑ์นี้ยังผูกกับ<b>สาขา' + curBranch.name
+    + '</b> อยู่ — แก้ตรงนี้เปลี่ยนแค่ข้อความที่อยู่ <b>ไม่ย้ายสาขาให้อัตโนมัติ</b> ถ้าย้ายสาขาจริง ให้ใช้เมนู "โอนย้ายครุภัณฑ์" ด้วย';
 }
 function _pickInspLocSuggest(loc) {
   var inp = document.getElementById('_inspEditLoc');
