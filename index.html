@@ -8577,7 +8577,10 @@ async function _loadInspOverview() {
   });
 
   var totalAssets = assets.length;
-  var totalDone   = items.length;
+  // นับ "ตรวจแล้ว" จาก byBranch (ซึ่งกรองด้วย doneSet ต่อ asset ที่ยังอยู่ใน scope assets ปัจจุบันแล้ว)
+  // ห้ามใช้ items.length ตรงๆ — จะรวม record ของครุภัณฑ์ที่ตรวจไปแล้วแต่ภายหลังหลุด scope
+  // (เช่น ตรวจแล้วมาร์ก "ชำรุด ซ่อมไม่ได้" ซึ่งถูกตัดออกจาก assetsQ ด้านบน) ทำให้ตรวจแล้ว > รวมทั้งหมด
+  var totalDone   = Object.keys(byBranch).reduce(function(sum, bId) { return sum + byBranch[bId].done; }, 0);
   var totalPct    = totalAssets ? Math.round(totalDone / totalAssets * 100) : 0;
 
   // เก็บไว้ใช้ render รายการที่ยังไม่สำรวจในการ์ดแต่ละสาขา
