@@ -11864,8 +11864,21 @@ async function exportRegisterExcel(branchId) {
   }
 }
 
+// App.currentInspectionId ปกติถูกตั้งค่าตอนโหลดหน้า "ตรวจสอบครุภัณฑ์" (_loadInspOverview)
+// แต่หน้า "รายงาน & พิมพ์" ไม่มี loader ของตัวเอง ถ้าเข้าหน้านี้ตรงๆ โดยไม่เคยผ่านหน้าตรวจสอบ
+// ก่อน ตัวแปรนี้จะยังไม่ถูกตั้งค่า ทำให้ขึ้น "ไม่มีรอบตรวจที่ active" ทั้งที่จริงมีรอบเปิดอยู่
+// ฟังก์ชันนี้ query หาเองถ้ายังไม่มีค่า กันปัญหานี้
+async function _ensureActiveInspection() {
+  if (App.currentInspectionId && App.currentInspectionId !== '__none__') return App.currentInspectionId;
+  var res = await sb.from('inspections').select('*').eq('status', 'active').order('created_at', { ascending: false }).limit(1);
+  var insp = (res.data || [])[0];
+  if (insp) { App.currentInspectionId = insp.id; App.currentInsp = insp; }
+  return App.currentInspectionId;
+}
+
 // ── 3c-print. รายงานผลการตรวจสอบ (พิมพ์) ────────────────────
 async function printInspectionResultReport() {
+  await _ensureActiveInspection();
   if (!App.currentInspectionId || App.currentInspectionId === '__none__') {
     showToast('ไม่มีรอบตรวจที่ active', 'warning'); return;
   }
@@ -12036,6 +12049,7 @@ async function printInspectionResultReport() {
 // ── 3c. รายงานผลการตรวจสอบ (Excel) ─────────────────────────
 async function exportInspectionResultExcel() {
   if (typeof XLSX === 'undefined') { showToast('กำลังโหลด SheetJS กรุณารอสักครู่แล้วลองใหม่', 'warning'); return; }
+  await _ensureActiveInspection();
   if (!App.currentInspectionId || App.currentInspectionId === '__none__') {
     showToast('ไม่มีรอบตรวจที่ active', 'warning'); return;
   }
