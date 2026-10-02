@@ -11108,6 +11108,7 @@ async function printAssetSubmissionReport() {
   var _branchMap = {};
   (App.branches||[]).forEach(function(b){ _branchMap[b.id] = b.name; });
 
+  await _ensureActiveInspection();
   var inspStatusMap = {};
   if (App.currentInspectionId && App.currentInspectionId !== '__none__') {
     var itemsRes = await sb.from('inspection_items')
@@ -11198,20 +11199,23 @@ async function printAssetSubmissionReport() {
       }
       var rawStatus = a.status || '';
       var hasInspData = Object.keys(inspStatusMap).length > 0;
-      var inspFound = hasInspData
-        ? (inspStatusMap[a.id] !== undefined ? inspStatusMap[a.id] !== 'not_found' : rawStatus !== 'not_found')
-        : rawStatus !== 'not_found';
-      var isActive       = rawStatus === 'active' || rawStatus === 'overaged';
-      var isDamagedFix   = rawStatus === 'damaged_fixable';
-      var isDamagedUnfix = rawStatus === 'damaged_unfixable';
+      // ผลตรวจรอบนี้ (ถ้ามี) มีความสำคัญกว่าสถานะที่บันทึกไว้ก่อนหน้า ใช้ชี้ขาดว่า "ไม่พบ" หรือไม่
+      var effStatus = (hasInspData && inspStatusMap[a.id] !== undefined) ? inspStatusMap[a.id] : rawStatus;
+      // 4 สถานะ (พบ/ไม่พบ/ชำรุดซ่อมได้/ชำรุดซ่อมไม่ได้) ต้อง mutually exclusive กัน ผลรวมถึงจะเท่ากับยอดรวมทั้งหมด
+      // เดิมเช็ค "พบ" แยกจากเช็คชำรุดได้/ไม่ได้ ทำให้ของชำรุดโดนนับซ้ำทั้งในช่อง "พบ" และช่องชำรุด
+      var isNotFound     = effStatus === 'not_found';
+      var isDamagedUnfix = !isNotFound && rawStatus === 'damaged_unfixable';
+      var isDamagedFix   = !isNotFound && !isDamagedUnfix && rawStatus === 'damaged_fixable';
+      var isActive       = !isNotFound && !isDamagedUnfix && !isDamagedFix && (rawStatus === 'active' || rawStatus === 'overaged');
+      var inspFound      = !isNotFound && !isDamagedUnfix && !isDamagedFix;
       var isTransferred  = rawStatus === 'transferred';
       var isDisposed     = rawStatus === 'disposed' || rawStatus === 'disposal_pending';
-      var isNotFound     = rawStatus === 'not_found';
 
       bTotal++;
-      if (inspFound && !isNotFound) bFound++; else bNotFound++;
-      if (isDamagedFix)   bFixable++;
-      if (isDamagedUnfix) bUnfixable++;
+      if (isNotFound) bNotFound++;
+      else if (isDamagedUnfix) bUnfixable++;
+      else if (isDamagedFix) bFixable++;
+      else bFound++;
       if (isTransferred)  bTransferred++;
       if (isDisposed)     bDisposed++;
 
@@ -11391,6 +11395,7 @@ async function exportAssetSubmissionExcel(fiscalYearParam) {
     var _branchMap = {};
     (App.branches||[]).forEach(function(b){ _branchMap[b.id] = b.name; });
 
+    await _ensureActiveInspection();
     var inspStatusMap = {};
     if (App.currentInspectionId && App.currentInspectionId !== '__none__') {
       var itemsRes = await sb.from('inspection_items')
@@ -11506,19 +11511,22 @@ async function exportAssetSubmissionExcel(fiscalYearParam) {
         }
         var rawStatus = a.status || '';
         var hasInsp = Object.keys(inspStatusMap).length > 0;
-        var inspFound = hasInsp
-          ? (inspStatusMap[a.id]!==undefined ? inspStatusMap[a.id]!=='not_found' : rawStatus!=='not_found')
-          : rawStatus!=='not_found';
-        var isDamagedFix   = rawStatus==='damaged_fixable';
-        var isDamagedUnfix = rawStatus==='damaged_unfixable';
+        // ผลตรวจรอบนี้ (ถ้ามี) มีความสำคัญกว่าสถานะที่บันทึกไว้ก่อนหน้า ใช้ชี้ขาดว่า "ไม่พบ" หรือไม่
+        var effStatus = (hasInsp && inspStatusMap[a.id] !== undefined) ? inspStatusMap[a.id] : rawStatus;
+        // 4 สถานะ (พบ/ไม่พบ/ชำรุดซ่อมได้/ชำรุดซ่อมไม่ได้) ต้อง mutually exclusive กัน ผลรวมถึงจะเท่ากับยอดรวมทั้งหมด
+        // เดิมเช็ค "พบ" แยกจากเช็คชำรุดได้/ไม่ได้ ทำให้ของชำรุดโดนนับซ้ำทั้งในช่อง "พบ" และช่องชำรุด
+        var isNotFound     = effStatus === 'not_found';
+        var isDamagedUnfix = !isNotFound && rawStatus === 'damaged_unfixable';
+        var isDamagedFix   = !isNotFound && !isDamagedUnfix && rawStatus === 'damaged_fixable';
+        var inspFound      = !isNotFound && !isDamagedUnfix && !isDamagedFix;
         var isTransferred  = rawStatus==='transferred';
         var isDisposed     = rawStatus==='disposed'||rawStatus==='disposal_pending';
-        var isNotFound     = rawStatus==='not_found';
 
         bTotal++; gTotal++;
-        if (inspFound&&!isNotFound){ bFound++; gFound++; } else { bNotFound++; gNotFound++; }
-        if (isDamagedFix)  { bFixable++;   gFixable++; }
-        if (isDamagedUnfix){ bUnfixable++;  gUnfixable++; }
+        if (isNotFound) { bNotFound++; gNotFound++; }
+        else if (isDamagedUnfix) { bUnfixable++; gUnfixable++; }
+        else if (isDamagedFix) { bFixable++; gFixable++; }
+        else { bFound++; gFound++; }
         if (isTransferred) { bTransferred++; gTransferred++; }
         if (isDisposed)    { bDisposed++;   gDisposed++; }
 
