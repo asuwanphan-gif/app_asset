@@ -5018,7 +5018,7 @@ async function loadAssetsPage() {
   updateBulkBar();
   if (tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>กำลังโหลด...</td></tr>';
 
-  var q = sb.from('assets').select('id, asset_code, name, brand, model, branch_id, price, status, acquired_date, location, custodian, category').order('acquired_date', { ascending: false }).order('asset_code', { ascending: true }).limit(10000);
+  var q = sb.from('assets').select('id, asset_code, name, brand, model, serial_number, branch_id, price, status, acquired_date, location, custodian, category').order('acquired_date', { ascending: false }).order('asset_code', { ascending: true }).limit(10000);
   if (App.profile && App.profile.role === 'branch') {
     q = q.eq('branch_id', App.profile.branch_id);
   }
@@ -5088,15 +5088,33 @@ async function loadAssetsPage() {
   }
 }
 
+// ทำให้ข้อความเทียบกันได้แม้พิมพ์ต่างกันเล็กน้อย: NFC, ตัวพิมพ์เล็ก, ตัดช่องว่าง/zero-width ทิ้ง
+// (ชื่อครุภัณฑ์ที่นำเข้าจาก Excel มักมีเว้นวรรคเกิน/ไม่เท่ากัน ทำให้ค้นหาแบบ includes ตรงๆ พลาด)
+function _normSearch(s) {
+  return String(s == null ? '' : s).normalize('NFC').toLowerCase().replace(/[\s​-‍⁠﻿]+/g, '');
+}
+function _assetMatchesSearch(a, tokens, extra) {
+  if (!tokens.length) return true;
+  var hay = [a.asset_code, a.name, a.brand, a.model, a.serial_number, a.category, a.location, a.custodian, extra]
+    .map(_normSearch).join('|');
+  return tokens.every(function(t) { return hay.indexOf(t) > -1; });
+}
+function _assetMatchesText(a, text, extra) {
+  var tokens = String(text || '').split(/\s+/).map(_normSearch).filter(Boolean);
+  return _assetMatchesSearch(a, tokens, extra);
+}
+
 function filterAssetsNow() {
-  var search = (document.getElementById('filterSearch').value || '').toLowerCase();
+  var rawSearch = (document.getElementById('filterSearch').value || '');
+  var searchTokens = rawSearch.split(/\s+/).map(_normSearch).filter(Boolean);
+  var search = rawSearch.toLowerCase();
   var year = document.getElementById('filterYear').value || '';
   var branch = document.getElementById('filterBranch').value || '';
   var status = document.getElementById('filterStatus').value || '';
   var codeStatus = document.getElementById('filterCodeStatus') ? (document.getElementById('filterCodeStatus').value || '') : '';
 
   App.filteredAssets = App.allAssets.filter(function(a) {
-    var matchSearch = !search || (a.asset_code||'').toLowerCase().includes(search) || (a.name||'').toLowerCase().includes(search) || (a.brand||'').toLowerCase().includes(search);
+    var matchSearch = _assetMatchesSearch(a, searchTokens);
     var matchYear = !year || (a.acquired_date && toThaiYear(a.acquired_date) == year);
     var matchBranch = !branch || (branch === 'no_branch' ? !a.branch_id : a.branch_id === branch);
     var matchStatus = !status || a.status === status;
@@ -7622,7 +7640,7 @@ function filterRepairAssets() {
   var isBranch= App.profile && App.profile.role==='branch';
   var myB     = App.profile ? App.profile.branch_id : null;
   _repFilteredAssets = _repAllAssets.filter(function(a) {
-    var ms = !search || (a.name||'').toLowerCase().includes(search)||(a.asset_code||'').toLowerCase().includes(search);
+    var ms = _assetMatchesText(a, search);
     var mb = !brFil  || a.branch_id === brFil;
     var mm = !isBranch || a.branch_id === myB;
     return ms && mb && mm;
@@ -7980,7 +7998,7 @@ function filterTransferModal() {
   var myB     = App.profile ? App.profile.branch_id : null;
 
   _trMFiltered = _trAll.filter(function(a){
-    var ms  = !search || (a.name||'').toLowerCase().includes(search)||(a.asset_code||'').toLowerCase().includes(search);
+    var ms  = _assetMatchesText(a, search);
     var mb  = !fromB  || a.branch_id === fromB;
     var mst = !stFil  || a.status === stFil;
     var mm  = !isBranch || a.branch_id === myB;
@@ -8872,7 +8890,7 @@ function _applyInspFilter() {
   var doneFilter = document.getElementById('inspFilterDone').value || '';
   App.inspFiltered = App.inspItems.filter(function(row) {
     var a = row.asset;
-    var matchS = !search || (a.asset_code||'').toLowerCase().includes(search) || (a.name||'').toLowerCase().includes(search);
+    var matchS = _assetMatchesText(a, search);
     var matchB = !branchFilter || a.branch_id === branchFilter;
     var matchD = !doneFilter || (doneFilter === 'done' ? !!row._status : !row._status);
     return matchS && matchB && matchD;
@@ -10525,11 +10543,7 @@ async function _openPrintAssetSelect(title, callback) {
 function _renderPrintSelectList(search) {
   var s = (search||'').toLowerCase().trim();
   var filtered = _printAssetList.filter(function(a) {
-    return !s || (a.asset_code||'').toLowerCase().includes(s)
-               || (a.name||'').toLowerCase().includes(s)
-               || (a.brand||'').toLowerCase().includes(s)
-               || (a.location||'').toLowerCase().includes(s)
-               || ((a.branches&&a.branches.name)||'').toLowerCase().includes(s);
+    return _assetMatchesText(a, s, ((a.branches&&a.branches.name)||''));
   });
 
   var thS = 'padding:7px 10px;font-weight:700;font-size:11px;color:#fff;background:#1e3a5f;white-space:nowrap;position:sticky;top:0;z-index:1;';
@@ -11250,7 +11264,7 @@ async function printAssetSubmissionReport() {
         a.category||'',                   // AC ประเภทครุภัณฑ์
         'ครุภัณฑ์',                       // AD หมวด
         inspFound ? '/' : '',             // AE พบ
-        (!inspFound||isNotFound)?'/':'',  // AF ไม่พบ
+        isNotFound ? '/' : '',            // AF ไม่พบ
         isDamagedFix ? '/' : '',          // AG ชำรุดซ่อมได้
         isDamagedUnfix ? '/' : '',        // AH ชำรุดซ่อมไม่ได้
         isTransferred ? '/' : '',         // AI โอนย้าย
@@ -11537,7 +11551,7 @@ async function exportAssetSubmissionExcel(fiscalYearParam) {
           a.budget_type||'', a.acquisition_method||'', a.vendor||'',
           a.receipt_number||'', a.location||'', 'คณะศิลปศาสตร์และวิทยาศาสตร์',
           '', a.custodian||'', a.life_years||'', a.category||'', 'ครุภัณฑ์',
-          inspFound?'/':'', (!inspFound||isNotFound)?'/':'',
+          inspFound?'/':'', isNotFound?'/':'',
           isDamagedFix?'/':'', isDamagedUnfix?'/':'',
           isTransferred?'/':'', isDisposed?'/':'', ''
         ], 'data');
@@ -12903,7 +12917,7 @@ function filterQRAssets() {
   var status  = ((document.getElementById('qrFilterStatus')||{}).value||'');
   var base    = _qrAllAssets;
   var filtered = base.filter(function(a) {
-    var mS  = !search || (a.asset_code||'').toLowerCase().includes(search) || (a.name||'').toLowerCase().includes(search);
+    var mS  = _assetMatchesText(a, search);
     var mY  = !year   || (a.acquired_date && toThaiYear(a.acquired_date) == year);
     var mB  = !branch || a.branch_id === branch;
     var mSt = !status || a.status === status;
