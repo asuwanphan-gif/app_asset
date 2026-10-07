@@ -859,6 +859,121 @@
   </div>
 </div>
 
+<!-- BUG REPORT MODAL (ทุกบทบาท) -->
+<div class="modal-overlay" id="bugModal" onclick="BugReport.close()">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:560px">
+    <div class="modal-hdr" style="background:linear-gradient(135deg,#b91c1c,#dc2626);">
+      <div class="modal-hdr-title"><i class="bi bi-bug-fill" style="margin-right:8px;"></i>แจ้งปัญหา / บั๊ก</div>
+      <button id="bugAdminReportBtn" onclick="BugReport.close();BugReport.openReport()" style="display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:7px;font-size:12px;padding:4px 10px;cursor:pointer;font-family:Anuphan;white-space:nowrap;"><i class="bi bi-list-check me-1"></i>ดูรายการทั้งหมด</button>
+      <button class="modal-hdr-close" onclick="BugReport.close()">&#x2715;</button>
+    </div>
+    <div class="modal-bdy" style="max-height:68vh;overflow-y:auto;">
+      <div style="margin-bottom:10px;">
+        <label class="form-label">หัวข้อปัญหา <span style="color:#ef4444;">*</span></label>
+        <input id="bugTitle" type="text" class="form-control" maxlength="150" placeholder="สรุปสั้นๆ เช่น ค้นหาครุภัณฑ์แล้วไม่พบรายการที่มีอยู่" style="font-family:Anuphan;font-size:13px;">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+        <div>
+          <label class="form-label">ประเภท <span style="color:#ef4444;">*</span></label>
+          <select id="bugType" class="form-select" style="font-family:Anuphan;font-size:13px;">
+            <option value="">-- เลือก --</option>
+            <option>ระบบทำงานผิดพลาด (Bug)</option>
+            <option>ข้อมูลไม่ถูกต้อง/ตัวเลขไม่ตรง</option>
+            <option>หน้าจอ/การแสดงผล</option>
+            <option>ช้า/ค้าง</option>
+            <option>ข้อเสนอแนะ/อยากให้เพิ่มฟีเจอร์</option>
+            <option>อื่นๆ</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">เมนู/โมดูลที่พบ <span style="color:#ef4444;">*</span></label>
+          <select id="bugModule" class="form-select" style="font-family:Anuphan;font-size:13px;">
+            <option value="">-- เลือก --</option>
+            <option>เข้าสู่ระบบ</option>
+            <option>ภาพรวมระบบ</option>
+            <option>ตรวจสอบครุภัณฑ์</option>
+            <option>รายการครุภัณฑ์</option>
+            <option>แจ้งซ่อมครุภัณฑ์</option>
+            <option>โอนย้ายครุภัณฑ์</option>
+            <option>จำหน่ายครุภัณฑ์</option>
+            <option>รายงาน &amp; พิมพ์</option>
+            <option>QR / สแกน</option>
+            <option>จัดการผู้ใช้</option>
+            <option>อื่นๆ</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label class="form-label">ความรุนแรง <span style="color:#ef4444;">*</span></label>
+        <select id="bugSeverity" class="form-select" style="font-family:Anuphan;font-size:13px;">
+          <option value="">-- เลือก --</option>
+          <option value="critical">วิกฤต — ใช้งานต่อไม่ได้เลย / ข้อมูลเสียหาย</option>
+          <option value="high">สูง — กระทบการทำงานหลัก แต่ยังพอใช้งานส่วนอื่นได้</option>
+          <option value="medium">ปานกลาง — มีวิธีเลี่ยงได้</option>
+          <option value="low">ต่ำ — เล็กน้อย/ความสวยงาม</option>
+        </select>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label class="form-label">รายละเอียดปัญหา <span style="color:#ef4444;">*</span></label>
+        <textarea id="bugDesc" class="form-control" rows="3" placeholder="เกิดอะไรขึ้น" style="font-family:Anuphan;font-size:13px;resize:none;"></textarea>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label class="form-label">ขั้นตอนที่ทำให้เกิดปัญหา <span style="color:var(--muted);font-weight:400;">(ถ้าจำได้)</span></label>
+        <textarea id="bugSteps" class="form-control" rows="3" placeholder="1. เข้าเมนู...&#10;2. กดปุ่ม...&#10;3. เกิดปัญหา..." style="font-family:Anuphan;font-size:13px;resize:none;"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;">
+        <div>
+          <label class="form-label">ผลที่คาดหวัง</label>
+          <textarea id="bugExpected" class="form-control" rows="2" style="font-family:Anuphan;font-size:13px;resize:none;"></textarea>
+        </div>
+        <div>
+          <label class="form-label">ผลที่เกิดขึ้นจริง</label>
+          <textarea id="bugActual" class="form-control" rows="2" style="font-family:Anuphan;font-size:13px;resize:none;"></textarea>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:#64748b;background:#f8fafc;border-radius:8px;padding:8px 10px;">
+        <i class="bi bi-info-circle me-1"></i>ระบบจะบันทึกอัตโนมัติ: ผู้แจ้ง สาขา หน้าที่เปิดอยู่ วันเวลา อุปกรณ์/เบราว์เซอร์ ขนาดหน้าจอ
+      </div>
+      <div id="bugAlert" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:13px;"></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-outline-secondary" onclick="BugReport.close()">ยกเลิก</button>
+      <button class="btn" style="background:#dc2626;color:#fff;" onclick="BugReport.save()"><i class="bi bi-send-fill me-1"></i>ส่งรายงานปัญหา</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUG REPORT LOG MODAL (admin) -->
+<div class="modal-overlay" id="bugReportModal" onclick="BugReport.closeReport()">
+  <div class="modal-box" onclick="event.stopPropagation()" style="max-width:1100px;width:96%">
+    <div class="modal-hdr" style="background:linear-gradient(135deg,#b91c1c,#dc2626);">
+      <div class="modal-hdr-title"><i class="bi bi-list-check" style="margin-right:8px;"></i>บันทึกรายการแจ้งปัญหา/บั๊ก</div>
+      <button class="modal-hdr-close" onclick="BugReport.closeReport()">&#x2715;</button>
+    </div>
+    <div class="modal-bdy" style="max-height:70vh;overflow-y:auto;">
+      <div id="bugReportSummary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;"></div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <select id="bugFilterStatus" class="form-select form-select-sm" style="max-width:180px;font-family:Anuphan;" onchange="BugReport.renderTable()">
+          <option value="">ทุกสถานะ</option>
+          <option value="new">รอดำเนินการ</option>
+          <option value="in_progress">กำลังแก้ไข</option>
+          <option value="resolved">แก้ไขแล้ว</option>
+          <option value="wontfix">ไม่แก้ไข/ปิดรายการ</option>
+        </select>
+        <select id="bugFilterSeverity" class="form-select form-select-sm" style="max-width:180px;font-family:Anuphan;" onchange="BugReport.renderTable()">
+          <option value="">ทุกระดับความรุนแรง</option>
+          <option value="critical">วิกฤต</option><option value="high">สูง</option><option value="medium">ปานกลาง</option><option value="low">ต่ำ</option>
+        </select>
+      </div>
+      <div id="bugReportTable"></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-outline-secondary" onclick="BugReport.closeReport()">ปิด</button>
+      <button class="btn btn-success" onclick="BugReport.exportExcel()"><i class="bi bi-file-earmark-excel-fill me-1"></i>Export Excel (สำหรับงานวิจัย)</button>
+    </div>
+  </div>
+</div>
+
 <!-- FEEDBACK REPORT MODAL (admin) -->
 <div class="modal-overlay" id="feedbackReportModal" onclick="Feedback.closeReport()">
   <div class="modal-box" onclick="event.stopPropagation()" style="max-width:720px">
@@ -914,6 +1029,7 @@
     </div>
     <div class="nav-link" onclick="showPage('report')"><i class="bi bi-file-earmark-bar-graph"></i>รายงาน &amp; พิมพ์</div>
     <div class="nav-link" id="menuFeedback" onclick="_feedbackAction()"><i class="bi bi-star-fill" style="color:#fbbf24;"></i>ความพึงพอใจ</div>
+    <div class="nav-link" id="menuBugReport" onclick="BugReport.open()"><i class="bi bi-bug-fill" style="color:#f87171;"></i>แจ้งปัญหา/บั๊ก</div>
     <div class="nav-link" onclick="showHelp()"><i class="bi bi-question-circle" style="color:#94a3b8;"></i>วิธีใช้งาน</div>
 
     <div class="sb-section" id="adminSection">จัดการระบบ</div>
@@ -10216,6 +10332,188 @@ var Feedback = {
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'ผลประเมินความพึงพอใจ');
     XLSX.writeFile(wb, 'ผลประเมิน_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  }
+};
+
+// ============================================================
+// BUG REPORT — แบบฟอร์มแจ้งปัญหา/บั๊ก เก็บเป็นข้อมูลสำหรับงานวิจัย (ตาราง bug_reports)
+// ต้องรัน create_bug_reports_table.sql ก่อนใช้งาน
+// ============================================================
+var BugReport = {
+  _data: [],
+  _sevLabel: { critical:'วิกฤต', high:'สูง', medium:'ปานกลาง', low:'ต่ำ' },
+  _sevColor: { critical:'#b91c1c', high:'#ea580c', medium:'#ca8a04', low:'#64748b' },
+  _stLabel:  { new:'รอดำเนินการ', in_progress:'กำลังแก้ไข', resolved:'แก้ไขแล้ว', wontfix:'ไม่แก้ไข/ปิดรายการ' },
+  _esc: function(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); },
+
+  open: function() {
+    ['bugTitle','bugType','bugModule','bugSeverity','bugDesc','bugSteps','bugExpected','bugActual'].forEach(function(id) {
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    var al = document.getElementById('bugAlert'); if (al) al.style.display = 'none';
+    var ab = document.getElementById('bugAdminReportBtn');
+    if (ab) ab.style.display = (App.profile && App.profile.role === 'admin') ? '' : 'none';
+    var m = document.getElementById('bugModal'); if (m) m.classList.add('show');
+    if (typeof _sbClosePopover === 'function') _sbClosePopover();
+  },
+  close: function() { var m = document.getElementById('bugModal'); if (m) m.classList.remove('show'); },
+
+  _alert: function(msg, ok) {
+    var a = document.getElementById('bugAlert'); if (!a) return;
+    a.style.cssText = 'display:block;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:13px;'
+      + (ok ? 'background:#dcfce7;color:#166534;' : 'background:#fee2e2;color:#991b1b;');
+    a.textContent = msg;
+  },
+
+  save: async function() {
+    var v = function(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; };
+    if (!v('bugTitle') || !v('bugType') || !v('bugModule') || !v('bugSeverity') || !v('bugDesc')) {
+      this._alert('กรุณากรอกช่องที่มีเครื่องหมาย * ให้ครบ (หัวข้อ ประเภท เมนู ความรุนแรง รายละเอียด)', false); return;
+    }
+    var topTitle = document.getElementById('topTitle');
+    var payload = {
+      reporter_id:   App.user ? App.user.id : null,
+      reporter_name: App.profile ? (App.profile.full_name || App.profile.username || null) : null,
+      reporter_role: App.profile ? App.profile.role : null,
+      branch_id:     App.profile ? App.profile.branch_id : null,
+      title:         v('bugTitle'),
+      bug_type:      v('bugType'),
+      module:        v('bugModule'),
+      severity:      v('bugSeverity'),
+      description:   v('bugDesc'),
+      steps:         v('bugSteps') || null,
+      expected:      v('bugExpected') || null,
+      actual:        v('bugActual') || null,
+      page_open:     topTitle ? topTitle.textContent : null,
+      user_agent:    navigator.userAgent,
+      screen_size:   window.innerWidth + 'x' + window.innerHeight + ' (จอ ' + screen.width + 'x' + screen.height + ')',
+      status:        'new'
+    };
+    var res = await sb.from('bug_reports').insert(payload);
+    if (res.error) {
+      var msg = res.error.message || '';
+      if (/bug_reports/.test(msg) && /(schema cache|does not exist|find the table)/i.test(msg)) msg = 'ยังไม่ได้สร้างตาราง bug_reports ในฐานข้อมูล (ให้ผู้ดูแลรัน create_bug_reports_table.sql)';
+      this._alert('ส่งไม่สำเร็จ: ' + msg, false); return;
+    }
+    logTx('bug_report_create', { title: payload.title, severity: payload.severity, module: payload.module });
+    this.close();
+    showConfirm('ส่งรายงานปัญหาแล้ว', 'ขอบคุณที่ช่วยแจ้งปัญหา ผู้ดูแลระบบจะตรวจสอบและแก้ไขต่อไป');
+  },
+
+  openReport: async function() {
+    var m = document.getElementById('bugReportModal'); if (m) m.classList.add('show');
+    var t = document.getElementById('bugReportTable');
+    if (t) t.innerHTML = '<div style="text-align:center;color:#64748b;padding:24px;font-size:13px;">กำลังโหลด...</div>';
+    var res = await sb.from('bug_reports').select('*').order('created_at', { ascending: false }).limit(2000);
+    if (res.error) {
+      if (t) t.innerHTML = '<div style="color:#ef4444;padding:16px;font-size:13px;">โหลดไม่สำเร็จ: ' + this._esc(res.error.message) + '</div>';
+      return;
+    }
+    this._data = res.data || [];
+    this.renderSummary();
+    this.renderTable();
+  },
+  closeReport: function() { var m = document.getElementById('bugReportModal'); if (m) m.classList.remove('show'); },
+
+  renderSummary: function() {
+    var el = document.getElementById('bugReportSummary'); if (!el) return;
+    var d = this._data, self = this;
+    var cnt = function(f) { return d.filter(f).length; };
+    var box = function(n, label, color) {
+      return '<div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px;text-align:center;">'
+        + '<div style="font-size:24px;font-weight:700;color:' + color + ';">' + n + '</div>'
+        + '<div style="font-size:11.5px;color:#64748b;">' + label + '</div></div>';
+    };
+    el.innerHTML = box(d.length, 'ทั้งหมด', '#0f172a')
+      + box(cnt(function(r){return r.status==='new';}), 'รอดำเนินการ', '#dc2626')
+      + box(cnt(function(r){return r.status==='in_progress';}), 'กำลังแก้ไข', '#ea580c')
+      + box(cnt(function(r){return r.status==='resolved';}), 'แก้ไขแล้ว', '#16a34a')
+      + box(cnt(function(r){return r.severity==='critical'||r.severity==='high';}), 'วิกฤต/สูง', '#b91c1c');
+  },
+
+  _filtered: function() {
+    var fs = (document.getElementById('bugFilterStatus') || {}).value || '';
+    var fv = (document.getElementById('bugFilterSeverity') || {}).value || '';
+    return this._data.filter(function(r) { return (!fs || r.status === fs) && (!fv || r.severity === fv); });
+  },
+
+  renderTable: function() {
+    var t = document.getElementById('bugReportTable'); if (!t) return;
+    var rows = this._filtered(), self = this;
+    if (!rows.length) { t.innerHTML = '<div style="text-align:center;color:#64748b;padding:28px;font-size:13px;">ไม่มีรายการ</div>'; return; }
+    var html = rows.map(function(r) {
+      var br = (App.branches||[]).find(function(b){ return b.id === r.branch_id; });
+      var d = r.created_at ? new Date(r.created_at).toLocaleString('th-TH', {day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'}) : '-';
+      var stOpts = Object.keys(self._stLabel).map(function(k) {
+        return '<option value="' + k + '"' + (r.status === k ? ' selected' : '') + '>' + self._stLabel[k] + '</option>';
+      }).join('');
+      return '<tr>'
+        + '<td style="font-size:12px;white-space:nowrap;">#' + self._esc(r.bug_no) + '<br><span style="color:#94a3b8;">' + d + '</span></td>'
+        + '<td style="font-size:12px;max-width:260px;word-break:break-word;"><b>' + self._esc(r.title) + '</b><br>'
+          + '<span style="color:#475569;">' + self._esc(r.description) + '</span>'
+          + (r.steps ? '<br><span style="color:#94a3b8;">ขั้นตอน: ' + self._esc(r.steps) + '</span>' : '') + '</td>'
+        + '<td style="font-size:12px;">' + self._esc(r.module) + '<br><span style="color:#94a3b8;">' + self._esc(r.bug_type) + '</span></td>'
+        + '<td style="font-size:12px;"><span style="font-weight:700;color:' + (self._sevColor[r.severity]||'#64748b') + ';">' + (self._sevLabel[r.severity]||'-') + '</span></td>'
+        + '<td style="font-size:12px;">' + self._esc(r.reporter_name || '-') + '<br><span style="color:#94a3b8;">' + self._esc(br ? br.name : (r.reporter_role||'')) + '</span></td>'
+        + '<td><select class="form-select form-select-sm" style="font-size:12px;min-width:130px;" onchange="BugReport.setStatus(\'' + r.id + '\',this.value)">' + stOpts + '</select></td>'
+        + '<td><input type="text" class="form-control form-control-sm" style="font-size:12px;min-width:160px;" placeholder="วิธีแก้/หมายเหตุ" value="' + self._esc(r.resolution || '') + '" onblur="BugReport.setResolution(\'' + r.id + '\',this.value)"></td>'
+        + '</tr>';
+    }).join('');
+    t.innerHTML = '<div style="overflow-x:auto;"><table class="table table-sm table-hover mb-0" style="font-family:Anuphan;">'
+      + '<thead style="background:#7f1d1d;color:#fff;font-size:12px;"><tr><th>เลขที่/วันที่</th><th>ปัญหา</th><th>เมนู/ประเภท</th><th>ระดับ</th><th>ผู้แจ้ง</th><th>สถานะ</th><th>วิธีแก้</th></tr></thead>'
+      + '<tbody>' + html + '</tbody></table></div>';
+  },
+
+  _update: async function(id, patch) {
+    var res = await sb.from('bug_reports').update(patch).eq('id', id).select('id');
+    if (res.error || !(res.data || []).length) {
+      showToast('บันทึกไม่สำเร็จ' + (res.error ? ': ' + res.error.message : ' (ไม่มีสิทธิ์แก้ไข)'), 'danger'); return false;
+    }
+    var row = this._data.find(function(r){ return r.id === id; });
+    if (row) Object.keys(patch).forEach(function(k){ row[k] = patch[k]; });
+    return true;
+  },
+  setStatus: async function(id, status) {
+    var patch = { status: status };
+    if (status === 'resolved' || status === 'wontfix') {
+      patch.resolved_at = new Date().toISOString();
+      patch.resolved_by = App.user ? App.user.id : null;
+    } else { patch.resolved_at = null; patch.resolved_by = null; }
+    if (await this._update(id, patch)) { logTx('bug_report_status', { id: id, status: status }); this.renderSummary(); }
+  },
+  setResolution: async function(id, text) {
+    var row = this._data.find(function(r){ return r.id === id; });
+    text = (text || '').trim();
+    if (row && (row.resolution || '') === text) return;
+    await this._update(id, { resolution: text || null });
+  },
+
+  exportExcel: function() {
+    var rows = this._filtered();
+    if (!rows.length) { showToast('ไม่มีรายการให้ส่งออก', 'warning'); return; }
+    var self = this;
+    var fmt = function(d) { return d ? new Date(d).toLocaleString('th-TH', {year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : ''; };
+    var header = ['เลขที่','วันที่แจ้ง','ผู้แจ้ง','บทบาท','สาขา','เมนู/โมดูล','ประเภท','ความรุนแรง','หัวข้อ','รายละเอียด','ขั้นตอนทำซ้ำ','ผลที่คาดหวัง','ผลที่เกิดขึ้นจริง','หน้าที่เปิดอยู่','อุปกรณ์/เบราว์เซอร์','ขนาดหน้าจอ','สถานะ','วิธีแก้/หมายเหตุ','วันที่แก้ไข','เวลาที่ใช้แก้ไข (ชั่วโมง)'];
+    var data = rows.map(function(r) {
+      var br = (App.branches||[]).find(function(b){ return b.id === r.branch_id; });
+      var hrs = (r.resolved_at && r.created_at) ? Math.round((new Date(r.resolved_at) - new Date(r.created_at)) / 36e5 * 10) / 10 : '';
+      return [r.bug_no, fmt(r.created_at), r.reporter_name || '', r.reporter_role || '', br ? br.name : '', r.module || '', r.bug_type || '',
+        self._sevLabel[r.severity] || '', r.title || '', r.description || '', r.steps || '', r.expected || '', r.actual || '',
+        r.page_open || '', r.user_agent || '', r.screen_size || '', self._stLabel[r.status] || r.status || '', r.resolution || '', fmt(r.resolved_at), hrs];
+    });
+    var ws = XLSX.utils.aoa_to_sheet([header].concat(data));
+    ws['!cols'] = [8,18,18,10,20,18,22,12,30,40,40,25,25,16,40,22,16,30,18,14].map(function(w){ return {wch:w}; });
+    var summary = [['ตัวชี้วัด','จำนวน'],
+      ['รายการทั้งหมด', rows.length],
+      ['แก้ไขแล้ว', rows.filter(function(r){return r.status==='resolved';}).length],
+      ['วิกฤต/สูง', rows.filter(function(r){return r.severity==='critical'||r.severity==='high';}).length],
+      ['เวลาแก้ไขเฉลี่ย (ชั่วโมง)', (function(){ var h = data.map(function(x){return x[19];}).filter(function(x){return x!=='';}); return h.length ? Math.round(h.reduce(function(a,b){return a+b;},0)/h.length*10)/10 : '-'; })()]];
+    var ws2 = XLSX.utils.aoa_to_sheet(summary);
+    ws2['!cols'] = [{wch:28},{wch:12}];
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'บันทึกบั๊ก');
+    XLSX.utils.book_append_sheet(wb, ws2, 'สรุป');
+    XLSX.writeFile(wb, 'บันทึกการแจ้งปัญหาระบบ_' + new Date().toISOString().slice(0,10) + '.xlsx');
   }
 };
 
